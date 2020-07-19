@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::process;
 
-const HELP_STRING: &'static str = "A command-line 6502 assembler
+const HELP_STRING: &str = "A command-line 6502 assembler
 
 Usage: spasm <command> [*.asm]
 Commands:
