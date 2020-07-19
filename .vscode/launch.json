@@ -7,16 +7,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'masm'",
+            "name": "Debug unit tests in library 'spasm'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=masm"
+                    "--package=spasm"
                 ],
                 "filter": {
-                    "name": "masm",
+                    "name": "spasm",
                     "kind": "lib"
                 }
             },
@@ -26,15 +26,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'masm'",
+            "name": "Debug executable 'spasm'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=masm",
-                    "--package=masm"
+                    "--bin=spasm",
+                    "--package=spasm"
                 ],
                 "filter": {
-                    "name": "masm",
+                    "name": "spasm",
                     "kind": "bin"
                 }
             },
@@ -44,16 +44,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'masm'",
+            "name": "Debug unit tests in executable 'spasm'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=masm",
-                    "--package=masm"
+                    "--bin=spasm",
+                    "--package=spasm"
                 ],
                 "filter": {
-                    "name": "masm",
+                    "name": "spasm",
                     "kind": "bin"
                 }
             },
