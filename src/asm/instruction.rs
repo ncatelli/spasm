@@ -1,4 +1,4 @@
-pub enum Instruction {
+pub enum Mnemonic {
     // Load-Store
     LDA,
     LDX,
@@ -79,15 +79,20 @@ pub enum Instruction {
 pub enum AddressMode {
     Accumlator,
     Implied,
-    Immediate,
-    Absolute,
-    ZeroPage,
-    Relative,
-    AbsoluteIndirect,
-    AbsoluteIndexedWithX,
-    AbsoluteIndexedWithY,
-    ZeroPageIndexedWithX,
-    ZeroPageIndexedWithY,
-    ZeroPageIndexedIndirect,
-    ZeroPageIndirectIndexedWithY,
+    Immediate(u8),
+    Absolute(u16),
+    ZeroPage(u8),
+    Relative(u8),
+    AbsoluteIndirect(u16),
+    AbsoluteIndexedWithX(u16),
+    AbsoluteIndexedWithY(u16),
+    ZeroPageIndexedWithX(u8),
+    ZeroPageIndexedWithY(u8),
+    ZeroPageIndexedIndirect(u8),
+    ZeroPageIndirectIndexedWithY(u8),
+}
+
+pub struct Instruction {
+    instruction: Mnemonic,
+    address_mode: AddressMode,
 }
