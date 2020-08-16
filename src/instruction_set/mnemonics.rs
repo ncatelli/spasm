@@ -1,4 +1,4 @@
-use crate::instruction_set::op_codes;
+use crate::instruction_set::op_codes::OpCodeOctal;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Mnemonic {
@@ -79,13 +79,11 @@ pub enum Mnemonic {
     NOP,
 }
 
-impl From<op_codes::OpCodeOctal> for Mnemonic {
-    fn from(oco: op_codes::OpCodeOctal) -> Self {
-        match oco.into() {
-            (_, _, 0) => Mnemonic::BRK,
-            (_, _, 1) => Mnemonic::BRK,
-            (_, _, 2) => Mnemonic::BRK,
-            _ => Mnemonic::BVC,
+impl Into<OpCodeOctal> for Mnemonic {
+    fn into(self) -> OpCodeOctal {
+        match self {
+            Mnemonic::BRK => OpCodeOctal(0, 0, 0),
+            _ => OpCodeOctal(0, 0, 0),
         }
     }
 }

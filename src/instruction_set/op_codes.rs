@@ -4,7 +4,7 @@ pub type OpCode = u8;
 /// OpCodeOctal represents the [aaabbbcc] representation of an instructions
 /// translation to an opcode table.
 #[derive(Clone, Copy, PartialEq, Debug)]
-pub struct OpCodeOctal(u8, u8, u8);
+pub struct OpCodeOctal(pub u8, pub u8, pub u8);
 
 impl From<(u8, u8, u8)> for OpCodeOctal {
     fn from(tuple: (u8, u8, u8)) -> OpCodeOctal {
