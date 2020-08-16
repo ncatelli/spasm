@@ -1,3 +1,5 @@
+use crate::instruction_set::op_codes;
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Mnemonic {
     // Load-Store
@@ -75,4 +77,15 @@ pub enum Mnemonic {
     // Misc
     BRK,
     NOP,
+}
+
+impl From<op_codes::OpCodeOctal> for Mnemonic {
+    fn from(oco: op_codes::OpCodeOctal) -> Self {
+        match oco.into() {
+            (_, _, 0) => Mnemonic::BRK,
+            (_, _, 1) => Mnemonic::BRK,
+            (_, _, 2) => Mnemonic::BRK,
+            _ => Mnemonic::BVC,
+        }
+    }
 }
