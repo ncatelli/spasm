@@ -1,82 +1,5 @@
-pub enum Mnemonic {
-    // Load-Store
-    LDA,
-    LDX,
-    LDY,
-    STA,
-    STX,
-    STY,
-
-    // Arithmetic
-    ADC,
-    SBC,
-    INC,
-    INX,
-    INY,
-    DEC,
-    DEX,
-    DEY,
-
-    // Shift and Rotate
-    ASL,
-    LSR,
-    ROL,
-    ROR,
-    AND,
-    ORA,
-    EOR,
-
-    // Compare and Test Bit
-    CMP,
-    CPX,
-    CPY,
-    BIT,
-
-    // Branch
-    BCC,
-    BCS,
-    BNE,
-    BEQ,
-    BPL,
-    BMI,
-    BVC,
-    BVS,
-
-    // Transfer
-    TAX,
-    TXA,
-    TAY,
-    TYA,
-    TSX,
-    TXS,
-
-    // Stack
-    PHA,
-    PLA,
-    PHP,
-    PLP,
-
-    // Subroutines and Jump
-    JMP,
-    JSR,
-    RTS,
-    RTI,
-
-    // Set and Clear
-    CLC,
-    SEC,
-    CLD,
-    SED,
-    CLI,
-    SEI,
-    CLV,
-
-    // Misc
-    BRK,
-    NOP,
-}
-
 // AddressMode represents the 6502 addressing mode only.
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum AddressMode {
     Accumlator,
     Implied,
@@ -124,6 +47,8 @@ impl From<&AddressModeWithOperand> for AddressMode {
     }
 }
 
+/// AddressModeWithOperand captures the
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum AddressModeWithOperand {
     Accumlator,
     Implied,
@@ -138,9 +63,4 @@ pub enum AddressModeWithOperand {
     ZeroPageIndexedWithY(u8),
     ZeroPageIndexedIndirect(u8),
     ZeroPageIndirectIndexedWithY(u8),
-}
-
-pub struct Instruction {
-    instruction: Mnemonic,
-    address_mode: AddressMode,
 }
