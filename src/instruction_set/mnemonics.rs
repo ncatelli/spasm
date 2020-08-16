@@ -79,8 +79,8 @@ pub enum Mnemonic {
     NOP,
 }
 
-impl From<OpCode> for Mnemonic {
-    fn from(oco: OpCode) -> Self {
+impl From<OpCodeOctal> for Mnemonic {
+    fn from(oco: OpCodeOctal) -> Self {
         match oco.into() {
             (0, 0, 0) => Mnemonic::BRK,
             (0, 2, 0) => Mnemonic::PHP,
