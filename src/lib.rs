@@ -1,4 +1,4 @@
 #[cfg(test)]
 mod tests;
 
-pub mod asm;
+pub mod instruction_set;

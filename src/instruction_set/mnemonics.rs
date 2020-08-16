@@ -1,3 +1,4 @@
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Mnemonic {
     // Load-Store
     LDA,
@@ -74,25 +75,4 @@ pub enum Mnemonic {
     // Misc
     BRK,
     NOP,
-}
-
-pub enum AddressMode {
-    Accumlator,
-    Implied,
-    Immediate(u8),
-    Absolute(u16),
-    ZeroPage(u8),
-    Relative(u8),
-    AbsoluteIndirect(u16),
-    AbsoluteIndexedWithX(u16),
-    AbsoluteIndexedWithY(u16),
-    ZeroPageIndexedWithX(u8),
-    ZeroPageIndexedWithY(u8),
-    ZeroPageIndexedIndirect(u8),
-    ZeroPageIndirectIndexedWithY(u8),
-}
-
-pub struct Instruction {
-    instruction: Mnemonic,
-    address_mode: AddressMode,
 }
