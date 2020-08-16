@@ -18,13 +18,6 @@ pub enum AddressMode {
 
 impl From<AddressModeWithOperand> for AddressMode {
     fn from(am: AddressModeWithOperand) -> AddressMode {
-        let ref_am = am;
-        ref_am.into()
-    }
-}
-
-impl From<&AddressModeWithOperand> for AddressMode {
-    fn from(am: &AddressModeWithOperand) -> AddressMode {
         match am {
             AddressModeWithOperand::Accumlator => AddressMode::Accumlator,
             AddressModeWithOperand::Implied => AddressMode::Implied,
@@ -47,7 +40,8 @@ impl From<&AddressModeWithOperand> for AddressMode {
     }
 }
 
-/// AddressModeWithOperand captures the
+/// AddressModeWithOperand captures the Address mode type with a corresponding
+/// operand of the appropriate bit length.
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum AddressModeWithOperand {
     Accumlator,
@@ -63,4 +57,36 @@ pub enum AddressModeWithOperand {
     ZeroPageIndexedWithY(u8),
     ZeroPageIndexedIndirect(u8),
     ZeroPageIndirectIndexedWithY(u8),
+}
+
+impl PartialEq<AddressMode> for AddressModeWithOperand {
+    fn eq(&self, other: &AddressMode) -> bool {
+        match self {
+            AddressModeWithOperand::Accumlator => *other == AddressMode::Accumlator,
+            AddressModeWithOperand::Implied => *other == AddressMode::Implied,
+            AddressModeWithOperand::Immediate(_) => *other == AddressMode::Immediate,
+            AddressModeWithOperand::Absolute(_) => *other == AddressMode::Absolute,
+            AddressModeWithOperand::ZeroPage(_) => *other == AddressMode::ZeroPage,
+            AddressModeWithOperand::Relative(_) => *other == AddressMode::Relative,
+            AddressModeWithOperand::AbsoluteIndirect(_) => *other == AddressMode::AbsoluteIndirect,
+            AddressModeWithOperand::AbsoluteIndexedWithX(_) => {
+                *other == AddressMode::AbsoluteIndexedWithX
+            }
+            AddressModeWithOperand::AbsoluteIndexedWithY(_) => {
+                *other == AddressMode::AbsoluteIndexedWithY
+            }
+            AddressModeWithOperand::ZeroPageIndexedWithX(_) => {
+                *other == AddressMode::ZeroPageIndexedWithX
+            }
+            AddressModeWithOperand::ZeroPageIndexedWithY(_) => {
+                *other == AddressMode::ZeroPageIndexedWithY
+            }
+            AddressModeWithOperand::ZeroPageIndexedIndirect(_) => {
+                *other == AddressMode::ZeroPageIndexedIndirect
+            }
+            AddressModeWithOperand::ZeroPageIndirectIndexedWithY(_) => {
+                *other == AddressMode::ZeroPageIndirectIndexedWithY
+            }
+        }
+    }
 }

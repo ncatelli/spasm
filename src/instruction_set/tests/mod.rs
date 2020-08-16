@@ -1,10 +1,16 @@
-use crate::asm;
+use crate::instruction_set::address_mode::{AddressMode, AddressModeWithOperand};
 
 #[test]
-fn test_statement_formatter_should_pretty_print_an_ast() {
-    let expr = Stmt::Expression(Expr::Unary(UnaryExpr::Minus(Box::new(Expr::Primary(
-        obj_number!(123.0),
-    )))));
+fn address_mode_with_operand_should_cast_into_corresponding_address_mode_type() {
+    let amwo: AddressModeWithOperand = AddressModeWithOperand::Accumlator;
+    let am: AddressMode = amwo.into();
 
-    assert_eq!("(Expression (- 123))".to_string(), format!("{}", expr))
+    assert!(am == AddressMode::Accumlator);
+}
+
+#[test]
+fn address_mode_with_operand_should_be_comparable_to_address_mode() {
+    let amwo: AddressModeWithOperand = AddressModeWithOperand::Accumlator;
+
+    assert!(amwo == AddressMode::Accumlator);
 }
