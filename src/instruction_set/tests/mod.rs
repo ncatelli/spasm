@@ -33,23 +33,23 @@ fn validate_address_mode_with_operands_into_bytes_returns_correct_endian_bytes()
         AddressModeWithOperand::ZeroPageIndexedWithY(0x80),
     ];
     let operands = vec![
-        [0x08, 0x80],
-        [0x08, 0x80],
-        [0x08, 0x80],
-        [0x00, 0x00],
-        [0x80, 0x00],
-        [0x00, 0x00],
-        [0x80, 0x00],
-        [0x08, 0x80],
-        [0x80, 0x00],
-        [0x80, 0x00],
-        [0x80, 0x00],
-        [0x80, 0x00],
-        [0x80, 0x00],
+        vec![0x08, 0x80],
+        vec![0x08, 0x80],
+        vec![0x08, 0x80],
+        vec![],
+        vec![0x80],
+        vec![],
+        vec![0x80],
+        vec![0x08, 0x80],
+        vec![0x80],
+        vec![0x80],
+        vec![0x80],
+        vec![0x80],
+        vec![0x80],
     ];
 
     for (am, rs) in addresses.into_iter().zip(operands.into_iter()) {
-        let am_bytes: [u8; 2] = am.into();
+        let am_bytes: Vec<u8> = am.into();
         assert_eq!(am_bytes, rs)
     }
 }
