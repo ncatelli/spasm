@@ -3,7 +3,9 @@ mod tests;
 
 pub mod address_mode;
 pub mod mnemonics;
-pub mod op_codes;
+
+/// OpCode represents an unsigned 8bit value.
+pub type OpCode = u8;
 
 /// Instruction represents a single 6502 instruction containing a mnemonic,
 /// address mode and optionally any operands.
@@ -13,8 +15,8 @@ pub struct Instruction {
     address_mode: address_mode::AddressModeWithOperand,
 }
 
-impl Into<op_codes::OpCode> for Instruction {
-    fn into(self) -> op_codes::OpCode {
+impl Into<OpCode> for Instruction {
+    fn into(self) -> OpCode {
         use address_mode::AddressModeWithOperand;
         use mnemonics::Mnemonic;
         match (self.mnemonic, self.address_mode) {
