@@ -82,3 +82,23 @@ impl PartialEq<AddressMode> for AddressModeWithOperand {
         }
     }
 }
+
+impl Into<[u8; 2]> for AddressModeWithOperand {
+    fn into(self) -> [u8; 2] {
+        match self {
+            AddressModeWithOperand::Accumulator => [0, 0],
+            AddressModeWithOperand::Implied => [0, 0],
+            AddressModeWithOperand::Immediate(operand) => [operand, 0],
+            AddressModeWithOperand::Absolute(operand) => operand.to_le_bytes(),
+            AddressModeWithOperand::ZeroPage(operand) => [operand, 0],
+            AddressModeWithOperand::Relative(operand) => [operand, 0],
+            AddressModeWithOperand::Indirect(operand) => operand.to_le_bytes(),
+            AddressModeWithOperand::AbsoluteIndexedWithX(operand) => operand.to_le_bytes(),
+            AddressModeWithOperand::AbsoluteIndexedWithY(operand) => operand.to_le_bytes(),
+            AddressModeWithOperand::ZeroPageIndexedWithX(operand) => [operand, 0],
+            AddressModeWithOperand::ZeroPageIndexedWithY(operand) => [operand, 0],
+            AddressModeWithOperand::IndexedIndirect(operand) => [operand, 0],
+            AddressModeWithOperand::IndirectIndexed(operand) => [operand, 0],
+        }
+    }
+}
