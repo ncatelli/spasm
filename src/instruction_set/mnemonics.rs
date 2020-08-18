@@ -1,5 +1,3 @@
-use crate::instruction_set::op_codes::OpCodeOctal;
-
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Mnemonic {
     // Load-Store
