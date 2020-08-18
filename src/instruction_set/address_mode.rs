@@ -7,13 +7,13 @@ pub enum AddressMode {
     Absolute,
     ZeroPage,
     Relative,
-    AbsoluteIndirect,
+    Indirect,
     AbsoluteIndexedWithX,
     AbsoluteIndexedWithY,
     ZeroPageIndexedWithX,
     ZeroPageIndexedWithY,
-    ZeroPageIndexedIndirect,
-    ZeroPageIndirectIndexedWithY,
+    IndexedIndirect,
+    IndirectIndexed,
 }
 
 impl From<AddressModeWithOperand> for AddressMode {
@@ -25,17 +25,13 @@ impl From<AddressModeWithOperand> for AddressMode {
             AddressModeWithOperand::Absolute(_) => AddressMode::Absolute,
             AddressModeWithOperand::ZeroPage(_) => AddressMode::ZeroPage,
             AddressModeWithOperand::Relative(_) => AddressMode::Relative,
-            AddressModeWithOperand::AbsoluteIndirect(_) => AddressMode::AbsoluteIndirect,
+            AddressModeWithOperand::Indirect(_) => AddressMode::Indirect,
             AddressModeWithOperand::AbsoluteIndexedWithX(_) => AddressMode::AbsoluteIndexedWithX,
             AddressModeWithOperand::AbsoluteIndexedWithY(_) => AddressMode::AbsoluteIndexedWithY,
             AddressModeWithOperand::ZeroPageIndexedWithX(_) => AddressMode::ZeroPageIndexedWithX,
             AddressModeWithOperand::ZeroPageIndexedWithY(_) => AddressMode::ZeroPageIndexedWithY,
-            AddressModeWithOperand::ZeroPageIndexedIndirect(_) => {
-                AddressMode::ZeroPageIndexedIndirect
-            }
-            AddressModeWithOperand::ZeroPageIndirectIndexedWithY(_) => {
-                AddressMode::ZeroPageIndirectIndexedWithY
-            }
+            AddressModeWithOperand::IndexedIndirect(_) => AddressMode::IndexedIndirect,
+            AddressModeWithOperand::IndirectIndexed(_) => AddressMode::IndirectIndexed,
         }
     }
 }
@@ -50,13 +46,13 @@ pub enum AddressModeWithOperand {
     Absolute(u16),
     ZeroPage(u8),
     Relative(u8),
-    AbsoluteIndirect(u16),
+    Indirect(u16),
     AbsoluteIndexedWithX(u16),
     AbsoluteIndexedWithY(u16),
     ZeroPageIndexedWithX(u8),
     ZeroPageIndexedWithY(u8),
-    ZeroPageIndexedIndirect(u8),
-    ZeroPageIndirectIndexedWithY(u8),
+    IndexedIndirect(u8),
+    IndirectIndexed(u8),
 }
 
 impl PartialEq<AddressMode> for AddressModeWithOperand {
@@ -68,7 +64,7 @@ impl PartialEq<AddressMode> for AddressModeWithOperand {
             AddressModeWithOperand::Absolute(_) => *other == AddressMode::Absolute,
             AddressModeWithOperand::ZeroPage(_) => *other == AddressMode::ZeroPage,
             AddressModeWithOperand::Relative(_) => *other == AddressMode::Relative,
-            AddressModeWithOperand::AbsoluteIndirect(_) => *other == AddressMode::AbsoluteIndirect,
+            AddressModeWithOperand::Indirect(_) => *other == AddressMode::Indirect,
             AddressModeWithOperand::AbsoluteIndexedWithX(_) => {
                 *other == AddressMode::AbsoluteIndexedWithX
             }
@@ -81,12 +77,8 @@ impl PartialEq<AddressMode> for AddressModeWithOperand {
             AddressModeWithOperand::ZeroPageIndexedWithY(_) => {
                 *other == AddressMode::ZeroPageIndexedWithY
             }
-            AddressModeWithOperand::ZeroPageIndexedIndirect(_) => {
-                *other == AddressMode::ZeroPageIndexedIndirect
-            }
-            AddressModeWithOperand::ZeroPageIndirectIndexedWithY(_) => {
-                *other == AddressMode::ZeroPageIndirectIndexedWithY
-            }
+            AddressModeWithOperand::IndexedIndirect(_) => *other == AddressMode::IndexedIndirect,
+            AddressModeWithOperand::IndirectIndexed(_) => *other == AddressMode::IndirectIndexed,
         }
     }
 }
