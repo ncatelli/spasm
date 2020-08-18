@@ -1,7 +1,7 @@
 // AddressMode represents the 6502 addressing mode only.
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum AddressMode {
-    Accumlator,
+    Accumulator,
     Implied,
     Immediate,
     Absolute,
@@ -19,7 +19,7 @@ pub enum AddressMode {
 impl From<AddressModeWithOperand> for AddressMode {
     fn from(am: AddressModeWithOperand) -> AddressMode {
         match am {
-            AddressModeWithOperand::Accumlator => AddressMode::Accumlator,
+            AddressModeWithOperand::Accumulator => AddressMode::Accumulator,
             AddressModeWithOperand::Implied => AddressMode::Implied,
             AddressModeWithOperand::Immediate(_) => AddressMode::Immediate,
             AddressModeWithOperand::Absolute(_) => AddressMode::Absolute,
@@ -40,7 +40,7 @@ impl From<AddressModeWithOperand> for AddressMode {
 /// operand of the appropriate bit length.
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum AddressModeWithOperand {
-    Accumlator,
+    Accumulator,
     Implied,
     Immediate(u8),
     Absolute(u16),
@@ -58,7 +58,7 @@ pub enum AddressModeWithOperand {
 impl PartialEq<AddressMode> for AddressModeWithOperand {
     fn eq(&self, other: &AddressMode) -> bool {
         match self {
-            AddressModeWithOperand::Accumlator => *other == AddressMode::Accumlator,
+            AddressModeWithOperand::Accumulator => *other == AddressMode::Accumulator,
             AddressModeWithOperand::Implied => *other == AddressMode::Implied,
             AddressModeWithOperand::Immediate(_) => *other == AddressMode::Immediate,
             AddressModeWithOperand::Absolute(_) => *other == AddressMode::Absolute,
