@@ -15,6 +15,15 @@ pub struct Instruction {
     address_mode: address_mode::AddressMode,
 }
 
+impl Instruction {
+    pub fn new(mnemonic: mnemonics::Mnemonic, address_mode: address_mode::AddressMode) -> Self {
+        Self {
+            mnemonic,
+            address_mode,
+        }
+    }
+}
+
 impl Into<OpCode> for Instruction {
     fn into(self) -> OpCode {
         use address_mode::AddressMode;
@@ -173,5 +182,14 @@ impl Into<OpCode> for Instruction {
             (Mnemonic::INC, AddressMode::AbsoluteIndexedWithX(_)) => 0xfe,
             _ => 0xea, // Defaults to NOP
         }
+    }
+}
+
+impl Into<Vec<u8>> for Instruction {
+    fn into(self) -> Vec<u8> {
+        vec![self.into()]
+            .into_iter()
+            .chain(Into::<Vec<u8>>::into(self.address_mode))
+            .collect()
     }
 }
