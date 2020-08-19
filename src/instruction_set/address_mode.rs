@@ -1,45 +1,7 @@
-// AddressMode represents the 6502 addressing mode only.
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum AddressMode {
-    Accumulator,
-    Implied,
-    Immediate,
-    Absolute,
-    ZeroPage,
-    Relative,
-    Indirect,
-    AbsoluteIndexedWithX,
-    AbsoluteIndexedWithY,
-    ZeroPageIndexedWithX,
-    ZeroPageIndexedWithY,
-    IndexedIndirect,
-    IndirectIndexed,
-}
-
-impl From<AddressModeWithOperand> for AddressMode {
-    fn from(am: AddressModeWithOperand) -> AddressMode {
-        match am {
-            AddressModeWithOperand::Accumulator => AddressMode::Accumulator,
-            AddressModeWithOperand::Implied => AddressMode::Implied,
-            AddressModeWithOperand::Immediate(_) => AddressMode::Immediate,
-            AddressModeWithOperand::Absolute(_) => AddressMode::Absolute,
-            AddressModeWithOperand::ZeroPage(_) => AddressMode::ZeroPage,
-            AddressModeWithOperand::Relative(_) => AddressMode::Relative,
-            AddressModeWithOperand::Indirect(_) => AddressMode::Indirect,
-            AddressModeWithOperand::AbsoluteIndexedWithX(_) => AddressMode::AbsoluteIndexedWithX,
-            AddressModeWithOperand::AbsoluteIndexedWithY(_) => AddressMode::AbsoluteIndexedWithY,
-            AddressModeWithOperand::ZeroPageIndexedWithX(_) => AddressMode::ZeroPageIndexedWithX,
-            AddressModeWithOperand::ZeroPageIndexedWithY(_) => AddressMode::ZeroPageIndexedWithY,
-            AddressModeWithOperand::IndexedIndirect(_) => AddressMode::IndexedIndirect,
-            AddressModeWithOperand::IndirectIndexed(_) => AddressMode::IndirectIndexed,
-        }
-    }
-}
-
-/// AddressModeWithOperand captures the Address mode type with a corresponding
+/// AddressMode captures the Address mode type with a corresponding
 /// operand of the appropriate bit length.
 #[derive(Clone, Copy, PartialEq, Debug)]
-pub enum AddressModeWithOperand {
+pub enum AddressMode {
     Accumulator,
     Implied,
     Immediate(u8),
@@ -55,48 +17,20 @@ pub enum AddressModeWithOperand {
     IndirectIndexed(u8),
 }
 
-impl PartialEq<AddressMode> for AddressModeWithOperand {
-    fn eq(&self, other: &AddressMode) -> bool {
-        match self {
-            AddressModeWithOperand::Accumulator => *other == AddressMode::Accumulator,
-            AddressModeWithOperand::Implied => *other == AddressMode::Implied,
-            AddressModeWithOperand::Immediate(_) => *other == AddressMode::Immediate,
-            AddressModeWithOperand::Absolute(_) => *other == AddressMode::Absolute,
-            AddressModeWithOperand::ZeroPage(_) => *other == AddressMode::ZeroPage,
-            AddressModeWithOperand::Relative(_) => *other == AddressMode::Relative,
-            AddressModeWithOperand::Indirect(_) => *other == AddressMode::Indirect,
-            AddressModeWithOperand::AbsoluteIndexedWithX(_) => {
-                *other == AddressMode::AbsoluteIndexedWithX
-            }
-            AddressModeWithOperand::AbsoluteIndexedWithY(_) => {
-                *other == AddressMode::AbsoluteIndexedWithY
-            }
-            AddressModeWithOperand::ZeroPageIndexedWithX(_) => {
-                *other == AddressMode::ZeroPageIndexedWithX
-            }
-            AddressModeWithOperand::ZeroPageIndexedWithY(_) => {
-                *other == AddressMode::ZeroPageIndexedWithY
-            }
-            AddressModeWithOperand::IndexedIndirect(_) => *other == AddressMode::IndexedIndirect,
-            AddressModeWithOperand::IndirectIndexed(_) => *other == AddressMode::IndirectIndexed,
-        }
-    }
-}
-
-impl Into<Vec<u8>> for AddressModeWithOperand {
+impl Into<Vec<u8>> for AddressMode {
     fn into(self) -> Vec<u8> {
         match self {
-            AddressModeWithOperand::Immediate(operand) => vec![operand],
-            AddressModeWithOperand::Absolute(operand) => operand.to_le_bytes().to_vec(),
-            AddressModeWithOperand::ZeroPage(operand) => vec![operand],
-            AddressModeWithOperand::Relative(operand) => vec![operand],
-            AddressModeWithOperand::Indirect(operand) => operand.to_le_bytes().to_vec(),
-            AddressModeWithOperand::AbsoluteIndexedWithX(operand) => operand.to_le_bytes().to_vec(),
-            AddressModeWithOperand::AbsoluteIndexedWithY(operand) => operand.to_le_bytes().to_vec(),
-            AddressModeWithOperand::ZeroPageIndexedWithX(operand) => vec![operand],
-            AddressModeWithOperand::ZeroPageIndexedWithY(operand) => vec![operand],
-            AddressModeWithOperand::IndexedIndirect(operand) => vec![operand],
-            AddressModeWithOperand::IndirectIndexed(operand) => vec![operand],
+            AddressMode::Immediate(operand) => vec![operand],
+            AddressMode::Absolute(operand) => operand.to_le_bytes().to_vec(),
+            AddressMode::ZeroPage(operand) => vec![operand],
+            AddressMode::Relative(operand) => vec![operand],
+            AddressMode::Indirect(operand) => operand.to_le_bytes().to_vec(),
+            AddressMode::AbsoluteIndexedWithX(operand) => operand.to_le_bytes().to_vec(),
+            AddressMode::AbsoluteIndexedWithY(operand) => operand.to_le_bytes().to_vec(),
+            AddressMode::ZeroPageIndexedWithX(operand) => vec![operand],
+            AddressMode::ZeroPageIndexedWithY(operand) => vec![operand],
+            AddressMode::IndexedIndirect(operand) => vec![operand],
+            AddressMode::IndirectIndexed(operand) => vec![operand],
             _ => vec![],
         }
     }
