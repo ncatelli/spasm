@@ -5,7 +5,7 @@ use parcel::MatchStatus;
 
 #[test]
 fn should_parse_valid_nop_instruction() {
-    let input: Vec<char> = "nop\n".chars().collect();
+    let input = "nop\n";
 
     assert_eq!(
         Ok(MatchStatus::Match((
@@ -18,7 +18,7 @@ fn should_parse_valid_nop_instruction() {
 
 #[test]
 fn should_strip_arbitrary_length_leading_chars_from_instruction() {
-    let input: Vec<char> = "    nop\n".chars().collect();
+    let input = "    nop\n";
 
     assert_eq!(
         Ok(MatchStatus::Match((
