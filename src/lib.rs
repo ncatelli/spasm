@@ -2,3 +2,4 @@
 mod tests;
 
 pub mod instruction_set;
+mod parser;
