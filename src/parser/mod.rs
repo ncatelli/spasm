@@ -3,7 +3,10 @@ use crate::instruction_set::address_mode::AddressMode;
 use crate::instruction_set::mnemonics::Mnemonic;
 use crate::instruction_set::Instruction;
 use parcel::prelude::v1::*;
-use parcel::{join, left, one_or_more, optional, right, zero_or_more, MatchStatus};
+use parcel::{join, left, one_or_more, optional, right, zero_or_more};
+
+mod combinators;
+use combinators::*;
 
 #[cfg(test)]
 mod tests;
@@ -28,19 +31,75 @@ fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {
 }
 
 fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    zero_or_more(alphabetic()).map(|_a| AddressMode::Implied)
+    accumulator()
+        .or(|| absolute())
+        .or(|| absolute_x_indexed())
+        .or(|| absolute_y_indexed())
+        .or(|| implied())
+        .or(|| indirect())
+        .or(|| x_indexed_indirect())
+        .or(|| indirect_y_indexed())
+        .or(|| relative())
+        .or(|| zeropage())
+        .or(|| zeropage_x_indexed())
+        .or(|| zeropage_y_indexed())
 }
 
-fn whitespace<'a>() -> impl Parser<'a, &'a str, &'a str> {
-    move |input: &'a str| match input.chars().next() {
-        Some(next) if next.is_whitespace() => Ok(MatchStatus::Match((&input[1..], &input[0..1]))),
-        _ => Ok(MatchStatus::NoMatch(input)),
-    }
+fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
 }
 
-fn alphabetic<'a>() -> impl Parser<'a, &'a str, &'a str> {
-    move |input: &'a str| match input.chars().next() {
-        Some(next) if next.is_alphabetic() => Ok(MatchStatus::Match((&input[1..], &input[0..1]))),
-        _ => Ok(MatchStatus::NoMatch(input)),
-    }
+/// TODO
+fn absolute<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
+}
+
+/// TODO
+fn absolute_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
+}
+
+/// TODO
+fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
+}
+
+/// TODO
+fn implied<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
+}
+
+/// TODO
+fn indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
+}
+
+/// TODO
+fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
+}
+
+/// TODO
+fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
+}
+
+/// TODO
+fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
+}
+
+/// TODO
+fn zeropage<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
+}
+
+/// TODO
+fn zeropage_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
+}
+
+/// TODO
+fn zeropage_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    character('A').map(|_| AddressMode::Accumulator)
 }
