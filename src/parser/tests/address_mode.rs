@@ -6,6 +6,19 @@ use parcel::MatchStatus;
 // no guarantees about instruction validity are asserted in these tests.
 
 #[test]
+fn implied_address_mode_should_match_if_no_address_mode_supplied() {
+    let input = "nop\n";
+
+    assert_eq!(
+        Ok(MatchStatus::Match((
+            &input[input.len()..],
+            Instruction::new(Mnemonic::NOP, AddressMode::Implied)
+        ))),
+        instruction().parse(&input)
+    );
+}
+
+#[test]
 fn accumulator_address_mode_should_match_a() {
     let input = "nop A\n";
 
