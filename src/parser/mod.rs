@@ -48,11 +48,11 @@ fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
         .or(|| absolute())
         .or(|| absolute_x_indexed())
         .or(|| absolute_y_indexed())
-        .or(|| immediate())
+        //        .or(|| immediate())
         .or(|| indirect())
         .or(|| x_indexed_indirect())
         .or(|| indirect_y_indexed())
-        .or(|| relative())
+        //        .or(|| relative())
         .or(|| zeropage())
         .or(|| zeropage_x_indexed())
         .or(|| zeropage_y_indexed())
@@ -86,6 +86,8 @@ fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     .map(|h| AddressMode::AbsoluteIndexedWithY(hex_char_vec_to_u16!(h)))
 }
 
+// needs implementation of signed bits
+#[allow(dead_code)]
 fn immediate<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     right(join(join(character('#'), character('$')), take_n(hex(), 2)))
         .map(|h| AddressMode::Immediate(hex_char_vec_to_u8!(h)))
@@ -121,6 +123,8 @@ fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     .map(|h| AddressMode::IndirectIndexed(hex_char_vec_to_u8!(h)))
 }
 
+// Needs implementation of signed bits
+#[allow(dead_code)]
 fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     right(join(character('$'), take_n(hex(), 2)))
         .map(|h| AddressMode::Relative(hex_char_vec_to_u8!(h)))
