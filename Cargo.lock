@@ -3,7 +3,7 @@
 [[package]]
 name = "parcel"
 version = "1.5.0"
-source = "git+https://github.com/ncatelli/parcel?tag=v1.5.1#5c443a65a8f3f33873ba91429e3a23ffc3dd7468"
+source = "git+https://github.com/ncatelli/parcel?tag=v1.6.0#6c01cf75438cbf2fd55c88a3a9065b54a0a43310"
 
 [[package]]
 name = "spasm"
