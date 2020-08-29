@@ -86,3 +86,26 @@ fn indirect_indexed_address_mode_should_match_valid_2_digit_hex_code() {
 fn relative_address_mode_should_match_valid_2_digit_hex_code() {
     gen_am_test!("nop $1a\n", Mnemonic::NOP, AddressMode::Relative(0x1a))
 }
+
+#[test]
+fn zeropage_address_mode_should_match_valid_2_digit_hex_code() {
+    gen_am_test!("nop $1a\n", Mnemonic::NOP, AddressMode::ZeroPage(0x1a))
+}
+
+#[test]
+fn zeropage_x_indexed_address_mode_should_match_valid_2_digit_hex_code() {
+    gen_am_test!(
+        "nop $1a,X\n",
+        Mnemonic::NOP,
+        AddressMode::ZeroPageIndexedWithX(0x1a)
+    )
+}
+
+#[test]
+fn zeropage_y_indexed_address_mode_should_match_valid_2_digit_hex_code() {
+    gen_am_test!(
+        "nop $1a,Y\n",
+        Mnemonic::NOP,
+        AddressMode::ZeroPageIndexedWithY(0x1a)
+    )
+}

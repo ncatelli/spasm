@@ -130,17 +130,26 @@ fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
         .map(|h| AddressMode::Relative(hex_char_vec_to_u8!(h)))
 }
 
-/// TODO
 fn zeropage<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    character('A').map(|_| AddressMode::Accumulator)
+    right(join(
+        character('$'),
+        left(join(take_n(hex(), 2), one_or_more(whitespace()))),
+    ))
+    .map(|h| AddressMode::ZeroPage(hex_char_vec_to_u8!(h)))
 }
 
-/// TODO
 fn zeropage_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    character('A').map(|_| AddressMode::Accumulator)
+    right(join(
+        character('$'),
+        left(join(take_n(hex(), 2), join(character(','), character('X')))),
+    ))
+    .map(|h| AddressMode::ZeroPageIndexedWithX(hex_char_vec_to_u8!(h)))
 }
 
-/// TODO
 fn zeropage_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    character('A').map(|_| AddressMode::Accumulator)
+    right(join(
+        character('$'),
+        left(join(take_n(hex(), 2), join(character(','), character('Y')))),
+    ))
+    .map(|h| AddressMode::ZeroPageIndexedWithY(hex_char_vec_to_u8!(h)))
 }
