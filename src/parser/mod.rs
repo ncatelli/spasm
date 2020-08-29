@@ -24,6 +24,11 @@ macro_rules! hex_char_vec_to_u8 {
 mod tests;
 
 #[allow(dead_code)]
+pub fn program<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> {
+    one_or_more(instruction())
+}
+
+#[allow(dead_code)]
 pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
     join(
         right(join(zero_or_more(whitespace()), mnemonic())),
