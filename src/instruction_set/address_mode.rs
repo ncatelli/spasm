@@ -1,3 +1,12 @@
+/// Operand represents each type of the signed operands with the intent of
+/// functioning as an internal representation of an operand that can be passed
+/// between serializers and deserializers.
+pub enum Operand {
+    Address(u16),
+    UnsignedByte(u8),
+    SignedByte(i8),
+}
+
 /// AddressMode captures the Address mode type with a corresponding
 /// operand of the appropriate bit length.
 #[derive(Clone, Copy, PartialEq, Debug)]
