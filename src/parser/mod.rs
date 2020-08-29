@@ -3,7 +3,7 @@ use crate::instruction_set::address_mode::AddressMode;
 use crate::instruction_set::mnemonics::Mnemonic;
 use crate::instruction_set::Instruction;
 use parcel::prelude::v1::*;
-use parcel::{join, left, one_or_more, optional, predicate, right, zero_or_more};
+use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
 
 mod combinators;
 use combinators::*;
@@ -49,9 +49,8 @@ fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     character('A').map(|_| AddressMode::Accumulator)
 }
 
-/// TODO
 fn absolute<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(character('$'), one_or_more(hex()))).map(|h| {
+    right(join(character('$'), take_n(hex(), 4))).map(|h| {
         let hex_str: String = h.into_iter().collect();
         let addr = u16::from_str_radix(&hex_str, 16).unwrap();
         AddressMode::Absolute(u16::from_le(addr))

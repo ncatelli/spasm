@@ -3,6 +3,8 @@ use crate::parser::instruction;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
+mod address_mode;
+
 #[test]
 fn should_parse_valid_nop_instruction() {
     let input = "nop\n";
