@@ -98,14 +98,26 @@ fn indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     .map(|h| AddressMode::Indirect(hex_char_vec_to_u16!(h)))
 }
 
-/// TODO
 fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    character('A').map(|_| AddressMode::Accumulator)
+    right(join(
+        join(character('('), character('$')),
+        left(join(
+            take_n(hex(), 2),
+            join(join(character(','), character('X')), character(')')),
+        )),
+    ))
+    .map(|h| AddressMode::IndexedIndirect(hex_char_vec_to_u8!(h)))
 }
 
-/// TODO
 fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    character('A').map(|_| AddressMode::Accumulator)
+    right(join(
+        join(character('('), character('$')),
+        left(join(
+            take_n(hex(), 2),
+            join(join(character(')'), character(',')), character('Y')),
+        )),
+    ))
+    .map(|h| AddressMode::IndirectIndexed(hex_char_vec_to_u8!(h)))
 }
 
 /// TODO

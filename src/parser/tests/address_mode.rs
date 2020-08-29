@@ -54,10 +54,28 @@ fn immediate_address_mode_should_match_valid_2_digit_hex_code() {
 }
 
 #[test]
-fn indirect_address_mode_should_match_valid_2_digit_hex_code() {
+fn indirect_address_mode_should_match_valid_4_digit_hex_code() {
     gen_am_test!(
         "nop ($1a2b)\n",
         Mnemonic::NOP,
         AddressMode::Indirect(0x1a2b)
+    )
+}
+
+#[test]
+fn indexed_indirect_address_mode_should_match_valid_2_digit_hex_code() {
+    gen_am_test!(
+        "nop ($1a,X)\n",
+        Mnemonic::NOP,
+        AddressMode::IndexedIndirect(0x1a)
+    )
+}
+
+#[test]
+fn indirect_indexed_address_mode_should_match_valid_2_digit_hex_code() {
+    gen_am_test!(
+        "nop ($1a),Y\n",
+        Mnemonic::NOP,
+        AddressMode::IndirectIndexed(0x1a)
     )
 }
