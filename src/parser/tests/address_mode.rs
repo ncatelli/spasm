@@ -44,6 +44,6 @@ fn absolute_y_indexed_address_mode_should_match_valid_4_digit_hex_code() {
     gen_am_test!(
         "nop $1a2b,Y\n",
         Mnemonic::NOP,
-        AddressMode::AbsoluteIndexedWithX(0x1a2b)
+        AddressMode::AbsoluteIndexedWithY(0x1a2b)
     )
 }

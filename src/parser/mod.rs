@@ -8,6 +8,12 @@ use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
 mod combinators;
 use combinators::*;
 
+macro_rules! hex_char_vec_to_u16 {
+    ($chars:expr) => {
+        u16::from_le(u16::from_str_radix(&$chars.into_iter().collect::<String>(), 16).unwrap())
+    };
+}
+
 #[cfg(test)]
 mod tests;
 
@@ -65,11 +71,7 @@ fn absolute_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
         character('$'),
         left(join(take_n(hex(), 4), join(character(','), character('X')))),
     ))
-    .map(|h| {
-        let hex_str: String = h.into_iter().collect();
-        let addr = u16::from_str_radix(&hex_str, 16).unwrap();
-        AddressMode::AbsoluteIndexedWithX(u16::from_le(addr))
-    })
+    .map(|h| AddressMode::AbsoluteIndexedWithX(hex_char_vec_to_u16!(h)))
 }
 
 fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
@@ -77,11 +79,7 @@ fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
         character('$'),
         left(join(take_n(hex(), 4), join(character(','), character('Y')))),
     ))
-    .map(|h| {
-        let hex_str: String = h.into_iter().collect();
-        let addr = u16::from_str_radix(&hex_str, 16).unwrap();
-        AddressMode::AbsoluteIndexedWithX(u16::from_le(addr))
-    })
+    .map(|h| AddressMode::AbsoluteIndexedWithY(hex_char_vec_to_u16!(h)))
 }
 
 /// TODO
