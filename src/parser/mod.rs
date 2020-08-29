@@ -42,6 +42,7 @@ fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {
     one_or_more(alphabetic()).map(|_m| Mnemonic::NOP)
 }
 
+#[allow(clippy::redundant_closure)]
 fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     accumulator()
         .or(|| absolute())
@@ -120,9 +121,9 @@ fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     .map(|h| AddressMode::IndirectIndexed(hex_char_vec_to_u8!(h)))
 }
 
-/// TODO
 fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    character('A').map(|_| AddressMode::Accumulator)
+    right(join(character('$'), take_n(hex(), 2)))
+        .map(|h| AddressMode::Relative(hex_char_vec_to_u8!(h)))
 }
 
 /// TODO

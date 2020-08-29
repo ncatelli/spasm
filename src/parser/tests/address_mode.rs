@@ -79,3 +79,8 @@ fn indirect_indexed_address_mode_should_match_valid_2_digit_hex_code() {
         AddressMode::IndirectIndexed(0x1a)
     )
 }
+
+#[test]
+fn relative_address_mode_should_match_valid_2_digit_hex_code() {
+    gen_am_test!("nop $1a\n", Mnemonic::NOP, AddressMode::Relative(0x1a))
+}
