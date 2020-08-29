@@ -47,3 +47,8 @@ fn absolute_y_indexed_address_mode_should_match_valid_4_digit_hex_code() {
         AddressMode::AbsoluteIndexedWithY(0x1a2b)
     )
 }
+
+#[test]
+fn immediate_address_mode_should_match_valid_2_digit_hex_code() {
+    gen_am_test!("nop #$1a\n", Mnemonic::NOP, AddressMode::Immediate(0x1a))
+}

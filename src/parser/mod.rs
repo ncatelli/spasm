@@ -14,6 +14,12 @@ macro_rules! hex_char_vec_to_u16 {
     };
 }
 
+macro_rules! hex_char_vec_to_u8 {
+    ($chars:expr) => {
+        u8::from_le(u8::from_str_radix(&$chars.into_iter().collect::<String>(), 16).unwrap())
+    };
+}
+
 #[cfg(test)]
 mod tests;
 
@@ -41,6 +47,7 @@ fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
         .or(|| absolute())
         .or(|| absolute_x_indexed())
         .or(|| absolute_y_indexed())
+        .or(|| immediate())
         .or(|| indirect())
         .or(|| x_indexed_indirect())
         .or(|| indirect_y_indexed())
@@ -59,11 +66,7 @@ fn absolute<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
         character('$'),
         left(join(take_n(hex(), 4), one_or_more(whitespace()))),
     ))
-    .map(|h| {
-        let hex_str: String = h.into_iter().collect();
-        let addr = u16::from_str_radix(&hex_str, 16).unwrap();
-        AddressMode::Absolute(u16::from_le(addr))
-    })
+    .map(|h| AddressMode::Absolute(hex_char_vec_to_u16!(h)))
 }
 
 fn absolute_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
@@ -80,6 +83,11 @@ fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
         left(join(take_n(hex(), 4), join(character(','), character('Y')))),
     ))
     .map(|h| AddressMode::AbsoluteIndexedWithY(hex_char_vec_to_u16!(h)))
+}
+
+fn immediate<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+    right(join(join(character('#'), character('$')), take_n(hex(), 2)))
+        .map(|h| AddressMode::Immediate(hex_char_vec_to_u8!(h)))
 }
 
 /// TODO
