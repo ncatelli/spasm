@@ -15,8 +15,6 @@ macro_rules! gen_am_test {
     };
 }
 
-// no guarantees about instruction validity are asserted in these tests.
-
 #[test]
 fn implied_address_mode_should_match_if_no_address_mode_supplied() {
     gen_am_test!("nop\n", Mnemonic::NOP, AddressMode::Implied)
@@ -30,4 +28,22 @@ fn accumulator_address_mode_should_match_a() {
 #[test]
 fn absolute_address_mode_should_match_valid_4_digit_hex_code() {
     gen_am_test!("nop $1a2b\n", Mnemonic::NOP, AddressMode::Absolute(0x1a2b))
+}
+
+#[test]
+fn absolute_x_indexed_address_mode_should_match_valid_4_digit_hex_code() {
+    gen_am_test!(
+        "nop $1a2b,X\n",
+        Mnemonic::NOP,
+        AddressMode::AbsoluteIndexedWithX(0x1a2b)
+    )
+}
+
+#[test]
+fn absolute_y_indexed_address_mode_should_match_valid_4_digit_hex_code() {
+    gen_am_test!(
+        "nop $1a2b,Y\n",
+        Mnemonic::NOP,
+        AddressMode::AbsoluteIndexedWithX(0x1a2b)
+    )
 }
