@@ -3,43 +3,31 @@ use crate::parser::instruction;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
+macro_rules! gen_am_test {
+    ($input:literal, $inst:expr, $am:expr) => {
+        assert_eq!(
+            Ok(MatchStatus::Match((
+                &$input[$input.len()..],
+                Instruction::new($inst, $am)
+            ))),
+            instruction().parse(&$input)
+        );
+    };
+}
+
 // no guarantees about instruction validity are asserted in these tests.
 
 #[test]
 fn implied_address_mode_should_match_if_no_address_mode_supplied() {
-    let input = "nop\n";
-
-    assert_eq!(
-        Ok(MatchStatus::Match((
-            &input[input.len()..],
-            Instruction::new(Mnemonic::NOP, AddressMode::Implied)
-        ))),
-        instruction().parse(&input)
-    );
+    gen_am_test!("nop\n", Mnemonic::NOP, AddressMode::Implied)
 }
 
 #[test]
 fn accumulator_address_mode_should_match_a() {
-    let input = "nop A\n";
-
-    assert_eq!(
-        Ok(MatchStatus::Match((
-            &input[input.len()..],
-            Instruction::new(Mnemonic::NOP, AddressMode::Accumulator)
-        ))),
-        instruction().parse(&input)
-    );
+    gen_am_test!("nop A\n", Mnemonic::NOP, AddressMode::Accumulator)
 }
 
 #[test]
 fn absolute_address_mode_should_match_valid_4_digit_hex_code() {
-    let input = "nop $1a2b\n";
-
-    assert_eq!(
-        Ok(MatchStatus::Match((
-            &input[input.len()..],
-            Instruction::new(Mnemonic::NOP, AddressMode::Absolute(0x1a2b))
-        ))),
-        instruction().parse(&input)
-    );
+    gen_am_test!("nop $1a2b\n", Mnemonic::NOP, AddressMode::Absolute(0x1a2b))
 }
