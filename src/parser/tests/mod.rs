@@ -10,6 +10,7 @@ mod instructions;
 #[test]
 fn should_multiline_program() {
     let input = "nop
+lda #12
 sta $1234
 jmp $1234\n";
 
@@ -18,6 +19,7 @@ jmp $1234\n";
             &input[input.len()..],
             vec![
                 Instruction::new(Mnemonic::NOP, AddressMode::Implied),
+                Instruction::new(Mnemonic::LDA, AddressMode::Immediate(0x12)),
                 Instruction::new(Mnemonic::STA, AddressMode::Absolute(0x1234)),
                 Instruction::new(Mnemonic::JMP, AddressMode::Absolute(0x1234))
             ]
