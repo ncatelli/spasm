@@ -21,6 +21,12 @@ macro_rules! hex_char_vec_to_u8 {
     };
 }
 
+macro_rules! hex_char_vec_to_i8 {
+    ($chars:expr) => {
+        i8::from_le(i8::from_str_radix(&$chars.into_iter().collect::<String>(), 16).unwrap())
+    };
+}
+
 #[cfg(test)]
 mod tests;
 
@@ -132,8 +138,11 @@ fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
 // Needs implementation of signed bits
 #[allow(dead_code)]
 fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(character('$'), take_n(hex(), 2)))
-        .map(|h| AddressMode::Relative(hex_char_vec_to_u8!(h)))
+    right(join(
+        character('*'),
+        join(character('+').or(|| character('-')), take_n(hex(), 2)),
+    ))
+    .map(|(_sign, h)| AddressMode::Relative(hex_char_vec_to_i8!(h)))
 }
 
 fn zeropage<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {

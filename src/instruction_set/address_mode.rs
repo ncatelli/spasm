@@ -1,12 +1,3 @@
-/// Operand represents each type of the signed operands with the intent of
-/// functioning as an internal representation of an operand that can be passed
-/// between serializers and deserializers.
-pub enum Operand {
-    Address(u16),
-    UnsignedByte(u8),
-    SignedByte(i8),
-}
-
 /// AddressMode captures the Address mode type with a corresponding
 /// operand of the appropriate bit length.
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -16,7 +7,7 @@ pub enum AddressMode {
     Immediate(u8),
     Absolute(u16),
     ZeroPage(u8),
-    Relative(u8),
+    Relative(i8),
     Indirect(u16),
     AbsoluteIndexedWithX(u16),
     AbsoluteIndexedWithY(u16),
@@ -32,7 +23,7 @@ impl Into<Vec<u8>> for AddressMode {
             AddressMode::Immediate(operand) => vec![operand],
             AddressMode::Absolute(operand) => operand.to_le_bytes().to_vec(),
             AddressMode::ZeroPage(operand) => vec![operand],
-            AddressMode::Relative(operand) => vec![operand],
+            //            AddressMode::Relative(operand) => vec![operand], // need to implement for i8
             AddressMode::Indirect(operand) => operand.to_le_bytes().to_vec(),
             AddressMode::AbsoluteIndexedWithX(operand) => operand.to_le_bytes().to_vec(),
             AddressMode::AbsoluteIndexedWithY(operand) => operand.to_le_bytes().to_vec(),
