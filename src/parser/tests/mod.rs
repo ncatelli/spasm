@@ -6,7 +6,6 @@ use parcel::MatchStatus;
 mod address_mode;
 mod instructions;
 
-#[ignore]
 #[test]
 fn should_multiline_program() {
     let input = "nop

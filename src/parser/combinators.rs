@@ -9,9 +9,9 @@ pub fn whitespace<'a>() -> impl Parser<'a, &'a str, &'a str> {
     }
 }
 
-pub fn alphabetic<'a>() -> impl Parser<'a, &'a str, &'a str> {
+pub fn alphabetic<'a>() -> impl Parser<'a, &'a str, char> {
     move |input: &'a str| match input.chars().next() {
-        Some(next) if next.is_alphabetic() => Ok(MatchStatus::Match((&input[1..], &input[0..1]))),
+        Some(next) if next.is_alphabetic() => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
