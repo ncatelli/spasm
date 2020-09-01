@@ -1,5 +1,5 @@
 use crate::instruction_set::{AddressMode, Instruction, Mnemonic};
-use crate::parser::program;
+use crate::parser::instructions;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
@@ -23,6 +23,6 @@ jmp $1234\n";
                 Instruction::new(Mnemonic::JMP, AddressMode::Absolute(0x1234))
             ]
         ))),
-        program().parse(&input)
+        instructions().parse(&input)
     );
 }

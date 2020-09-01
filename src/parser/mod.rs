@@ -31,7 +31,7 @@ macro_rules! hex_char_vec_to_i8 {
 mod tests;
 
 #[allow(dead_code)]
-pub fn program<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> {
+pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> {
     one_or_more(instruction())
 }
 
