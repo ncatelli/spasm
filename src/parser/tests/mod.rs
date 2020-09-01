@@ -7,7 +7,7 @@ mod address_mode;
 mod instructions;
 
 #[test]
-fn should_multiline_program() {
+fn should_parse_multiple_instructions() {
     let input = "nop
 lda #12
 sta $1234
