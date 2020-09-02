@@ -4,6 +4,9 @@ mod tests;
 pub mod address_mode;
 pub mod mnemonics;
 
+pub use address_mode::AddressMode;
+pub use mnemonics::Mnemonic;
+
 /// OpCode represents an unsigned 8bit value.
 pub type OpCode = u8;
 
@@ -11,12 +14,12 @@ pub type OpCode = u8;
 /// address mode and optionally any operands.
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Instruction {
-    mnemonic: mnemonics::Mnemonic,
-    address_mode: address_mode::AddressMode,
+    mnemonic: Mnemonic,
+    address_mode: AddressMode,
 }
 
 impl Instruction {
-    pub fn new(mnemonic: mnemonics::Mnemonic, address_mode: address_mode::AddressMode) -> Self {
+    pub fn new(mnemonic: Mnemonic, address_mode: AddressMode) -> Self {
         Self {
             mnemonic,
             address_mode,
@@ -26,8 +29,6 @@ impl Instruction {
 
 impl Into<OpCode> for Instruction {
     fn into(self) -> OpCode {
-        use address_mode::AddressMode;
-        use mnemonics::Mnemonic;
         match (self.mnemonic, self.address_mode) {
             (Mnemonic::BRK, AddressMode::Implied) => 0x00,
             (Mnemonic::ORA, AddressMode::IndexedIndirect(_)) => 0x01,

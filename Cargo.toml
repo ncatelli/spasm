@@ -8,3 +8,4 @@ edition = "2018"
 lto = true
 
 [dependencies]
+parcel = { git = "https://github.com/ncatelli/parcel", tag = "v1.6.0" }

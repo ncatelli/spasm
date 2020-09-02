@@ -19,7 +19,7 @@ fn validate_address_mode_with_operands_into_bytes_returns_correct_endian_bytes()
         AddressMode::IndexedIndirect(0x80),
         AddressMode::Indirect(0x8008),
         AddressMode::IndirectIndexed(0x80),
-        AddressMode::Relative(0x80),
+        //AddressMode::Relative(0x80),
         AddressMode::ZeroPage(0x80),
         AddressMode::ZeroPageIndexedWithX(0x80),
         AddressMode::ZeroPageIndexedWithY(0x80),

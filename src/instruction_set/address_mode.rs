@@ -7,7 +7,7 @@ pub enum AddressMode {
     Immediate(u8),
     Absolute(u16),
     ZeroPage(u8),
-    Relative(u8),
+    Relative(i8),
     Indirect(u16),
     AbsoluteIndexedWithX(u16),
     AbsoluteIndexedWithY(u16),
@@ -23,7 +23,7 @@ impl Into<Vec<u8>> for AddressMode {
             AddressMode::Immediate(operand) => vec![operand],
             AddressMode::Absolute(operand) => operand.to_le_bytes().to_vec(),
             AddressMode::ZeroPage(operand) => vec![operand],
-            AddressMode::Relative(operand) => vec![operand],
+            //            AddressMode::Relative(operand) => vec![operand], // need to implement for i8
             AddressMode::Indirect(operand) => operand.to_le_bytes().to_vec(),
             AddressMode::AbsoluteIndexedWithX(operand) => operand.to_le_bytes().to_vec(),
             AddressMode::AbsoluteIndexedWithY(operand) => operand.to_le_bytes().to_vec(),
