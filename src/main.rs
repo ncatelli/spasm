@@ -1,3 +1,4 @@
+use spasm::assemble;
 use std::env;
 use std::fmt;
 use std::fs::File;
@@ -38,13 +39,14 @@ fn main() {
     }
 
     match (&args[1].as_ref(), &args[2]) {
-        (&"assemble", filename) => run(read_src_file(filename).unwrap()),
+        (&"assemble", filename) => run(&read_src_file(filename).unwrap()),
         _ => process::exit(help().unwrap()),
     }
     .unwrap();
 }
 
 fn read_src_file(filename: &str) -> RuntimeResult<String> {
+    println!("{}", &filename);
     let mut f = File::open(filename).map_err(|_| RuntimeError::FileUnreadable)?;
 
     let mut contents = String::new();
@@ -54,11 +56,25 @@ fn read_src_file(filename: &str) -> RuntimeResult<String> {
     }
 }
 
+fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
+    let mut f = File::open(filename).map_err(|_| RuntimeError::FileUnreadable)?;
+
+    match f.write(data) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(RuntimeError::Undefined(e.to_string())),
+    }
+}
+
 fn help() -> RuntimeResult<i32> {
     println!("{}", HELP_STRING);
     Ok(0)
 }
 
-fn run(_source: String) -> RuntimeResult<i32> {
+fn run(source: &str) -> RuntimeResult<i32> {
+    let obj = assemble(source)
+        .map_err(|e| RuntimeError::Undefined(e.to_string()))
+        .map(|bin| bin)?;
+
+    write_dest_file("obj.bin", &obj)?;
     Ok(0)
 }
