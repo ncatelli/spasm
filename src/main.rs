@@ -1,7 +1,7 @@
 use spasm::assemble;
 use std::env;
 use std::fmt;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 use std::process;
 
@@ -46,7 +46,6 @@ fn main() {
 }
 
 fn read_src_file(filename: &str) -> RuntimeResult<String> {
-    println!("{}", &filename);
     let mut f = File::open(filename).map_err(|_| RuntimeError::FileUnreadable)?;
 
     let mut contents = String::new();
@@ -57,7 +56,12 @@ fn read_src_file(filename: &str) -> RuntimeResult<String> {
 }
 
 fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
-    let mut f = File::open(filename).map_err(|_| RuntimeError::FileUnreadable)?;
+    let mut f = OpenOptions::new()
+        .truncate(true)
+        .create(true)
+        .write(true)
+        .open(filename)
+        .map_err(|_| RuntimeError::FileUnreadable)?;
 
     match f.write(data) {
         Ok(_) => Ok(()),
@@ -74,6 +78,8 @@ fn run(source: &str) -> RuntimeResult<i32> {
     let obj = assemble(source)
         .map_err(|e| RuntimeError::Undefined(e.to_string()))
         .map(|bin| bin)?;
+
+    println!("obj, {:x?}", &obj);
 
     write_dest_file("obj.bin", &obj)?;
     Ok(0)
