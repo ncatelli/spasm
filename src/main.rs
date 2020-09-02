@@ -79,8 +79,6 @@ fn run(source: &str) -> RuntimeResult<i32> {
         .map_err(|e| RuntimeError::Undefined(e.to_string()))
         .map(|bin| bin)?;
 
-    println!("obj, {:x?}", &obj);
-
     write_dest_file("obj.bin", &obj)?;
     Ok(0)
 }
