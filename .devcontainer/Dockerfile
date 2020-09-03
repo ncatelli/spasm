@@ -24,6 +24,8 @@ RUN apt-get update \
     # Install lldb, vadimcn.vscode-lldb VSCode extension dependencies
     && apt-get install -y lldb python3-minimal libpython3.7 \
     #
+    # Install debugging utilities
+    && apt-get install -y xxd \
     # Install Rust components
     && rustup update 2>&1 \
     && rustup component add rls rust-analysis rust-src rustfmt clippy 2>&1 \

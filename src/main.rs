@@ -5,6 +5,8 @@ use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 use std::process;
 
+const EXIT_SUCCESS: i32 = 0;
+const DATA_PADDING: usize = 32768;
 const HELP_STRING: &str = "A command-line 6502 assembler
 
 Usage: spasm <command> [*.asm]
@@ -63,7 +65,7 @@ fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
         .open(filename)
         .map_err(|_| RuntimeError::FileUnreadable)?;
 
-    match f.write(data) {
+    match f.write_all(data) {
         Ok(_) => Ok(()),
         Err(e) => Err(RuntimeError::Undefined(e.to_string())),
     }
@@ -76,11 +78,16 @@ fn help() -> RuntimeResult<i32> {
 
 fn run(source: &str) -> RuntimeResult<i32> {
     let obj = assemble(source)
-        .map_err(|e| RuntimeError::Undefined(e.to_string()))
+        .map_err(RuntimeError::Undefined)
         .map(|bin| bin)?;
+    let data_len = obj.len();
+    let padding = DATA_PADDING - data_len;
+    let mut bin: Vec<u8> = obj.into_iter().chain((0..padding).map(|_| 0xea)).collect();
 
-    println!("obj, {:x?}", &obj);
+    // reset vector
+    bin[0x7ffc] = 0x00;
+    bin[0x7ffd] = 0x80;
 
-    write_dest_file("obj.bin", &obj)?;
-    Ok(0)
+    write_dest_file("a.out", &bin)?;
+    Ok(EXIT_SUCCESS)
 }
