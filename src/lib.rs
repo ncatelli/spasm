@@ -16,7 +16,7 @@ pub fn assemble(source: &str) -> AssemblerResult {
 
     Ok(insts
         .into_iter()
-        .map(|i| Into::<Vec<u8>>::into(i))
+        .map(Into::<Vec<u8>>::into)
         .flatten()
         .collect::<Vec<u8>>())
 }
