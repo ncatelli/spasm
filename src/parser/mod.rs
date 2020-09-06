@@ -39,9 +39,12 @@ pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> 
 pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
     join(
         right(join(zero_or_more(whitespace()), mnemonic())),
-        right(join(
-            one_or_more(whitespace()),
-            optional(left(join(address_mode(), zero_or_more(whitespace())))),
+        left(join(
+            optional(right(join(
+                one_or_more(whitespace()),
+                left(join(address_mode(), zero_or_more(whitespace()))),
+            ))),
+            zero_or_more(whitespace()),
         )),
     )
     .map(|(m, a)| match a {
@@ -78,7 +81,7 @@ fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
 fn absolute<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     right(join(
         character('$'),
-        left(join(take_n(hex(), 4), one_or_more(whitespace()))),
+        left(join(take_n(hex(), 4), whitespace().or(|| eof()))),
     ))
     .map(|h| AddressMode::Absolute(hex_char_vec_to_u16!(h)))
 }
@@ -148,7 +151,7 @@ fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
 fn zeropage<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     right(join(
         character('$'),
-        left(join(take_n(hex(), 2), one_or_more(whitespace()))),
+        left(join(take_n(hex(), 2), whitespace().or(|| eof()))),
     ))
     .map(|h| AddressMode::ZeroPage(hex_char_vec_to_u8!(h)))
 }
