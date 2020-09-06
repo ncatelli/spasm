@@ -31,6 +31,11 @@ fn absolute_address_mode_should_match_valid_4_digit_hex_code() {
 }
 
 #[test]
+fn absolute_address_mode_should_match_eof_at_end_of_instruction() {
+    gen_am_test!("nop $1a2b", Mnemonic::NOP, AddressMode::Absolute(0x1a2b))
+}
+
+#[test]
 fn absolute_x_indexed_address_mode_should_match_valid_4_digit_hex_code() {
     gen_am_test!(
         "nop $1a2b,X\n",
