@@ -19,7 +19,7 @@ pub fn alphabetic<'a>() -> impl Parser<'a, &'a str, char> {
 pub fn eof<'a>() -> impl Parser<'a, &'a str, char> {
     move |input: &'a str| match input.chars().next() {
         Some(_) => Ok(MatchStatus::NoMatch(input)),
-        None => Ok(MatchStatus::Match((&input[1..], ' '))),
+        None => Ok(MatchStatus::Match((&input[0..], ' '))),
     }
 }
 

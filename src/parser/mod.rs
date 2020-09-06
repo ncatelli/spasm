@@ -81,7 +81,7 @@ fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
 fn absolute<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     right(join(
         character('$'),
-        left(join(take_n(hex(), 4), one_or_more(whitespace()))),
+        left(join(take_n(hex(), 4), whitespace().or(|| eof()))),
     ))
     .map(|h| AddressMode::Absolute(hex_char_vec_to_u16!(h)))
 }
