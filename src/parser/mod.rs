@@ -151,7 +151,7 @@ fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
 fn zeropage<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     right(join(
         character('$'),
-        left(join(take_n(hex(), 2), one_or_more(whitespace()))),
+        left(join(take_n(hex(), 2), whitespace().or(|| eof()))),
     ))
     .map(|h| AddressMode::ZeroPage(hex_char_vec_to_u8!(h)))
 }
