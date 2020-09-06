@@ -39,9 +39,12 @@ pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> 
 pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
     join(
         right(join(zero_or_more(whitespace()), mnemonic())),
-        right(join(
-            one_or_more(whitespace()),
-            optional(left(join(address_mode(), zero_or_more(whitespace())))),
+        left(join(
+            optional(right(join(
+                one_or_more(whitespace()),
+                left(join(address_mode(), zero_or_more(whitespace()))),
+            ))),
+            zero_or_more(whitespace()),
         )),
     )
     .map(|(m, a)| match a {
