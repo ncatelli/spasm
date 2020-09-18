@@ -1,19 +1,15 @@
+extern crate scrap;
+use scrap::prelude::v1::*;
 use spasm::assemble;
 use std::env;
 use std::fmt;
 use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
-use std::process;
 
 const EXIT_SUCCESS: i32 = 0;
 const DATA_PADDING: usize = 32768;
-const HELP_STRING: &str = "A command-line 6502 assembler
 
-Usage: spasm <command> [*.asm]
-Commands:
-  assemble: assemble a source 6502 assembly file to an object file.
-  help:     print this help message
-";
+type RuntimeResult<T> = Result<T, RuntimeError>;
 
 enum RuntimeError {
     InvalidArguments,
@@ -31,20 +27,64 @@ impl fmt::Debug for RuntimeError {
     }
 }
 
-type RuntimeResult<T> = Result<T, RuntimeError>;
+impl fmt::Display for RuntimeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", &self)
+    }
+}
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 3 {
-        help().unwrap();
-        process::exit(1);
-    }
+    let args: Vec<String> = env::args().into_iter().collect();
 
-    match (&args[1].as_ref(), &args[2]) {
-        (&"assemble", filename) => run(&read_src_file(filename).unwrap()),
-        _ => process::exit(help().unwrap()),
+    let res = Cmd::new()
+        .name("spasm")
+        .description("An experimental 6502 assembler.")
+        .author("Nate Catelli <ncatelli@packetfire.org>")
+        .version("0.1.0")
+        .handler(Box::new(|c| {
+            println!("root dispatched with config: {:?}", c);
+            Ok(0)
+        }))
+        .subcommand(
+            Cmd::new()
+                .name("assemble")
+                .description("assemble a source file into it's corresponding binary format")
+                .flag(
+                    Flag::new()
+                        .name("infile")
+                        .short_code("i")
+                        .help_string("an asm source filepath to assemble")
+                        .value_type(ValueType::Str),
+                )
+                .flag(
+                    Flag::new()
+                        .name("outfile")
+                        .short_code("o")
+                        .help_string("an output path for a the corresponding binary file")
+                        .value_type(ValueType::Str)
+                        .default_value(Value::Str("a.out".to_string())),
+                )
+                .handler(Box::new(|c| {
+                    match (c.get("infile"), c.get("outfile")) {
+                        (Some(Value::Str(in_f)), Some(Value::Str(out_f))) => read_src_file(&in_f)
+                            .map(|input| run(&input, &out_f))
+                            .and_then(std::convert::identity),
+                        _ => Err(RuntimeError::InvalidArguments),
+                    }
+                    .map_err(|e| format!("{}", e))
+                })),
+        )
+        .run(args)
+        .unwrap()
+        .dispatch();
+
+    match res {
+        Ok(_) => (),
+        Err(e) => {
+            println!("{}", e);
+            std::process::exit(1)
+        }
     }
-    .unwrap();
 }
 
 fn read_src_file(filename: &str) -> RuntimeResult<String> {
@@ -71,12 +111,7 @@ fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
     }
 }
 
-fn help() -> RuntimeResult<i32> {
-    println!("{}", HELP_STRING);
-    Ok(0)
-}
-
-fn run(source: &str) -> RuntimeResult<i32> {
+fn run(source: &str, dest: &str) -> RuntimeResult<i32> {
     let obj = assemble(source)
         .map_err(RuntimeError::Undefined)
         .map(|bin| bin)?;
@@ -88,6 +123,6 @@ fn run(source: &str) -> RuntimeResult<i32> {
     bin[0x7ffc] = 0x00;
     bin[0x7ffd] = 0x80;
 
-    write_dest_file("a.out", &bin)?;
+    write_dest_file(dest, &bin)?;
     Ok(EXIT_SUCCESS)
 }
