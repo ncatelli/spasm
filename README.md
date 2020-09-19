@@ -4,9 +4,9 @@ An experimental 6502 assembler.
 ## Grammar
 
 ```
-program        = (instruction | comment)* ("\n" | EOF) ;
+instructions   = (instruction | comment)* (newline | EOF) ;
 
-instruction    = mnemonic operand comment? ;
+instruction    = whitespace* mnemonic (whitespace+ operand)? (whitespace*)? comment? ;
 
 mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "STA" | "sta" | "STX" | "stx" | "STY" | "sty"
@@ -53,6 +53,9 @@ upper          = A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z
 digit          = 0|1|2|3|4|5|6|7|8|9
 special        = -|_|"|#|&|’|(|)|*|+|,|.|/|:|;|<|=|>
 character      = lower|upper|digit|special
+whitespace     = " " | "\t"
+newline        = "\n"
+
 ```
 
 ## Warnings
