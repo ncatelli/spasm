@@ -51,21 +51,21 @@ fn main() {
                 .description("assemble a source file into it's corresponding binary format")
                 .flag(
                     Flag::new()
-                        .name("infile")
+                        .name("in-file")
                         .short_code("i")
                         .help_string("an asm source filepath to assemble")
                         .value_type(ValueType::Str),
                 )
                 .flag(
                     Flag::new()
-                        .name("outfile")
+                        .name("out-file")
                         .short_code("o")
                         .help_string("an output path for a the corresponding binary file")
                         .value_type(ValueType::Str)
                         .default_value(Value::Str("a.out".to_string())),
                 )
                 .handler(Box::new(|c| {
-                    match (c.get("infile"), c.get("outfile")) {
+                    match (c.get("in-file"), c.get("out-file")) {
                         (Some(Value::Str(in_f)), Some(Value::Str(out_f))) => read_src_file(&in_f)
                             .map(|input| run(&input, &out_f))
                             .and_then(std::convert::identity),
