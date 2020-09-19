@@ -30,9 +30,19 @@ macro_rules! hex_char_vec_to_i8 {
 #[cfg(test)]
 mod tests;
 
-#[allow(dead_code)]
 pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> {
-    one_or_more(left(join(instruction(), newline().or(|| eof()))))
+    one_or_more(left(join(
+        instruction()
+            .map(|i| Some(i))
+            .or(|| comment().map(|_| None)),
+        newline().or(|| eof()),
+    )))
+    .map(|ioc| {
+        ioc.into_iter()
+            .filter(|oi| oi.is_some())
+            .map(|oi| oi.unwrap())
+            .collect()
+    })
 }
 
 pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
@@ -49,7 +59,6 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
     })
 }
 
-#[allow(dead_code)]
 fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
     right(join(
         expect_character(';'),
@@ -110,7 +119,6 @@ fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     .map(|h| AddressMode::AbsoluteIndexedWithY(hex_char_vec_to_u16!(h)))
 }
 
-#[allow(dead_code)]
 fn immediate<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     right(join(expect_character('#'), take_n(hex(), 2)))
         .map(|h| AddressMode::Immediate(hex_char_vec_to_u8!(h)))
