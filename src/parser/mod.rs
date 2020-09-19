@@ -55,7 +55,7 @@ fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
 }
 
 fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {
-    one_or_more(alphabetic())
+    take_n(alphabetic(), 3)
         .map(|m| Mnemonic::try_from(m.into_iter().collect::<String>().as_str()).unwrap())
 }
 
