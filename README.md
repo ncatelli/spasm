@@ -6,7 +6,7 @@ An experimental 6502 assembler.
 ```
 instructions   = (instruction | comment)* (newline | EOF) ;
 
-instruction    = whitespace* mnemonic (whitespace+ operand)? (whitespace*)? comment? ;
+instruction    = whitespace* mnemonic (whitespace+ operand)? whitespace+ comment? ;
 
 mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "STA" | "sta" | "STX" | "stx" | "STY" | "sty"
