@@ -5,11 +5,11 @@ use parcel::MatchStatus;
 
 #[test]
 fn should_parse_valid_nop_instruction() {
-    let input = "nop\n";
+    let input = "nop";
 
     assert_eq!(
         Ok(MatchStatus::Match((
-            &input[4..],
+            &input[3..],
             Instruction::new(Mnemonic::NOP, AddressMode::Implied)
         ))),
         instruction().parse(&input)
@@ -18,11 +18,11 @@ fn should_parse_valid_nop_instruction() {
 
 #[test]
 fn should_strip_arbitrary_length_leading_chars_from_instruction() {
-    let input = "    nop\n";
+    let input = "    nop";
 
     assert_eq!(
         Ok(MatchStatus::Match((
-            &input[8..],
+            &input[7..],
             Instruction::new(Mnemonic::NOP, AddressMode::Implied)
         ))),
         instruction().parse(&input)
