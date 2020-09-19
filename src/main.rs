@@ -7,7 +7,6 @@ use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 
 const EXIT_SUCCESS: i32 = 0;
-const DATA_PADDING: usize = 32768;
 
 type RuntimeResult<T> = Result<T, RuntimeError>;
 
@@ -64,13 +63,47 @@ fn main() {
                         .value_type(ValueType::Str)
                         .default_value(Value::Str("a.out".to_string())),
                 )
+                .flag(
+                    Flag::new()
+                        .name("reset-vector")
+                        .short_code("r")
+                        .help_string("the address offset of the starting byte of rom")
+                        .value_type(ValueType::Integer)
+                        .default_value(Value::Integer(32768)),
+                )
+                .flag(
+                    Flag::new()
+                        .name("padding")
+                        .short_code("p")
+                        .help_string("size in bytes to pad the output binary to")
+                        .value_type(ValueType::Integer)
+                        .default_value(Value::Integer(32768)),
+                )
                 .handler(Box::new(|c| {
-                    match (c.get("in-file"), c.get("out-file")) {
-                        (Some(Value::Str(in_f)), Some(Value::Str(out_f))) => read_src_file(&in_f)
-                            .map(|input| run(&input, &out_f))
-                            .and_then(std::convert::identity),
-                        _ => Err(RuntimeError::InvalidArguments),
+                    {
+                        match (
+                            c.get("in-file"),
+                            c.get("out-file"),
+                            c.get("reset-vector"),
+                            c.get("padding"),
+                        ) {
+                            (
+                                Some(Value::Str(in_f)),
+                                Some(Value::Str(out_f)),
+                                Some(&Value::Integer(reset_vector)),
+                                Some(&Value::Integer(bin_size)),
+                            ) => Ok((in_f, out_f, reset_vector as u16, bin_size as usize)),
+                            _ => Err(RuntimeError::InvalidArguments),
+                        }
+                        .map(|(in_f, out_f, rv, padding)| {
+                            read_src_file(&in_f)
+                                .map(|input| assemble_object(&input, rv, padding))?
+                                .map(|bin_data| {
+                                    write_dest_file(&out_f, &bin_data).map(|_| EXIT_SUCCESS)
+                                })?
+                        })
                     }
+                    .and_then(std::convert::identity)
                     .map_err(|e| format!("{}", e))
                 })),
         )
@@ -111,18 +144,20 @@ fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
     }
 }
 
-fn run(source: &str, dest: &str) -> RuntimeResult<i32> {
-    let obj = assemble(source)
+fn assemble_object(asm_src: &str, reset_vector: u16, bin_size: usize) -> RuntimeResult<Vec<u8>> {
+    let obj = assemble(asm_src)
         .map_err(RuntimeError::Undefined)
         .map(|bin| bin)?;
+
     let data_len = obj.len();
-    let padding = DATA_PADDING - data_len;
+    let padding = bin_size - data_len;
+
     let mut bin: Vec<u8> = obj.into_iter().chain((0..padding).map(|_| 0xea)).collect();
 
+    let [lsb, msb] = reset_vector.to_le_bytes();
     // reset vector
-    bin[0x7ffc] = 0x00;
-    bin[0x7ffd] = 0x80;
+    bin[0x7ffc] = lsb;
+    bin[0x7ffd] = msb;
 
-    write_dest_file(dest, &bin)?;
-    Ok(EXIT_SUCCESS)
+    Ok(bin)
 }
