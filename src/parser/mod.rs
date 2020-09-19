@@ -40,7 +40,7 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
         right(join(zero_or_more(whitespace()), mnemonic())),
         left(join(
             optional(right(join(one_or_more(whitespace()), address_mode()))),
-            zero_or_more(whitespace()),
+            join(zero_or_more(whitespace()), optional(comment())),
         )),
     )
     .map(|(m, a)| match a {
@@ -51,7 +51,11 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
 
 #[allow(dead_code)]
 fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
-    right(join(expect_character(';'), zero_or_more(character()))).map(|_| ())
+    right(join(
+        expect_character(';'),
+        zero_or_more(character().or(|| whitespace())),
+    ))
+    .map(|_| ())
 }
 
 fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {

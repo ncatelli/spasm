@@ -4,11 +4,11 @@ use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
 macro_rules! gen_am_test {
-    ($input:literal, $inst:expr, $am:expr) => {
+    ($input:literal, $mnemonic:expr, $am:expr) => {
         assert_eq!(
             Ok(MatchStatus::Match((
                 &$input[$input.len()..],
-                Instruction::new($inst, $am)
+                Instruction::new($mnemonic, $am)
             ))),
             instruction().parse(&$input)
         );
