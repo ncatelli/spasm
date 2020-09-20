@@ -4,7 +4,7 @@ An experimental 6502 assembler.
 ## Grammar
 
 ```
-instructions   = ( whitespace | newline )* ( instruction | comment | symboldef )* ( newline | EOF ) ;
+instructions   = ( whitespace | newline )* ( symboldef | comment | instruction )* ( newline | EOF ) ;
 
 instruction    = whitespace* mnemonic ( whitespace+ ( operand | symbol ) )? whitespace+ comment? ;
 
