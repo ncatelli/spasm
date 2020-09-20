@@ -16,9 +16,10 @@ pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<InstructionOrS
     one_or_more(right(join(
         zero_or_more(whitespace().or(|| newline())),
         left(join(
-            instruction()
+            symboldef()
                 .map(|i| Some(i))
-                .or(|| comment().map(|_| None)),
+                .or(|| comment().map(|_| None))
+                .or(|| instruction().map(|i| Some(i))),
             newline().or(|| eof()),
         )),
     )))
@@ -51,6 +52,16 @@ fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
         zero_or_more(character().or(|| whitespace())),
     ))
     .map(|_| ())
+}
+
+#[allow(dead_code)]
+fn symboldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
+    labeldef()
+}
+
+fn labeldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
+    left(join(zero_or_more(alphanumeric()), expect_character(':')))
+        .map(|cv| InstructionOrSymbol::Label(cv.into_iter().collect()))
 }
 
 fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {

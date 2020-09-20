@@ -11,7 +11,7 @@ mod tests;
 #[derive(Debug, Clone, PartialEq)]
 pub enum InstructionOrSymbol {
     Instruction(Instruction),
-    Label((String, u16)),
+    Label(String),
 }
 
 /// OpCode represents an unsigned 8bit value.
@@ -200,4 +200,25 @@ impl Into<Vec<u8>> for Instruction {
             .chain(Into::<Vec<u8>>::into(self.address_mode))
             .collect()
     }
+}
+
+#[allow(unused_macros)]
+macro_rules! instruction {
+    ($mnemonic:expr, $am:expr) => {
+        $crate::instruction_set::Instruction::new($mnemonic, $am)
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! ios_instruction {
+    ($inst:expr) => {
+        $crate::instruction_set::InstructionOrSymbol::Instruction($inst)
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! ios_label {
+    ($symbol:expr) => {
+        $crate::instruction_set::InstructionOrSymbol::Label($symbol.to_string())
+    };
 }

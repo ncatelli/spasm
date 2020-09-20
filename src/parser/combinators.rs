@@ -65,6 +65,13 @@ pub fn newline<'a>() -> impl Parser<'a, &'a str, char> {
     expect_character('\n')
 }
 
+pub fn alphanumeric<'a>() -> impl Parser<'a, &'a str, char> {
+    move |input: &'a str| match input.chars().next() {
+        Some(next) if next.is_alphanumeric() => Ok(MatchStatus::Match((&input[1..], next))),
+        _ => Ok(MatchStatus::NoMatch(input)),
+    }
+}
+
 pub fn character<'a>() -> impl Parser<'a, &'a str, char> {
     move |input: &'a str| match input.chars().next() {
         Some(next) if !next.is_whitespace() => Ok(MatchStatus::Match((&input[1..], next))),

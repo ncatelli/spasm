@@ -3,6 +3,7 @@ use parcel::prelude::v1::*;
 #[cfg(test)]
 mod tests;
 
+#[macro_use]
 pub mod instruction_set;
 use instruction_set::InstructionOrSymbol;
 mod parser;
