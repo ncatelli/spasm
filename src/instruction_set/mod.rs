@@ -1,11 +1,18 @@
+pub mod address_mode;
+pub use address_mode::AddressMode;
+pub mod mnemonics;
+pub use mnemonics::Mnemonic;
+
 #[cfg(test)]
 mod tests;
 
-pub mod address_mode;
-pub mod mnemonics;
-
-pub use address_mode::AddressMode;
-pub use mnemonics::Mnemonic;
+/// InstructionOrSymbol wraps the token variants that can be derived from the
+/// parser.
+#[derive(Debug, Clone, PartialEq)]
+pub enum InstructionOrSymbol {
+    Instruction(Instruction),
+    Label((String, u16)),
+}
 
 /// OpCode represents an unsigned 8bit value.
 pub type OpCode = u8;

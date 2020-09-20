@@ -1,7 +1,7 @@
 extern crate parcel;
 use crate::instruction_set::address_mode::AddressMode;
 use crate::instruction_set::mnemonics::Mnemonic;
-use crate::instruction_set::Instruction;
+use crate::instruction_set::{Instruction, InstructionOrSymbol};
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
 use std::convert::TryFrom;
@@ -12,7 +12,7 @@ use combinators::*;
 #[cfg(test)]
 mod tests;
 
-pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> {
+pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<InstructionOrSymbol>> {
     one_or_more(right(join(
         zero_or_more(whitespace().or(|| newline())),
         left(join(
@@ -30,7 +30,7 @@ pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> 
     })
 }
 
-pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
+pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
     join(
         right(join(zero_or_more(whitespace()), mnemonic())),
         left(join(
@@ -42,6 +42,7 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
         Some(am) => Instruction::new(m, am),
         None => Instruction::new(m, AddressMode::Implied),
     })
+    .map(|i| InstructionOrSymbol::Instruction(i))
 }
 
 fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {

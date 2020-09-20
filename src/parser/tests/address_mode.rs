@@ -8,7 +8,9 @@ macro_rules! gen_am_test {
         assert_eq!(
             Ok(MatchStatus::Match((
                 &$input[$input.len()..],
-                Instruction::new($mnemonic, $am)
+                crate::instruction_set::InstructionOrSymbol::Instruction(Instruction::new(
+                    $mnemonic, $am
+                ))
             ))),
             instruction().parse(&$input)
         );

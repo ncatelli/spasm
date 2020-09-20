@@ -8,7 +8,13 @@ mod instructions;
 macro_rules! gen_program_test {
     ($input:literal, $insts:expr) => {
         assert_eq!(
-            Ok(MatchStatus::Match((&$input[$input.len()..], $insts))),
+            Ok(MatchStatus::Match((
+                &$input[$input.len()..],
+                $insts
+                    .into_iter()
+                    .map(|i| $crate::instruction_set::InstructionOrSymbol::Instruction(i))
+                    .collect()
+            ))),
             $crate::parser::instructions().parse(&$input)
         );
     };
