@@ -3,41 +3,33 @@ use crate::parser::instruction;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
+macro_rules! gen_inst_test {
+    ($input:literal, $mnemonic:expr, $am:expr) => {
+        assert_eq!(
+            Ok(MatchStatus::Match((
+                &$input[$input.len()..],
+                Instruction::new($mnemonic, $am)
+            ))),
+            instruction().parse(&$input)
+        );
+    };
+}
+
 #[test]
 fn should_parse_valid_nop_instruction() {
-    let input = "nop\n";
-
-    assert_eq!(
-        Ok(MatchStatus::Match((
-            &input[4..],
-            Instruction::new(Mnemonic::NOP, AddressMode::Implied)
-        ))),
-        instruction().parse(&input)
-    );
+    gen_inst_test!("nop", Mnemonic::NOP, AddressMode::Implied)
 }
 
 #[test]
 fn should_strip_arbitrary_length_leading_chars_from_instruction() {
-    let input = "    nop\n";
-
-    assert_eq!(
-        Ok(MatchStatus::Match((
-            &input[8..],
-            Instruction::new(Mnemonic::NOP, AddressMode::Implied)
-        ))),
-        instruction().parse(&input)
-    );
+    gen_inst_test!("    nop", Mnemonic::NOP, AddressMode::Implied)
 }
 
 #[test]
-fn should_succeed_if_eof_is_reached() {
-    let input = "    nop";
-
-    assert_eq!(
-        Ok(MatchStatus::Match((
-            &input[7..],
-            Instruction::new(Mnemonic::NOP, AddressMode::Implied)
-        ))),
-        instruction().parse(&input)
-    );
+fn should_parse_and_ignore_inline_comments() {
+    gen_inst_test!(
+        "    nop ; this is a comment",
+        Mnemonic::NOP,
+        AddressMode::Implied
+    )
 }

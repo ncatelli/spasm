@@ -4,11 +4,11 @@ use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
 macro_rules! gen_am_test {
-    ($input:literal, $inst:expr, $am:expr) => {
+    ($input:literal, $mnemonic:expr, $am:expr) => {
         assert_eq!(
             Ok(MatchStatus::Match((
                 &$input[$input.len()..],
-                Instruction::new($inst, $am)
+                Instruction::new($mnemonic, $am)
             ))),
             instruction().parse(&$input)
         );
@@ -27,7 +27,6 @@ fn accumulator_address_mode_should_match_a() {
 
 #[test]
 fn absolute_address_mode_should_match_valid_4_digit_hex_code() {
-    gen_am_test!("nop $1a2b\n", Mnemonic::NOP, AddressMode::Absolute(0x1a2b));
     gen_am_test!("nop $1a2b", Mnemonic::NOP, AddressMode::Absolute(0x1a2b))
 }
 
@@ -56,17 +55,13 @@ fn immediate_address_mode_should_match_valid_2_digit_hex_code() {
 
 #[test]
 fn indirect_address_mode_should_match_valid_4_digit_hex_code() {
-    gen_am_test!(
-        "nop ($1a2b)\n",
-        Mnemonic::NOP,
-        AddressMode::Indirect(0x1a2b)
-    )
+    gen_am_test!("nop ($1a2b)", Mnemonic::NOP, AddressMode::Indirect(0x1a2b))
 }
 
 #[test]
 fn indexed_indirect_address_mode_should_match_valid_2_digit_hex_code() {
     gen_am_test!(
-        "nop ($1a,X)\n",
+        "nop ($1a,X)",
         Mnemonic::NOP,
         AddressMode::IndexedIndirect(0x1a)
     )
@@ -89,7 +84,6 @@ fn relative_address_mode_should_match_valid_2_digit_hex_code() {
 
 #[test]
 fn zeropage_address_mode_should_match_valid_2_digit_hex_code() {
-    gen_am_test!("nop $1a\n", Mnemonic::NOP, AddressMode::ZeroPage(0x1a));
     gen_am_test!("nop $1a", Mnemonic::NOP, AddressMode::ZeroPage(0x1a))
 }
 

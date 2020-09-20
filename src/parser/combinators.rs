@@ -2,9 +2,12 @@ extern crate parcel;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
+// whitespaces matches any wh
 pub fn whitespace<'a>() -> impl Parser<'a, &'a str, char> {
     move |input: &'a str| match input.chars().next() {
-        Some(next) if next.is_whitespace() => Ok(MatchStatus::Match((&input[1..], next))),
+        Some(next) if next.is_whitespace() && next != '\n' => {
+            Ok(MatchStatus::Match((&input[1..], next)))
+        }
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
@@ -23,7 +26,18 @@ pub fn eof<'a>() -> impl Parser<'a, &'a str, char> {
     }
 }
 
-pub fn character<'a>(expected: char) -> impl Parser<'a, &'a str, char> {
+pub fn newline<'a>() -> impl Parser<'a, &'a str, char> {
+    expect_character('\n')
+}
+
+pub fn character<'a>() -> impl Parser<'a, &'a str, char> {
+    move |input: &'a str| match input.chars().next() {
+        Some(next) if !next.is_whitespace() => Ok(MatchStatus::Match((&input[1..], next))),
+        _ => Ok(MatchStatus::NoMatch(input)),
+    }
+}
+
+pub fn expect_character<'a>(expected: char) -> impl Parser<'a, &'a str, char> {
     move |input: &'a str| match input.chars().next() {
         Some(next) if next == expected => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
