@@ -31,11 +31,14 @@ macro_rules! hex_char_vec_to_i8 {
 mod tests;
 
 pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> {
-    one_or_more(left(join(
-        instruction()
-            .map(|i| Some(i))
-            .or(|| comment().map(|_| None)),
-        newline().or(|| eof()),
+    one_or_more(right(join(
+        zero_or_more(whitespace().or(|| newline())),
+        left(join(
+            instruction()
+                .map(|i| Some(i))
+                .or(|| comment().map(|_| None)),
+            newline().or(|| eof()),
+        )),
     )))
     .map(|ioc| {
         ioc.into_iter()

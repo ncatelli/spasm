@@ -15,12 +15,12 @@ macro_rules! gen_program_test {
 }
 
 #[test]
-fn should_parse_multiple_instructions() {
+fn should_parse_multiple_instructions_until_eof() {
     gen_program_test!(
         "nop
 lda #12
 sta $1234
-jmp $1234\n",
+jmp $1234",
         vec![
             Instruction::new(Mnemonic::NOP, AddressMode::Implied),
             Instruction::new(Mnemonic::LDA, AddressMode::Immediate(0x12)),
@@ -31,10 +31,13 @@ jmp $1234\n",
 }
 
 #[test]
-fn should_parse_multiple_instructions_until_eof() {
+fn should_parse_arbitrary_newlines_and_whitespaces_before_instruction() {
     gen_program_test!(
-        "nop
+        "
+        
+        nop
 lda #12
+
 sta $1234
 jmp $1234",
         vec![
