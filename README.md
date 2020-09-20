@@ -33,6 +33,8 @@ mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "SEC" | "sec" | "SED" | "sed" | SEI" | "sei"
                | "BRK" | "brk" | "NOP" | "nop"
 
+comment        = ";" ( whitespace | character )* ;
+
 symboldef      = labeldef ;
 
 symbol         = label ;
@@ -40,6 +42,8 @@ symbol         = label ;
 labeldef       = alphanumeric* ":" ;
 
 label          = alphanumeric* ;
+
+
 
 operand        = accumulator
                | absolute
@@ -62,12 +66,10 @@ immediate          = "#" byte ;
 indirect           = "(" word ")";
 x_indexed_indirect = "(" byte ",X)" ;
 indirect_y_indexed = "(" byte "),Y" ;
-relative           =  sign? byte ;
+relative           = "*" sign? byte ;
 zeropage           = byte ;
 zeropage_x_indexed = byte ",X" ;
 zeropage_y_indexed = byte ",Y" ;
-
-comment        = ";" (whitespace | character)* ;
 
 character      = lower|upper|digit|special ;
 whitespace     = " " | "\t" ;
