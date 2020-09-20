@@ -4,9 +4,9 @@ An experimental 6502 assembler.
 ## Grammar
 
 ```
-instructions   = (whitespace | newline)* (instruction | comment)* (newline | EOF) ;
+instructions   = ( whitespace | newline )* ( instruction | comment | symboldef )* ( newline | EOF ) ;
 
-instruction    = whitespace* mnemonic (whitespace+ operand)? whitespace+ comment? ;
+instruction    = whitespace* mnemonic ( whitespace+ ( operand | symbol ) )? whitespace+ comment? ;
 
 mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "STA" | "sta" | "STX" | "stx" | "STY" | "sty"
@@ -32,6 +32,14 @@ mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "CLC" | "clc" | "CLD" | "cld" | "CLI" | "cli" | "CLV" | "clv"
                | "SEC" | "sec" | "SED" | "sed" | SEI" | "sei"
                | "BRK" | "brk" | "NOP" | "nop"
+
+symboldef      = labeldef ;
+
+symbol         = label ;
+
+labeldef       = alphanumeric* ":" ;
+
+label          = alphanumeric* ;
 
 operand        = accumulator
                | absolute
@@ -64,6 +72,7 @@ comment        = ";" (whitespace | character)* ;
 character      = lower|upper|digit|special ;
 whitespace     = " " | "\t" ;
 newline        = "\n" ;
+alphanumeric   = (lower|upper|digit) ;
 lower          = "a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"
                |"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z" ;
 upper          = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"
