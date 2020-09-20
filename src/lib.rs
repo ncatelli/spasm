@@ -1,4 +1,5 @@
 use parcel::prelude::v1::*;
+use std::collections::HashMap;
 
 #[cfg(test)]
 mod tests;
@@ -18,10 +19,21 @@ pub fn assemble(source: &str) -> AssemblerResult {
         _ => Err("match error".to_string()),
     }?
     .into_iter()
-    .map(|ios| match ios {
-        InstructionOrSymbol::Instruction(i) => i,
-        _ => panic!("not implemented".to_string()),
-    }) // DEVNOTE: temp unpack of instructions from InstructionOrSymbol enum
+    .fold(
+        (HashMap::<String, u16>::new(), Vec::new()),
+        |(mut labels, mut insts), ios| match ios {
+            InstructionOrSymbol::Instruction(i) => {
+                insts.push(i);
+                (labels, insts)
+            }
+            InstructionOrSymbol::Label(l) => {
+                labels.insert(l, 0);
+                (labels, insts)
+            }
+        },
+    ) // DEVNOTE: temp unpack of instructions from InstructionOrSymbol enum
+    .1
+    .into_iter()
     .map(Into::<Vec<u8>>::into)
     .flatten()
     .collect::<Vec<u8>>();
