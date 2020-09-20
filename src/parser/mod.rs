@@ -9,24 +9,6 @@ use std::convert::TryFrom;
 mod combinators;
 use combinators::*;
 
-macro_rules! hex_char_vec_to_u16 {
-    ($chars:expr) => {
-        u16::from_le(u16::from_str_radix(&$chars.into_iter().collect::<String>(), 16).unwrap())
-    };
-}
-
-macro_rules! hex_char_vec_to_u8 {
-    ($chars:expr) => {
-        u8::from_le(u8::from_str_radix(&$chars.into_iter().collect::<String>(), 16).unwrap())
-    };
-}
-
-macro_rules! hex_char_vec_to_i8 {
-    ($chars:expr) => {
-        i8::from_le(i8::from_str_radix(&$chars.into_iter().collect::<String>(), 16).unwrap())
-    };
-}
-
 #[cfg(test)]
 mod tests;
 
@@ -78,17 +60,17 @@ fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {
 #[allow(clippy::redundant_closure)]
 fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     accumulator()
-        .or(|| absolute_x_indexed())
-        .or(|| absolute_y_indexed())
-        .or(|| absolute())
-        .or(|| immediate())
-        .or(|| indirect())
-        .or(|| x_indexed_indirect())
-        .or(|| indirect_y_indexed())
-        //        .or(|| relative())
         .or(|| zeropage())
         .or(|| zeropage_x_indexed())
         .or(|| zeropage_y_indexed())
+        .or(|| absolute_x_indexed())
+        .or(|| absolute_y_indexed())
+        .or(|| x_indexed_indirect())
+        .or(|| indirect_y_indexed())
+        .or(|| absolute())
+        .or(|| immediate())
+        .or(|| indirect())
+    //        .or(|| relative())
 }
 
 fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
@@ -96,112 +78,87 @@ fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
 }
 
 fn absolute<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(expect_character('$'), take_n(hex(), 4)))
-        .map(|h| AddressMode::Absolute(hex_char_vec_to_u16!(h)))
+    unsigned16().map(|h| AddressMode::Absolute(h))
 }
 
 fn absolute_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(
-        expect_character('$'),
-        left(join(
-            take_n(hex(), 4),
-            join(expect_character(','), expect_character('X')),
-        )),
+    left(join(
+        unsigned16(),
+        join(expect_character(','), expect_character('X')),
     ))
-    .map(|h| AddressMode::AbsoluteIndexedWithX(hex_char_vec_to_u16!(h)))
+    .map(|h| AddressMode::AbsoluteIndexedWithX(h))
 }
 
 fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(
-        expect_character('$'),
-        left(join(
-            take_n(hex(), 4),
-            join(expect_character(','), expect_character('Y')),
-        )),
+    left(join(
+        unsigned16(),
+        join(expect_character(','), expect_character('Y')),
     ))
-    .map(|h| AddressMode::AbsoluteIndexedWithY(hex_char_vec_to_u16!(h)))
+    .map(|h| AddressMode::AbsoluteIndexedWithY(h))
 }
 
 fn immediate<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(expect_character('#'), take_n(hex(), 2)))
-        .map(|h| AddressMode::Immediate(hex_char_vec_to_u8!(h)))
+    right(join(expect_character('#'), unsigned8())).map(|u| AddressMode::Immediate(u))
 }
 
 fn indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     right(join(
-        join(expect_character('('), expect_character('$')),
-        left(join(take_n(hex(), 4), expect_character(')'))),
+        expect_character('('),
+        left(join(unsigned16(), expect_character(')'))),
     ))
-    .map(|h| AddressMode::Indirect(hex_char_vec_to_u16!(h)))
+    .map(|bytes| AddressMode::Indirect(bytes))
 }
 
 fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     right(join(
-        join(expect_character('('), expect_character('$')),
+        expect_character('('),
         left(join(
-            take_n(hex(), 2),
+            unsigned8(),
             join(
                 join(expect_character(','), expect_character('X')),
                 expect_character(')'),
             ),
         )),
     ))
-    .map(|h| AddressMode::IndexedIndirect(hex_char_vec_to_u8!(h)))
+    .map(|u| AddressMode::IndexedIndirect(u))
 }
 
 fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     right(join(
-        join(expect_character('('), expect_character('$')),
+        expect_character('('),
         left(join(
-            take_n(hex(), 2),
+            unsigned8(),
             join(
                 join(expect_character(')'), expect_character(',')),
                 expect_character('Y'),
             ),
         )),
     ))
-    .map(|h| AddressMode::IndirectIndexed(hex_char_vec_to_u8!(h)))
+    .map(|u| AddressMode::IndirectIndexed(u))
 }
 
 // Needs implementation of signed bits
 #[allow(dead_code)]
 fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(
-        expect_character('*'),
-        join(
-            expect_character('+').or(|| expect_character('-')),
-            take_n(hex(), 2),
-        ),
-    ))
-    .map(|(_sign, h)| AddressMode::Relative(hex_char_vec_to_i8!(h)))
+    right(join(expect_character('*'), signed8())).map(|i| AddressMode::Relative(i))
 }
 
 fn zeropage<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(
-        expect_character('$'),
-        left(join(take_n(hex(), 2), whitespace().or(|| eof()))),
-    ))
-    .map(|h| AddressMode::ZeroPage(hex_char_vec_to_u8!(h)))
+    left(join(unsigned8(), whitespace().or(|| eof()))).map(|u| AddressMode::ZeroPage(u))
 }
 
 fn zeropage_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(
-        expect_character('$'),
-        left(join(
-            take_n(hex(), 2),
-            join(expect_character(','), expect_character('X')),
-        )),
+    left(join(
+        unsigned8(),
+        join(expect_character(','), expect_character('X')),
     ))
-    .map(|h| AddressMode::ZeroPageIndexedWithX(hex_char_vec_to_u8!(h)))
+    .map(|u| AddressMode::ZeroPageIndexedWithX(u))
 }
 
 fn zeropage_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(
-        expect_character('$'),
-        left(join(
-            take_n(hex(), 2),
-            join(expect_character(','), expect_character('Y')),
-        )),
+    left(join(
+        unsigned8(),
+        join(expect_character(','), expect_character('Y')),
     ))
-    .map(|h| AddressMode::ZeroPageIndexedWithY(hex_char_vec_to_u8!(h)))
+    .map(|u| AddressMode::ZeroPageIndexedWithY(u))
 }

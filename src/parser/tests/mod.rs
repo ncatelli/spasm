@@ -18,7 +18,7 @@ macro_rules! gen_program_test {
 fn should_parse_multiple_instructions_until_eof() {
     gen_program_test!(
         "nop
-lda #12
+lda #$12
 sta $1234
 jmp $1234",
         vec![
@@ -36,7 +36,7 @@ fn should_parse_arbitrary_newlines_and_whitespaces_before_instruction() {
         "
         
         nop
-lda #12
+lda #$12
 
 sta $1234
 jmp $1234",
@@ -62,7 +62,7 @@ fn should_parse_singleline_comment() {
 fn should_ignore_comment_lines() {
     gen_program_test!(
         "; nop
-lda #12 ; this is the first instruction
+lda #$12 ; this is the first instruction
 sta $1234
 jmp $1234",
         vec![

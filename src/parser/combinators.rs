@@ -1,6 +1,41 @@
 extern crate parcel;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
+use parcel::{join, one_or_more, right, take_n};
+
+macro_rules! hex_char_vec_to_u16 {
+    ($chars:expr) => {
+        u16::from_le(u16::from_str_radix(&$chars.into_iter().collect::<String>(), 16).unwrap())
+    };
+}
+
+macro_rules! hex_char_vec_to_u8 {
+    ($chars:expr) => {
+        u8::from_le(u8::from_str_radix(&$chars.into_iter().collect::<String>(), 16).unwrap())
+    };
+}
+
+macro_rules! hex_char_vec_to_i8 {
+    ($chars:expr) => {
+        i8::from_le(i8::from_str_radix(&$chars.into_iter().collect::<String>(), 16).unwrap())
+    };
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum Sign {
+    Positive,
+    Negative,
+}
+
+impl PartialEq<char> for Sign {
+    fn eq(&self, other: &char) -> bool {
+        match self {
+            &Self::Positive if *other == '+' => true,
+            &Self::Negative if *other == '-' => true,
+            _ => false,
+        }
+    }
+}
 
 // whitespaces matches any wh
 pub fn whitespace<'a>() -> impl Parser<'a, &'a str, char> {
@@ -44,10 +79,93 @@ pub fn expect_character<'a>(expected: char) -> impl Parser<'a, &'a str, char> {
     }
 }
 
-#[allow(dead_code)]
-pub fn hex<'a>() -> impl Parser<'a, &'a str, char> {
+pub fn unsigned16<'a>() -> impl Parser<'a, &'a str, u16> {
+    right(join(expect_character('$'), hex_bytes(2)))
+        .map(|hex| hex_char_vec_to_u16!(hex))
+        .or(|| dec_u16())
+}
+
+pub fn unsigned8<'a>() -> impl Parser<'a, &'a str, u8> {
+    right(join(expect_character('$'), hex_bytes(1)))
+        .map(|hex| hex_char_vec_to_u8!(hex))
+        .or(|| dec_u8())
+}
+
+pub fn signed8<'a>() -> impl Parser<'a, &'a str, i8> {
+    join(sign(), right(join(expect_character('$'), hex_bytes(1)))).map(|(sign, hex)| {
+        let signed_char_vec = if sign == Sign::Negative {
+            vec![vec!['-'], hex].into_iter().flatten().collect()
+        } else {
+            hex
+        };
+        hex_char_vec_to_i8!(signed_char_vec)
+    })
+}
+
+fn sign<'a>() -> impl Parser<'a, &'a str, Sign> {
+    expect_character('+')
+        .or(|| expect_character('-'))
+        .map(|c| match c {
+            '-' => Sign::Negative,
+            _ => Sign::Positive,
+        })
+}
+
+pub fn hex_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a str, Vec<char>> {
+    take_n(hex_digit(), bytes * 2)
+}
+
+pub fn hex_digit<'a>() -> impl Parser<'a, &'a str, char> {
     move |input: &'a str| match input.chars().next() {
-        Some(next) if next.is_ascii_hexdigit() => Ok(MatchStatus::Match((&input[1..], next))),
+        Some(next) if next.is_digit(16) => Ok(MatchStatus::Match((&input[1..], next))),
+        _ => Ok(MatchStatus::NoMatch(input)),
+    }
+}
+
+#[allow(dead_code)]
+fn dec_u16<'a>() -> impl Parser<'a, &'a str, u16> {
+    move |input: &'a str| {
+        let preparsed_input = input;
+        let res = one_or_more(decimal())
+            .map(|digits| {
+                let vd: String = digits.into_iter().collect();
+                u16::from_str_radix(&vd, 10)
+            })
+            .parse(input);
+
+        match res {
+            Ok(MatchStatus::Match((rem, Ok(u)))) => Ok(MatchStatus::Match((rem, u))),
+            Ok(MatchStatus::Match((_, Err(_)))) => Ok(MatchStatus::NoMatch(preparsed_input)),
+            Ok(MatchStatus::NoMatch(rem)) => Ok(MatchStatus::NoMatch(rem)),
+            Err(e) => Err(e),
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn dec_u8<'a>() -> impl Parser<'a, &'a str, u8> {
+    move |input: &'a str| {
+        let preparsed_input = input;
+        let res = one_or_more(decimal())
+            .map(|digits| {
+                let vd: String = digits.into_iter().collect();
+                u8::from_str_radix(&vd, 10)
+            })
+            .parse(input);
+
+        match res {
+            Ok(MatchStatus::Match((rem, Ok(u)))) => Ok(MatchStatus::Match((rem, u))),
+            Ok(MatchStatus::Match((_, Err(_)))) => Ok(MatchStatus::NoMatch(preparsed_input)),
+            Ok(MatchStatus::NoMatch(rem)) => Ok(MatchStatus::NoMatch(rem)),
+            Err(e) => Err(e),
+        }
+    }
+}
+
+#[allow(dead_code)]
+pub fn decimal<'a>() -> impl Parser<'a, &'a str, char> {
+    move |input: &'a str| match input.chars().next() {
+        Some(next) if next.is_digit(10) => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }

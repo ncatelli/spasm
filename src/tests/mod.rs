@@ -5,8 +5,8 @@ use parcel::MatchStatus;
 #[test]
 fn should_generate_expected_opcode() {
     let input = "nop
-lda #12
-sta $1234
+lda #$12
+sta 4660
 jmp $1234\n";
 
     let insts = match instructions().parse(&input).unwrap() {
