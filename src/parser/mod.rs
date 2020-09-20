@@ -60,17 +60,17 @@ fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {
 #[allow(clippy::redundant_closure)]
 fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
     accumulator()
-        .or(|| absolute_x_indexed())
-        .or(|| absolute_y_indexed())
-        .or(|| absolute())
-        .or(|| immediate())
-        .or(|| indirect())
-        .or(|| x_indexed_indirect())
-        .or(|| indirect_y_indexed())
-        //        .or(|| relative())
         .or(|| zeropage())
         .or(|| zeropage_x_indexed())
         .or(|| zeropage_y_indexed())
+        .or(|| absolute_x_indexed())
+        .or(|| absolute_y_indexed())
+        .or(|| x_indexed_indirect())
+        .or(|| indirect_y_indexed())
+        .or(|| absolute())
+        .or(|| immediate())
+        .or(|| indirect())
+    //        .or(|| relative())
 }
 
 fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
