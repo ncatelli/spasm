@@ -5,7 +5,7 @@ use parcel::MatchStatus;
 #[test]
 fn should_generate_expected_opcode() {
     let input = "nop
-lda #$12
+lda #%00010010
 sta 4660
 jmp $1234\n";
 

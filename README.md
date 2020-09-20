@@ -47,33 +47,39 @@ operand        = accumulator
                | zeropage_y_indexed
 
 accumulator        = "A" ;
-absolute           = ( "$" hexword ) | number ;
-absolute_x_indexed = ( ( "$" hexword ) | number ) ",X" ;
-absolute_y_indexed = ( ( "$" hexword ) | number ) ",Y" ;
-immediate          = "#" (( "$" hexbyte ) | number ) ;
-indirect           = "(" ( ( "$" hexword ) | number ) ")";
-x_indexed_indirect = "(" ( ( "$" hexbyte ) | number ) ",X)" ;
-indirect_y_indexed = "(" ( ( "$" hexbyte ) | number ) "),X" ;
-relative           =  sign? ( ( "$" ( hexbyte ) | number ) ;
-zeropage           = ( "$" ( hexbyte ) | number ;
-zeropage_x_indexed = ( ( "$" hexbyte ) | number ) ",X" ;
-zeropage_y_indexed = ( ( "$" hexbyte ) | number ) ",Y" ;
+absolute           = word ;
+absolute_x_indexed = word ",X" ;
+absolute_y_indexed = word ",Y" ;
+immediate          = "#" byte ;
+indirect           = "(" word ")";
+x_indexed_indirect = "(" byte ",X)" ;
+indirect_y_indexed = "(" byte "),Y" ;
+relative           =  sign? byte ;
+zeropage           = byte ;
+zeropage_x_indexed = byte ",X" ;
+zeropage_y_indexed = byte ",Y" ;
 
 comment        = ";" (whitespace | character)* ;
 
-lower          = a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z ;
-upper          = A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z ;
-hexword        = hex hex hex hex;
-hexbyte        = hex hex ;
-hex            = 0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|A|B|C|D|E|F ;
-number         = digit+ ;
-sign           = "-" | "+" ;
-digit          = 0|1|2|3|4|5|6|7|8|9 ;
-special        = -|_|"|#|&|’|(|)|*|+|,|.|/|:|;|<|=|> ;
 character      = lower|upper|digit|special ;
 whitespace     = " " | "\t" ;
 newline        = "\n" ;
-
+lower          = "a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"
+               |"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z" ;
+upper          = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"
+               |"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z" ;
+word        = ( "$" hex hex hex hex ) | digit+ 
+            | binarybyte binarybyte ;
+byte        = ( "$" hex hex ) | digit+ | binarybyte ;
+hex            = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"a"|"b"|"c"
+               |"d"|"e"|"f"|"A"|"B"|"C"|"D"|"E"|"F" ;
+number         = digit+ ;
+sign           = "-" | "+" ;
+binarybyte     = binary binary binary binary binary binary binary binary ;
+binary         = "0" | "1" ;
+digit          = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9" ;
+special        = "-"|"_"|"\""|"#"|"&"|"’"|"("|")"|"*"|"+"|","|"."|"/"
+               |":"|";"|"<"|"="|">" ;
 ```
 
 ## Warnings
