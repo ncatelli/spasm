@@ -43,8 +43,6 @@ labeldef       = alphanumeric* ":" ;
 
 label          = alphanumeric* ;
 
-
-
 operand        = accumulator
                | absolute
                | absolute_x_indexed
