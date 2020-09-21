@@ -14,7 +14,7 @@ pub type AssemblerResult = Result<Vec<u8>, String>;
 // Converts a source string to it's corresponding array of little endinan binary
 // opcodes.
 pub fn assemble(source: &str) -> AssemblerResult {
-    let opcodes = match parser::instructions().parse(&source).unwrap() {
+    let opcodes: Vec<u8> = match parser::instructions().parse(&source).unwrap() {
         parcel::MatchStatus::Match((_, insts)) => Ok(insts),
         _ => Err("match error".to_string()),
     }?
