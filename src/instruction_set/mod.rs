@@ -1,4 +1,5 @@
 pub mod address_mode;
+use address_mode::AddressModeOrLabel;
 pub use address_mode::AddressMode;
 pub mod mnemonics;
 use crate::addressing;
@@ -17,6 +18,29 @@ pub enum InstructionOrSymbol {
 
 /// OpCode represents an unsigned 8bit value.
 pub type OpCode = u8;
+
+/// Instruction represents a single 6502 instruction containing a mnemonic,
+/// and either a static address_mode or a label.
+#[derive(Clone, PartialEq, Debug)]
+pub struct Instruction {
+    mnemonic: Mnemonic,
+    amos: AddressModeOrLabel,
+}
+
+impl Instruction {
+    pub fn new(mnemonic: Mnemonic, amos: AddressModeOrLabel) -> Self {
+        Self {
+            mnemonic,
+            amos,
+        }
+    }
+}
+
+impl addressing::SizeOf for Instruction {
+    fn size_of(&self) -> usize {
+        self.mnemonic.size_of() + self.amos.size_of()
+    }
+}
 
 /// StaticInstruction represents a single 6502 instruction containing a mnemonic,
 /// and static address mode, mapping directly to an address or byte value.
