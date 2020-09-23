@@ -1,6 +1,7 @@
 pub mod address_mode;
 pub use address_mode::AddressMode;
 pub mod mnemonics;
+use crate::addressing;
 pub use mnemonics::Mnemonic;
 
 #[cfg(test)]
@@ -31,6 +32,12 @@ impl Instruction {
             mnemonic,
             address_mode,
         }
+    }
+}
+
+impl addressing::SizeOf for Instruction {
+    fn size_of(&self) -> usize {
+        self.mnemonic.size_of() + self.address_mode.size_of()
     }
 }
 

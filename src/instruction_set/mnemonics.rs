@@ -86,6 +86,7 @@ impl addressing::SizeOf for Mnemonic {
         1
     }
 }
+
 impl TryFrom<&str> for Mnemonic {
     type Error = String;
 
