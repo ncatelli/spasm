@@ -8,6 +8,7 @@ mod tests;
 pub mod instruction_set;
 use instruction_set::InstructionOrSymbol;
 mod addressing;
+use addressing::SizeOf;
 mod parser;
 
 pub type AssemblerResult = Result<Vec<u8>, String>;
@@ -21,20 +22,21 @@ pub fn assemble(source: &str) -> AssemblerResult {
     }?
     .into_iter()
     .fold(
-        (HashMap::<String, u16>::new(), Vec::new()),
-        |(mut labels, mut insts), ios| match ios {
+        (0 as usize, HashMap::<String, usize>::new(), Vec::new()),
+        |(offset, mut labels, mut insts), ios| match ios {
             InstructionOrSymbol::Instruction(i) => {
-                insts.push(i);
-                (labels, insts)
+                insts.push(addressing::Positional::with_position(offset, i));
+                (offset + i.size_of(), labels, insts)
             }
             InstructionOrSymbol::Label(l) => {
-                labels.insert(l, 0);
-                (labels, insts)
+                labels.insert(l, offset);
+                (offset, labels, insts)
             }
         },
     ) // DEVNOTE: temp unpack of instructions from InstructionOrSymbol enum
-    .1
+    .2
     .into_iter()
+    .map(|pi| pi.unwrap())
     .map(Into::<Vec<u8>>::into)
     .flatten()
     .collect::<Vec<u8>>();

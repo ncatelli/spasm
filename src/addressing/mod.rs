@@ -21,6 +21,7 @@ where
 {
     /// new instantiates a Positional with an offset of 0 that wraps a value T.
     /// Essentially this calls Self::with_position(0, T).
+    #[allow(dead_code)]
     pub fn new(contents: T) -> Self {
         Self::with_position(0, contents)
     }
