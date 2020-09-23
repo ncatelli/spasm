@@ -13,7 +13,7 @@ macro_rules! gen_instruction_only_program_test {
                 &$input[$input.len()..],
                 $insts
                     .into_iter()
-                    .map(|i| $crate::instruction_set::InstructionOrSymbol::Instruction(i))
+                    .map(|i| $crate::instruction_set::InstructionOrDefinition::Instruction(i))
                     .collect()
             ))),
             $crate::parser::instructions().parse(&$input)

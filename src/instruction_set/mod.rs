@@ -8,10 +8,10 @@ pub use mnemonics::Mnemonic;
 #[cfg(test)]
 mod tests;
 
-/// InstructionOrSymbol wraps the token variants that can be derived from the
+/// InstructionOrDefinition wraps the token variants that can be derived from the
 /// parser.
 #[derive(Debug, Clone, PartialEq)]
-pub enum InstructionOrSymbol {
+pub enum InstructionOrDefinition {
     Instruction(Instruction),
     Label(String),
 }
@@ -256,13 +256,13 @@ macro_rules! static_instruction {
 #[allow(unused_macros)]
 macro_rules! ios_instruction {
     ($inst:expr) => {
-        $crate::instruction_set::InstructionOrSymbol::Instruction($inst)
+        $crate::instruction_set::InstructionOrDefinition::Instruction($inst)
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! ios_label {
     ($symbol:expr) => {
-        $crate::instruction_set::InstructionOrSymbol::Label($symbol.to_string())
+        $crate::instruction_set::InstructionOrDefinition::Label($symbol.to_string())
     };
 }

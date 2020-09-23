@@ -1,7 +1,7 @@
 extern crate parcel;
 use crate::instruction_set::address_mode::{AddressMode, AddressModeOrLabel};
 use crate::instruction_set::mnemonics::Mnemonic;
-use crate::instruction_set::{Instruction, InstructionOrSymbol};
+use crate::instruction_set::{Instruction, InstructionOrDefinition};
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
 use std::convert::TryFrom;
@@ -12,7 +12,7 @@ use combinators::*;
 #[cfg(test)]
 mod tests;
 
-pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<InstructionOrSymbol>> {
+pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<InstructionOrDefinition>> {
     one_or_more(right(join(
         zero_or_more(whitespace().or(|| newline())),
         left(join(
@@ -31,7 +31,7 @@ pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<InstructionOrS
     })
 }
 
-pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
+pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrDefinition> {
     join(
         right(join(zero_or_more(whitespace()), mnemonic())),
         left(join(
@@ -43,7 +43,7 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol
         Some(amol) => Instruction::new(m, amol),
         None => Instruction::new(m, AddressModeOrLabel::AddressMode(AddressMode::Implied)),
     })
-    .map(|i| InstructionOrSymbol::Instruction(i))
+    .map(|i| InstructionOrDefinition::Instruction(i))
 }
 
 fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
@@ -54,9 +54,9 @@ fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
     .map(|_| ())
 }
 
-fn labeldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
+fn labeldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrDefinition> {
     left(join(zero_or_more(alphabetic()), expect_character(':')))
-        .map(|cv| InstructionOrSymbol::Label(cv.into_iter().collect()))
+        .map(|cv| InstructionOrDefinition::Label(cv.into_iter().collect()))
 }
 
 fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {

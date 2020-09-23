@@ -4,7 +4,7 @@ use std::collections::HashMap;
 #[macro_use]
 pub mod instruction_set;
 use instruction_set::address_mode::{AddressMode, AddressModeOrLabel};
-use instruction_set::{InstructionOrSymbol, Mnemonic, StaticInstruction};
+use instruction_set::{InstructionOrDefinition, Mnemonic, StaticInstruction};
 mod addressing;
 use addressing::SizeOf;
 mod parser;
@@ -30,7 +30,7 @@ pub fn assemble(source: &str) -> AssemblerResult {
     .fold(
         (0 as u16, SymbolConfig::new(), Vec::new()),
         |(offset, mut labels, mut insts), (line, ios)| match ios {
-            InstructionOrSymbol::Instruction(i) => {
+            InstructionOrDefinition::Instruction(i) => {
                 let size_of = i.size_of();
                 let line_number = line + 1;
                 insts.push((
@@ -39,7 +39,7 @@ pub fn assemble(source: &str) -> AssemblerResult {
                 ));
                 (offset + size_of, labels, insts)
             }
-            InstructionOrSymbol::Label(l) => {
+            InstructionOrDefinition::Label(l) => {
                 labels.insert(l, offset);
                 (offset, labels, insts)
             }
