@@ -11,22 +11,22 @@ mod tests;
 /// parser.
 #[derive(Debug, Clone, PartialEq)]
 pub enum InstructionOrSymbol {
-    Instruction(Instruction),
+    Instruction(StaticInstruction),
     Label(String),
 }
 
 /// OpCode represents an unsigned 8bit value.
 pub type OpCode = u8;
 
-/// Instruction represents a single 6502 instruction containing a mnemonic,
-/// address mode and optionally any operands.
+/// StaticInstruction represents a single 6502 instruction containing a mnemonic,
+/// and static address mode, mapping directly to an address or byte value.
 #[derive(Clone, Copy, PartialEq, Debug)]
-pub struct Instruction {
+pub struct StaticInstruction {
     mnemonic: Mnemonic,
     address_mode: AddressMode,
 }
 
-impl Instruction {
+impl StaticInstruction {
     pub fn new(mnemonic: Mnemonic, address_mode: AddressMode) -> Self {
         Self {
             mnemonic,
@@ -35,13 +35,13 @@ impl Instruction {
     }
 }
 
-impl addressing::SizeOf for Instruction {
+impl addressing::SizeOf for StaticInstruction {
     fn size_of(&self) -> usize {
         self.mnemonic.size_of() + self.address_mode.size_of()
     }
 }
 
-impl Into<OpCode> for Instruction {
+impl Into<OpCode> for StaticInstruction {
     fn into(self) -> OpCode {
         match (self.mnemonic, self.address_mode) {
             (Mnemonic::BRK, AddressMode::Implied) => 0x00,
@@ -200,7 +200,7 @@ impl Into<OpCode> for Instruction {
     }
 }
 
-impl Into<Vec<u8>> for Instruction {
+impl Into<Vec<u8>> for StaticInstruction {
     fn into(self) -> Vec<u8> {
         vec![self.into()]
             .into_iter()
@@ -210,9 +210,9 @@ impl Into<Vec<u8>> for Instruction {
 }
 
 #[allow(unused_macros)]
-macro_rules! instruction {
+macro_rules! static_instruction {
     ($mnemonic:expr, $am:expr) => {
-        $crate::instruction_set::Instruction::new($mnemonic, $am)
+        $crate::instruction_set::StaticInstruction::new($mnemonic, $am)
     };
 }
 

@@ -1,7 +1,7 @@
 extern crate parcel;
 use crate::instruction_set::address_mode::AddressMode;
 use crate::instruction_set::mnemonics::Mnemonic;
-use crate::instruction_set::{Instruction, InstructionOrSymbol};
+use crate::instruction_set::{InstructionOrSymbol, StaticInstruction};
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
 use std::convert::TryFrom;
@@ -40,8 +40,8 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol
         )),
     )
     .map(|(m, a)| match a {
-        Some(am) => Instruction::new(m, am),
-        None => Instruction::new(m, AddressMode::Implied),
+        Some(am) => StaticInstruction::new(m, am),
+        None => StaticInstruction::new(m, AddressMode::Implied),
     })
     .map(|i| InstructionOrSymbol::Instruction(i))
 }

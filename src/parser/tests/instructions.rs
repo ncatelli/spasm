@@ -1,4 +1,4 @@
-use crate::instruction_set::{AddressMode, Instruction, Mnemonic};
+use crate::instruction_set::{AddressMode, Mnemonic};
 use crate::parser::instruction;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
@@ -8,9 +8,9 @@ macro_rules! gen_inst_test {
         assert_eq!(
             Ok(MatchStatus::Match((
                 &$input[$input.len()..],
-                crate::instruction_set::InstructionOrSymbol::Instruction(Instruction::new(
-                    $mnemonic, $am
-                ))
+                $crate::instruction_set::InstructionOrSymbol::Instruction(
+                    $crate::instruction_set::StaticInstruction::new($mnemonic, $am)
+                )
             ))),
             instruction().parse(&$input)
         );
