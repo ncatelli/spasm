@@ -65,7 +65,7 @@ jmp $1234",
 }
 
 #[test]
-fn should_parse_symbols() {
+fn should_parse_labels() {
     gen_program_test!(
         "
 init:
