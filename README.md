@@ -4,7 +4,7 @@ An experimental 6502 assembler.
 ## Grammar
 
 ```
-instructions   = ( whitespace | newline )* ( definition | comment | instruction )+ ( newline | EOF ) ;
+instructions   = ( whitespace | newline )* ( labeldef | symboldef | comment | instruction )+ ( newline | EOF ) ;
 
 instruction    = whitespace* mnemonic ( whitespace+ ( operand | symbol ) )? whitespace+ comment? ;
 
@@ -34,8 +34,6 @@ mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "BRK" | "brk" | "NOP" | "nop"
 
 comment        = ";" ( whitespace | character )* ;
-
-definition     = symboldef | labeldef ;
 
 symboldef      = upper* '=' byte ;
 

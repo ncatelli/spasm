@@ -254,14 +254,14 @@ macro_rules! static_instruction {
 }
 
 #[allow(unused_macros)]
-macro_rules! ios_instruction {
+macro_rules! iod_instruction {
     ($inst:expr) => {
         $crate::instruction_set::InstructionOrDefinition::Instruction($inst)
     };
 }
 
 #[allow(unused_macros)]
-macro_rules! ios_label {
+macro_rules! iod_label {
     ($symbol:expr) => {
         $crate::instruction_set::InstructionOrDefinition::Label($symbol.to_string())
     };

@@ -29,7 +29,7 @@ pub fn assemble(source: &str) -> AssemblerResult {
     .enumerate()
     .fold(
         (0 as u16, SymbolConfig::new(), Vec::new()),
-        |(offset, mut labels, mut insts), (line, ios)| match ios {
+        |(offset, mut labels, mut insts), (line, iod)| match iod {
             InstructionOrDefinition::Instruction(i) => {
                 let size_of = i.size_of();
                 let line_number = line + 1;

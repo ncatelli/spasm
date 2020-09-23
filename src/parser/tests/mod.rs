@@ -99,20 +99,20 @@ init:
   sta $1234
   jmp $1234",
         vec![
-            ios_label!("init"),
-            ios_instruction!(instruction!(
+            iod_label!("init"),
+            iod_instruction!(instruction!(
                 Mnemonic::NOP,
                 AddressModeOrLabel::AddressMode(AddressMode::Implied)
             )),
-            ios_instruction!(instruction!(
+            iod_instruction!(instruction!(
                 Mnemonic::LDA,
                 AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
             )),
-            ios_instruction!(instruction!(
+            iod_instruction!(instruction!(
                 Mnemonic::STA,
                 AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
             )),
-            ios_instruction!(instruction!(
+            iod_instruction!(instruction!(
                 Mnemonic::JMP,
                 AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
             ))

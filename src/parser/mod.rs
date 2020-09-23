@@ -17,7 +17,8 @@ pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<InstructionOrD
         zero_or_more(whitespace().or(|| newline())),
         left(join(
             labeldef()
-                .map(|i| Some(i))
+                .map(|iod| Some(iod))
+                .or(|| symboldef().map(|iod| Some(iod)))
                 .or(|| comment().map(|_| None))
                 .or(|| instruction().map(|i| Some(i))),
             newline().or(|| eof()),
@@ -55,6 +56,12 @@ fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
 }
 
 fn labeldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrDefinition> {
+    left(join(zero_or_more(alphabetic()), expect_character(':')))
+        .map(|cv| InstructionOrDefinition::Label(cv.into_iter().collect()))
+}
+
+// TODO
+fn symboldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrDefinition> {
     left(join(zero_or_more(alphabetic()), expect_character(':')))
         .map(|cv| InstructionOrDefinition::Label(cv.into_iter().collect()))
 }
