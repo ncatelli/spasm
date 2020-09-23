@@ -234,6 +234,15 @@ impl Into<Vec<u8>> for StaticInstruction {
 }
 
 #[allow(unused_macros)]
+macro_rules! instruction {
+    ($mnemonic:expr, $amos:expr) => {
+        $crate::instruction_set::Instruction::new(
+            $mnemonic, $amos
+        )
+    };
+}
+
+#[allow(unused_macros)]
 macro_rules! static_instruction {
     ($mnemonic:expr, $am:expr) => {
         $crate::instruction_set::StaticInstruction::new($mnemonic, $am)
