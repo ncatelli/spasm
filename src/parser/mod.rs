@@ -1,7 +1,7 @@
 extern crate parcel;
-use crate::instruction_set::address_mode::AddressMode;
+use crate::instruction_set::address_mode::{AddressMode, AddressModeOrLabel};
 use crate::instruction_set::mnemonics::Mnemonic;
-use crate::instruction_set::Instruction;
+use crate::instruction_set::{Instruction, InstructionOrSymbol};
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
 use std::convert::TryFrom;
@@ -12,13 +12,14 @@ use combinators::*;
 #[cfg(test)]
 mod tests;
 
-pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> {
+pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<InstructionOrSymbol>> {
     one_or_more(right(join(
         zero_or_more(whitespace().or(|| newline())),
         left(join(
-            instruction()
+            symboldef()
                 .map(|i| Some(i))
-                .or(|| comment().map(|_| None)),
+                .or(|| comment().map(|_| None))
+                .or(|| instruction().map(|i| Some(i))),
             newline().or(|| eof()),
         )),
     )))
@@ -30,7 +31,7 @@ pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<Instruction>> 
     })
 }
 
-pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
+pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
     join(
         right(join(zero_or_more(whitespace()), mnemonic())),
         left(join(
@@ -39,9 +40,10 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, Instruction> {
         )),
     )
     .map(|(m, a)| match a {
-        Some(am) => Instruction::new(m, am),
-        None => Instruction::new(m, AddressMode::Implied),
+        Some(amol) => Instruction::new(m, amol),
+        None => Instruction::new(m, AddressModeOrLabel::AddressMode(AddressMode::Implied)),
     })
+    .map(|i| InstructionOrSymbol::Instruction(i))
 }
 
 fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
@@ -52,13 +54,23 @@ fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
     .map(|_| ())
 }
 
+#[allow(dead_code)]
+fn symboldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
+    labeldef()
+}
+
+fn labeldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
+    left(join(zero_or_more(alphabetic()), expect_character(':')))
+        .map(|cv| InstructionOrSymbol::Label(cv.into_iter().collect()))
+}
+
 fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {
     take_n(alphabetic(), 3)
         .map(|m| Mnemonic::try_from(m.into_iter().collect::<String>().as_str()).unwrap())
 }
 
 #[allow(clippy::redundant_closure)]
-fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrLabel> {
     accumulator()
         .or(|| zeropage())
         .or(|| zeropage_x_indexed())
@@ -70,7 +82,13 @@ fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
         .or(|| absolute())
         .or(|| immediate())
         .or(|| indirect())
+        .map(|am| AddressModeOrLabel::AddressMode(am))
+        .or(|| label().map(|l| AddressModeOrLabel::Label(l)))
     //        .or(|| relative())
+}
+
+fn label<'a>() -> impl parcel::Parser<'a, &'a str, String> {
+    one_or_more(alphabetic()).map(|l| l.into_iter().collect())
 }
 
 fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {

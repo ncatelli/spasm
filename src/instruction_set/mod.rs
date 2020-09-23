@@ -1,24 +1,62 @@
+pub mod address_mode;
+pub use address_mode::AddressMode;
+use address_mode::AddressModeOrLabel;
+pub mod mnemonics;
+use crate::addressing;
+pub use mnemonics::Mnemonic;
+
 #[cfg(test)]
 mod tests;
 
-pub mod address_mode;
-pub mod mnemonics;
-
-pub use address_mode::AddressMode;
-pub use mnemonics::Mnemonic;
+/// InstructionOrSymbol wraps the token variants that can be derived from the
+/// parser.
+#[derive(Debug, Clone, PartialEq)]
+pub enum InstructionOrSymbol {
+    Instruction(Instruction),
+    Label(String),
+}
 
 /// OpCode represents an unsigned 8bit value.
 pub type OpCode = u8;
 
 /// Instruction represents a single 6502 instruction containing a mnemonic,
-/// address mode and optionally any operands.
-#[derive(Clone, Copy, PartialEq, Debug)]
+/// and either a static address_mode or a label.
+#[derive(Clone, PartialEq, Debug)]
 pub struct Instruction {
-    mnemonic: Mnemonic,
-    address_mode: AddressMode,
+    pub mnemonic: Mnemonic,
+    pub amol: AddressModeOrLabel,
 }
 
 impl Instruction {
+    pub fn new(mnemonic: Mnemonic, amol: AddressModeOrLabel) -> Self {
+        Self { mnemonic, amol }
+    }
+}
+
+impl addressing::SizeOf for Instruction {
+    fn size_of(&self) -> u16 {
+        self.mnemonic.size_of() + self.amol.size_of()
+    }
+}
+
+impl From<StaticInstruction> for Instruction {
+    fn from(si: StaticInstruction) -> Self {
+        Self {
+            mnemonic: si.mnemonic,
+            amol: AddressModeOrLabel::AddressMode(si.address_mode),
+        }
+    }
+}
+
+/// StaticInstruction represents a single 6502 instruction containing a mnemonic,
+/// and static address mode, mapping directly to an address or byte value.
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct StaticInstruction {
+    pub mnemonic: Mnemonic,
+    pub address_mode: AddressMode,
+}
+
+impl StaticInstruction {
     pub fn new(mnemonic: Mnemonic, address_mode: AddressMode) -> Self {
         Self {
             mnemonic,
@@ -27,7 +65,13 @@ impl Instruction {
     }
 }
 
-impl Into<OpCode> for Instruction {
+impl addressing::SizeOf for StaticInstruction {
+    fn size_of(&self) -> u16 {
+        self.mnemonic.size_of() + self.address_mode.size_of()
+    }
+}
+
+impl Into<OpCode> for StaticInstruction {
     fn into(self) -> OpCode {
         match (self.mnemonic, self.address_mode) {
             (Mnemonic::BRK, AddressMode::Implied) => 0x00,
@@ -186,11 +230,39 @@ impl Into<OpCode> for Instruction {
     }
 }
 
-impl Into<Vec<u8>> for Instruction {
+impl Into<Vec<u8>> for StaticInstruction {
     fn into(self) -> Vec<u8> {
         vec![self.into()]
             .into_iter()
             .chain(Into::<Vec<u8>>::into(self.address_mode))
             .collect()
     }
+}
+
+#[allow(unused_macros)]
+macro_rules! instruction {
+    ($mnemonic:expr, $amos:expr) => {
+        $crate::instruction_set::Instruction::new($mnemonic, $amos)
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! static_instruction {
+    ($mnemonic:expr, $am:expr) => {
+        $crate::instruction_set::StaticInstruction::new($mnemonic, $am)
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! ios_instruction {
+    ($inst:expr) => {
+        $crate::instruction_set::InstructionOrSymbol::Instruction($inst)
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! ios_label {
+    ($symbol:expr) => {
+        $crate::instruction_set::InstructionOrSymbol::Label($symbol.to_string())
+    };
 }

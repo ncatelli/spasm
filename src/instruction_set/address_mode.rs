@@ -1,3 +1,24 @@
+use crate::addressing;
+
+pub type Label = String;
+
+/// AddressModeOrLabel handles for parsing either an explicit address mode or a
+/// label mapping.
+#[derive(Clone, PartialEq, Debug)]
+pub enum AddressModeOrLabel {
+    AddressMode(AddressMode),
+    Label(Label),
+}
+
+impl addressing::SizeOf for AddressModeOrLabel {
+    fn size_of(&self) -> u16 {
+        match self {
+            Self::AddressMode(am) => am.size_of(),
+            Self::Label(_) => 2,
+        }
+    }
+}
+
 /// AddressMode captures the Address mode type with a corresponding
 /// operand of the appropriate bit length.
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -32,6 +53,19 @@ impl Into<Vec<u8>> for AddressMode {
             AddressMode::IndexedIndirect(operand) => vec![operand],
             AddressMode::IndirectIndexed(operand) => vec![operand],
             _ => vec![],
+        }
+    }
+}
+
+impl addressing::SizeOf for AddressMode {
+    fn size_of(&self) -> u16 {
+        match self {
+            AddressMode::Accumulator | AddressMode::Implied => 0,
+            AddressMode::Absolute(_)
+            | AddressMode::Indirect(_)
+            | AddressMode::AbsoluteIndexedWithX(_)
+            | AddressMode::AbsoluteIndexedWithY(_) => 2,
+            _ => 1,
         }
     }
 }

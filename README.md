@@ -4,9 +4,9 @@ An experimental 6502 assembler.
 ## Grammar
 
 ```
-instructions   = (whitespace | newline)* (instruction | comment)* (newline | EOF) ;
+instructions   = ( whitespace | newline )* ( symboldef | comment | instruction )+ ( newline | EOF ) ;
 
-instruction    = whitespace* mnemonic (whitespace+ operand)? whitespace+ comment? ;
+instruction    = whitespace* mnemonic ( whitespace+ ( operand | symbol ) )? whitespace+ comment? ;
 
 mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "STA" | "sta" | "STX" | "stx" | "STY" | "sty"
@@ -22,7 +22,7 @@ mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "BNE" | "bne" | "BEQ" | "beq"
                | "BPL" | "bpl" | "BMI" | "bmi"
                | "BVC" | "bvc" | "BVS" | "bvs"
-               | "TAX" | "tax" | TXA" | "txa"
+               | "TAX" | "tax" | "TXA" | "txa"
                | "TAY" | "tay" | "TYA" | "tya"
                | "TSX" | "tsx" | "TXS" | "txs"
                | "PHA" | "pha" | "PLA" | "pla"
@@ -32,6 +32,16 @@ mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "CLC" | "clc" | "CLD" | "cld" | "CLI" | "cli" | "CLV" | "clv"
                | "SEC" | "sec" | "SED" | "sed" | SEI" | "sei"
                | "BRK" | "brk" | "NOP" | "nop"
+
+comment        = ";" ( whitespace | character )* ;
+
+symboldef      = labeldef ;
+
+symbol         = label ;
+
+labeldef       = alphabetic* ":" ;
+
+label          = alphabetic* ;
 
 operand        = accumulator
                | absolute
@@ -54,23 +64,22 @@ immediate          = "#" byte ;
 indirect           = "(" word ")";
 x_indexed_indirect = "(" byte ",X)" ;
 indirect_y_indexed = "(" byte "),Y" ;
-relative           =  sign? byte ;
+relative           = "*" sign? byte ;
 zeropage           = byte ;
 zeropage_x_indexed = byte ",X" ;
 zeropage_y_indexed = byte ",Y" ;
 
-comment        = ";" (whitespace | character)* ;
-
 character      = lower|upper|digit|special ;
 whitespace     = " " | "\t" ;
 newline        = "\n" ;
+alphabetic     = (lower|upper) ;
 lower          = "a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"
                |"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z" ;
 upper          = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"
                |"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z" ;
-word        = ( "$" hex hex hex hex ) | digit+ 
-            | binarybyte binarybyte ;
-byte        = ( "$" hex hex ) | digit+ | binarybyte ;
+word           = ( "$" hex hex hex hex ) | digit+ 
+               | binarybyte binarybyte ;
+byte           = ( "$" hex hex ) | digit+ | binarybyte ;
 hex            = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"a"|"b"|"c"
                |"d"|"e"|"f"|"A"|"B"|"C"|"D"|"E"|"F" ;
 number         = digit+ ;
