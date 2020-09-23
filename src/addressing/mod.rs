@@ -4,7 +4,8 @@ pub trait SizeOf {
     fn size_of(&self) -> u16;
 }
 
-/// Positional functions to store an object wrapped with an offset position
+/// Positional functions to store an object wrapped with an offset position.
+#[derive(Debug, Clone, PartialEq)]
 pub struct Positional<T>
 where
     T: SizeOf,
