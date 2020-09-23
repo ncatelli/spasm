@@ -9,9 +9,8 @@ macro_rules! gen_am_test {
             Ok(MatchStatus::Match((
                 &$input[$input.len()..],
                 $crate::instruction_set::InstructionOrSymbol::Instruction(
-                    $crate::instruction_set::StaticInstruction::new(
-                    $mnemonic, $am
-                ))
+                    $crate::instruction_set::StaticInstruction::new($mnemonic, $am)
+                )
             ))),
             instruction().parse(&$input)
         );
