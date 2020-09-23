@@ -24,21 +24,21 @@ pub type OpCode = u8;
 #[derive(Clone, PartialEq, Debug)]
 pub struct Instruction {
     mnemonic: Mnemonic,
-    amos: AddressModeOrLabel,
+    amol: AddressModeOrLabel,
 }
 
 impl Instruction {
-    pub fn new(mnemonic: Mnemonic, amos: AddressModeOrLabel) -> Self {
+    pub fn new(mnemonic: Mnemonic, amol: AddressModeOrLabel) -> Self {
         Self {
             mnemonic,
-            amos,
+            amol,
         }
     }
 }
 
 impl addressing::SizeOf for Instruction {
     fn size_of(&self) -> usize {
-        self.mnemonic.size_of() + self.amos.size_of()
+        self.mnemonic.size_of() + self.amol.size_of()
     }
 }
 

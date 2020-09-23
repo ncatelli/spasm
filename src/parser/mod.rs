@@ -1,5 +1,5 @@
 extern crate parcel;
-use crate::instruction_set::address_mode::AddressMode;
+use crate::instruction_set::address_mode::{AddressMode, AddressModeOrLabel};
 use crate::instruction_set::mnemonics::Mnemonic;
 use crate::instruction_set::{InstructionOrSymbol, StaticInstruction};
 use parcel::prelude::v1::*;
@@ -40,7 +40,8 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol
         )),
     )
     .map(|(m, a)| match a {
-        Some(am) => StaticInstruction::new(m, am),
+        Some(AddressModeOrLabel::AddressMode(am)) => StaticInstruction::new(m, am),
+        Some(AddressModeOrLabel::Label(_)) => StaticInstruction::new(m, AddressMode::Implied), // TODO: Actually handle notes here`
         None => StaticInstruction::new(m, AddressMode::Implied),
     })
     .map(|i| InstructionOrSymbol::Instruction(i))
@@ -60,7 +61,7 @@ fn symboldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
 }
 
 fn labeldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
-    left(join(zero_or_more(alphanumeric()), expect_character(':')))
+    left(join(zero_or_more(alphabetic()), expect_character(':')))
         .map(|cv| InstructionOrSymbol::Label(cv.into_iter().collect()))
 }
 
@@ -70,7 +71,7 @@ fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {
 }
 
 #[allow(clippy::redundant_closure)]
-fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrLabel> {
     accumulator()
         .or(|| zeropage())
         .or(|| zeropage_x_indexed())
@@ -82,7 +83,13 @@ fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
         .or(|| absolute())
         .or(|| immediate())
         .or(|| indirect())
+        .map(|am| AddressModeOrLabel::AddressMode(am))
+        .or(|| label().map(|l| AddressModeOrLabel::Label(l)))
     //        .or(|| relative())
+}
+
+fn label<'a>() -> impl parcel::Parser<'a, &'a str, String> {
+    one_or_more(alphabetic()).map(|l| l.into_iter().collect())
 }
 
 fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
