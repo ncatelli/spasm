@@ -26,12 +26,17 @@ pub fn assemble(source: &str) -> AssemblerResult {
         _ => Err("match error".to_string()),
     }?
     .into_iter()
+    .enumerate()
     .fold(
         (0 as u16, SymbolConfig::new(), Vec::new()),
-        |(offset, mut labels, mut insts), ios| match ios {
+        |(offset, mut labels, mut insts), (line, ios)| match ios {
             InstructionOrSymbol::Instruction(i) => {
                 let size_of = i.size_of();
-                insts.push(addressing::Positional::with_position(offset, i));
+                let line_number = line + 1;
+                insts.push((
+                    line_number,
+                    addressing::Positional::with_position(offset, i),
+                ));
                 (offset + size_of, labels, insts)
             }
             InstructionOrSymbol::Label(l) => {
@@ -43,16 +48,15 @@ pub fn assemble(source: &str) -> AssemblerResult {
 
     let opcodes = insts
         .into_iter()
-        .map(|pi| pi.unwrap())
-        .map(|i| {
+        .map(|(line, pi)| (line, pi.unwrap()))
+        .map(|(line, i)| {
             let mnemonic = i.mnemonic;
             let amol = i.amol;
             match amol {
-                AddressModeOrLabel::Label(l) => symbols
-                    .get(&l)
-                    .map_or(Err("Symbol undefined".to_string()), |offset| {
-                        Ok((mnemonic, AddressMode::Absolute(*offset)))
-                    }),
+                AddressModeOrLabel::Label(l) => symbols.get(&l).map_or(
+                    Err(format!("Symbol {}, undefined at line: {}", &l, line)),
+                    |offset| Ok((mnemonic, AddressMode::Absolute(*offset))),
+                ),
                 AddressModeOrLabel::AddressMode(am) => Ok((mnemonic, am)),
             }
         })
