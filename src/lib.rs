@@ -1,9 +1,6 @@
 use parcel::prelude::v1::*;
 use std::collections::HashMap;
 
-#[cfg(test)]
-mod tests;
-
 #[macro_use]
 pub mod instruction_set;
 use instruction_set::address_mode::{AddressMode, AddressModeOrLabel};
@@ -11,6 +8,9 @@ use instruction_set::{InstructionOrSymbol, Mnemonic, StaticInstruction};
 mod addressing;
 use addressing::SizeOf;
 mod parser;
+
+#[cfg(test)]
+mod tests;
 
 /// A type storing the results of an assemble representing an array of bytes
 /// or a String Error.
