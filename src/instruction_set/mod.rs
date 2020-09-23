@@ -1,6 +1,6 @@
 pub mod address_mode;
-use address_mode::AddressModeOrLabel;
 pub use address_mode::AddressMode;
+use address_mode::AddressModeOrLabel;
 pub mod mnemonics;
 use crate::addressing;
 pub use mnemonics::Mnemonic;
@@ -12,7 +12,7 @@ mod tests;
 /// parser.
 #[derive(Debug, Clone, PartialEq)]
 pub enum InstructionOrSymbol {
-    Instruction(StaticInstruction),
+    Instruction(Instruction),
     Label(String),
 }
 
@@ -23,22 +23,28 @@ pub type OpCode = u8;
 /// and either a static address_mode or a label.
 #[derive(Clone, PartialEq, Debug)]
 pub struct Instruction {
-    mnemonic: Mnemonic,
-    amol: AddressModeOrLabel,
+    pub mnemonic: Mnemonic,
+    pub amol: AddressModeOrLabel,
 }
 
 impl Instruction {
     pub fn new(mnemonic: Mnemonic, amol: AddressModeOrLabel) -> Self {
-        Self {
-            mnemonic,
-            amol,
-        }
+        Self { mnemonic, amol }
     }
 }
 
 impl addressing::SizeOf for Instruction {
-    fn size_of(&self) -> usize {
+    fn size_of(&self) -> u16 {
         self.mnemonic.size_of() + self.amol.size_of()
+    }
+}
+
+impl From<StaticInstruction> for Instruction {
+    fn from(si: StaticInstruction) -> Self {
+        Self {
+            mnemonic: si.mnemonic,
+            amol: AddressModeOrLabel::AddressMode(si.address_mode),
+        }
     }
 }
 
@@ -46,8 +52,8 @@ impl addressing::SizeOf for Instruction {
 /// and static address mode, mapping directly to an address or byte value.
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct StaticInstruction {
-    mnemonic: Mnemonic,
-    address_mode: AddressMode,
+    pub mnemonic: Mnemonic,
+    pub address_mode: AddressMode,
 }
 
 impl StaticInstruction {
@@ -60,7 +66,7 @@ impl StaticInstruction {
 }
 
 impl addressing::SizeOf for StaticInstruction {
-    fn size_of(&self) -> usize {
+    fn size_of(&self) -> u16 {
         self.mnemonic.size_of() + self.address_mode.size_of()
     }
 }
@@ -236,9 +242,7 @@ impl Into<Vec<u8>> for StaticInstruction {
 #[allow(unused_macros)]
 macro_rules! instruction {
     ($mnemonic:expr, $amos:expr) => {
-        $crate::instruction_set::Instruction::new(
-            $mnemonic, $amos
-        )
+        $crate::instruction_set::Instruction::new($mnemonic, $amos)
     };
 }
 

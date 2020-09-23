@@ -11,7 +11,7 @@ pub enum AddressModeOrLabel {
 }
 
 impl addressing::SizeOf for AddressModeOrLabel {
-    fn size_of(&self) -> usize {
+    fn size_of(&self) -> u16 {
         match self {
             Self::AddressMode(am) => am.size_of(),
             Self::Label(_) => 2,
@@ -58,7 +58,7 @@ impl Into<Vec<u8>> for AddressMode {
 }
 
 impl addressing::SizeOf for AddressMode {
-    fn size_of(&self) -> usize {
+    fn size_of(&self) -> u16 {
         match self {
             AddressMode::Accumulator | AddressMode::Implied => 0,
             AddressMode::Absolute(_)

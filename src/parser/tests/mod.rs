@@ -1,3 +1,4 @@
+use crate::instruction_set::address_mode::AddressModeOrLabel;
 use crate::instruction_set::{AddressMode, Mnemonic};
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
@@ -37,10 +38,22 @@ lda #$12
 sta $1234
 jmp $1234",
         vec![
-            static_instruction!(Mnemonic::NOP, AddressMode::Implied),
-            static_instruction!(Mnemonic::LDA, AddressMode::Immediate(0x12)),
-            static_instruction!(Mnemonic::STA, AddressMode::Absolute(0x1234)),
-            static_instruction!(Mnemonic::JMP, AddressMode::Absolute(0x1234))
+            instruction!(
+                Mnemonic::NOP,
+                AddressModeOrLabel::AddressMode(AddressMode::Implied)
+            ),
+            instruction!(
+                Mnemonic::LDA,
+                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+            ),
+            instruction!(
+                Mnemonic::STA,
+                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+            ),
+            instruction!(
+                Mnemonic::JMP,
+                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+            )
         ]
     )
 }
@@ -56,10 +69,22 @@ lda #$12
 sta $1234
 jmp $1234",
         vec![
-            static_instruction!(Mnemonic::NOP, AddressMode::Implied),
-            static_instruction!(Mnemonic::LDA, AddressMode::Immediate(0x12)),
-            static_instruction!(Mnemonic::STA, AddressMode::Absolute(0x1234)),
-            static_instruction!(Mnemonic::JMP, AddressMode::Absolute(0x1234))
+            instruction!(
+                Mnemonic::NOP,
+                AddressModeOrLabel::AddressMode(AddressMode::Implied)
+            ),
+            instruction!(
+                Mnemonic::LDA,
+                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+            ),
+            instruction!(
+                Mnemonic::STA,
+                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+            ),
+            instruction!(
+                Mnemonic::JMP,
+                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+            )
         ]
     )
 }
@@ -75,18 +100,21 @@ init:
   jmp $1234",
         vec![
             ios_label!("init"),
-            ios_instruction!(static_instruction!(Mnemonic::NOP, AddressMode::Implied)),
-            ios_instruction!(static_instruction!(
+            ios_instruction!(instruction!(
+                Mnemonic::NOP,
+                AddressModeOrLabel::AddressMode(AddressMode::Implied)
+            )),
+            ios_instruction!(instruction!(
                 Mnemonic::LDA,
-                AddressMode::Immediate(0x12)
+                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
             )),
-            ios_instruction!(static_instruction!(
+            ios_instruction!(instruction!(
                 Mnemonic::STA,
-                AddressMode::Absolute(0x1234)
+                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
             )),
-            ios_instruction!(static_instruction!(
+            ios_instruction!(instruction!(
                 Mnemonic::JMP,
-                AddressMode::Absolute(0x1234)
+                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
             ))
         ]
     )
@@ -105,9 +133,18 @@ lda #$12 ; this is the first instruction
 sta $1234
 jmp $1234",
         vec![
-            static_instruction!(Mnemonic::LDA, AddressMode::Immediate(0x12)),
-            static_instruction!(Mnemonic::STA, AddressMode::Absolute(0x1234)),
-            static_instruction!(Mnemonic::JMP, AddressMode::Absolute(0x1234))
+            instruction!(
+                Mnemonic::LDA,
+                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+            ),
+            instruction!(
+                Mnemonic::STA,
+                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+            ),
+            instruction!(
+                Mnemonic::JMP,
+                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+            )
         ]
     )
 }

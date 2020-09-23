@@ -1,7 +1,7 @@
 extern crate parcel;
 use crate::instruction_set::address_mode::{AddressMode, AddressModeOrLabel};
 use crate::instruction_set::mnemonics::Mnemonic;
-use crate::instruction_set::{InstructionOrSymbol, StaticInstruction};
+use crate::instruction_set::{Instruction, InstructionOrSymbol};
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
 use std::convert::TryFrom;
@@ -40,9 +40,8 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol
         )),
     )
     .map(|(m, a)| match a {
-        Some(AddressModeOrLabel::AddressMode(am)) => StaticInstruction::new(m, am),
-        Some(AddressModeOrLabel::Label(_)) => StaticInstruction::new(m, AddressMode::Implied), // TODO: Actually handle notes here`
-        None => StaticInstruction::new(m, AddressMode::Implied),
+        Some(amol) => Instruction::new(m, amol),
+        None => Instruction::new(m, AddressModeOrLabel::AddressMode(AddressMode::Implied)),
     })
     .map(|i| InstructionOrSymbol::Instruction(i))
 }

@@ -1,9 +1,7 @@
 /// SizeOf provides the trait to implement referencing the size of an object
 // in bytes.
 pub trait SizeOf {
-    fn size_of(&self) -> usize {
-        std::mem::size_of_val(&self)
-    }
+    fn size_of(&self) -> u16;
 }
 
 /// Positional functions to store an object wrapped with an offset position
@@ -11,7 +9,7 @@ pub struct Positional<T>
 where
     T: SizeOf,
 {
-    pub position: usize,
+    pub position: u16,
     contents: T,
 }
 
@@ -27,7 +25,7 @@ where
     }
 
     /// with_position instantiates a new position, taking a starting offset and a contents to wrap.
-    pub fn with_position(position: usize, contents: T) -> Self {
+    pub fn with_position(position: u16, contents: T) -> Self {
         Self { position, contents }
     }
 
