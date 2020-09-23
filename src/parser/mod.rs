@@ -16,7 +16,7 @@ pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a str, Vec<InstructionOrS
     one_or_more(right(join(
         zero_or_more(whitespace().or(|| newline())),
         left(join(
-            symboldef()
+            labeldef()
                 .map(|i| Some(i))
                 .or(|| comment().map(|_| None))
                 .or(|| instruction().map(|i| Some(i))),
@@ -52,11 +52,6 @@ fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
         zero_or_more(character().or(|| whitespace())),
     ))
     .map(|_| ())
-}
-
-#[allow(dead_code)]
-fn symboldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
-    labeldef()
 }
 
 fn labeldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrSymbol> {
