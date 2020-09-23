@@ -1,3 +1,5 @@
+use crate::addressing;
+
 /// AddressMode captures the Address mode type with a corresponding
 /// operand of the appropriate bit length.
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -32,6 +34,19 @@ impl Into<Vec<u8>> for AddressMode {
             AddressMode::IndexedIndirect(operand) => vec![operand],
             AddressMode::IndirectIndexed(operand) => vec![operand],
             _ => vec![],
+        }
+    }
+}
+
+impl addressing::SizeOf for AddressMode {
+    fn size_of(&self) -> usize {
+        match self {
+            AddressMode::Accumulator | AddressMode::Implied => 0,
+            AddressMode::Absolute(_)
+            | AddressMode::Indirect(_)
+            | AddressMode::AbsoluteIndexedWithX(_)
+            | AddressMode::AbsoluteIndexedWithY(_) => 2,
+            _ => 1,
         }
     }
 }

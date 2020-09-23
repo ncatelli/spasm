@@ -1,5 +1,7 @@
 use std::convert::TryFrom;
 
+use crate::addressing;
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Mnemonic {
     // Load-Store
@@ -79,6 +81,11 @@ pub enum Mnemonic {
     NOP,
 }
 
+impl addressing::SizeOf for Mnemonic {
+    fn size_of(&self) -> usize {
+        1
+    }
+}
 impl TryFrom<&str> for Mnemonic {
     type Error = String;
 
