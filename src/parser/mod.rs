@@ -1,5 +1,5 @@
 extern crate parcel;
-use crate::instruction_set::address_mode::{AddressMode, AddressModeOrLabel};
+use crate::instruction_set::address_mode::{AddressMode, AddressModeOrReference};
 use crate::instruction_set::mnemonics::Mnemonic;
 use crate::instruction_set::{Instruction, InstructionOrDefinition};
 use parcel::prelude::v1::*;
@@ -42,7 +42,7 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrDefini
     )
     .map(|(m, a)| match a {
         Some(amol) => Instruction::new(m, amol),
-        None => Instruction::new(m, AddressModeOrLabel::AddressMode(AddressMode::Implied)),
+        None => Instruction::new(m, AddressModeOrReference::AddressMode(AddressMode::Implied)),
     })
     .map(|i| InstructionOrDefinition::Instruction(i))
 }
@@ -56,14 +56,19 @@ fn comment<'a>() -> impl parcel::Parser<'a, &'a str, ()> {
 }
 
 fn labeldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrDefinition> {
-    left(join(zero_or_more(alphabetic()), expect_character(':')))
+    left(join(one_or_more(alphabetic()), expect_character(':')))
         .map(|cv| InstructionOrDefinition::Label(cv.into_iter().collect()))
 }
 
-// TODO
 fn symboldef<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrDefinition> {
-    left(join(zero_or_more(alphabetic()), expect_character(':')))
-        .map(|cv| InstructionOrDefinition::Label(cv.into_iter().collect()))
+    right(join(
+        join(expect_str("define"), one_or_more(whitespace())),
+        join(
+            left(join(one_or_more(alphabetic()), one_or_more(whitespace()))),
+            unsigned8(),
+        ),
+    ))
+    .map(|(s, v)| InstructionOrDefinition::Symbol((s.into_iter().collect(), v)))
 }
 
 fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {
@@ -72,7 +77,7 @@ fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a str, Mnemonic> {
 }
 
 #[allow(clippy::redundant_closure)]
-fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrLabel> {
+fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
     accumulator()
         .or(|| zeropage())
         .or(|| zeropage_x_indexed())
@@ -84,8 +89,8 @@ fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrLabel> {
         .or(|| absolute())
         .or(|| immediate())
         .or(|| indirect())
-        .map(|am| AddressModeOrLabel::AddressMode(am))
-        .or(|| label().map(|l| AddressModeOrLabel::Label(l)))
+        .map(|am| AddressModeOrReference::AddressMode(am))
+        .or(|| label().map(|l| AddressModeOrReference::Label(l)))
     //        .or(|| relative())
 }
 

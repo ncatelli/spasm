@@ -35,7 +35,7 @@ mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
 
 comment        = ";" ( whitespace | character )* ;
 
-symboldef      = upper* '=' byte ;
+symboldef      = "define" alphabetic byte ;
 
 symbol         = upper* ;
 

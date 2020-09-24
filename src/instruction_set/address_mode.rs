@@ -1,20 +1,23 @@
 use crate::addressing;
 
 pub type Label = String;
+pub type Symbol = String;
 
-/// AddressModeOrLabel handles for parsing either an explicit address mode or a
+/// AddressModeOrReference handles for parsing either an explicit address mode or a
 /// label mapping.
 #[derive(Clone, PartialEq, Debug)]
-pub enum AddressModeOrLabel {
+pub enum AddressModeOrReference {
     AddressMode(AddressMode),
     Label(Label),
+    Symbol(Symbol),
 }
 
-impl addressing::SizeOf for AddressModeOrLabel {
+impl addressing::SizeOf for AddressModeOrReference {
     fn size_of(&self) -> u16 {
         match self {
             Self::AddressMode(am) => am.size_of(),
             Self::Label(_) => 2,
+            Self::Symbol(_) => 1,
         }
     }
 }

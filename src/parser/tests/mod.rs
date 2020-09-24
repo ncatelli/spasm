@@ -1,4 +1,4 @@
-use crate::instruction_set::address_mode::AddressModeOrLabel;
+use crate::instruction_set::address_mode::AddressModeOrReference;
 use crate::instruction_set::{AddressMode, Mnemonic};
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
@@ -40,19 +40,19 @@ jmp $1234",
         vec![
             instruction!(
                 Mnemonic::NOP,
-                AddressModeOrLabel::AddressMode(AddressMode::Implied)
+                AddressModeOrReference::AddressMode(AddressMode::Implied)
             ),
             instruction!(
                 Mnemonic::LDA,
-                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+                AddressModeOrReference::AddressMode(AddressMode::Immediate(0x12))
             ),
             instruction!(
                 Mnemonic::STA,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             ),
             instruction!(
                 Mnemonic::JMP,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )
         ]
     )
@@ -71,19 +71,19 @@ jmp $1234",
         vec![
             instruction!(
                 Mnemonic::NOP,
-                AddressModeOrLabel::AddressMode(AddressMode::Implied)
+                AddressModeOrReference::AddressMode(AddressMode::Implied)
             ),
             instruction!(
                 Mnemonic::LDA,
-                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+                AddressModeOrReference::AddressMode(AddressMode::Immediate(0x12))
             ),
             instruction!(
                 Mnemonic::STA,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             ),
             instruction!(
                 Mnemonic::JMP,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )
         ]
     )
@@ -102,19 +102,19 @@ init:
             iod_label!("init"),
             iod_instruction!(instruction!(
                 Mnemonic::NOP,
-                AddressModeOrLabel::AddressMode(AddressMode::Implied)
+                AddressModeOrReference::AddressMode(AddressMode::Implied)
             )),
             iod_instruction!(instruction!(
                 Mnemonic::LDA,
-                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+                AddressModeOrReference::AddressMode(AddressMode::Immediate(0x12))
             )),
             iod_instruction!(instruction!(
                 Mnemonic::STA,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )),
             iod_instruction!(instruction!(
                 Mnemonic::JMP,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             ))
         ]
     )
@@ -135,15 +135,15 @@ jmp $1234",
         vec![
             instruction!(
                 Mnemonic::LDA,
-                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+                AddressModeOrReference::AddressMode(AddressMode::Immediate(0x12))
             ),
             instruction!(
                 Mnemonic::STA,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             ),
             instruction!(
                 Mnemonic::JMP,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )
         ]
     )

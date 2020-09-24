@@ -1,6 +1,6 @@
 pub mod address_mode;
 pub use address_mode::AddressMode;
-use address_mode::AddressModeOrLabel;
+use address_mode::AddressModeOrReference;
 pub mod mnemonics;
 use crate::addressing;
 pub use mnemonics::Mnemonic;
@@ -14,6 +14,7 @@ mod tests;
 pub enum InstructionOrDefinition {
     Instruction(Instruction),
     Label(String),
+    Symbol((String, u8)),
 }
 
 /// OpCode represents an unsigned 8bit value.
@@ -24,11 +25,11 @@ pub type OpCode = u8;
 #[derive(Clone, PartialEq, Debug)]
 pub struct Instruction {
     pub mnemonic: Mnemonic,
-    pub amol: AddressModeOrLabel,
+    pub amol: AddressModeOrReference,
 }
 
 impl Instruction {
-    pub fn new(mnemonic: Mnemonic, amol: AddressModeOrLabel) -> Self {
+    pub fn new(mnemonic: Mnemonic, amol: AddressModeOrReference) -> Self {
         Self { mnemonic, amol }
     }
 }
@@ -43,7 +44,7 @@ impl From<StaticInstruction> for Instruction {
     fn from(si: StaticInstruction) -> Self {
         Self {
             mnemonic: si.mnemonic,
-            amol: AddressModeOrLabel::AddressMode(si.address_mode),
+            amol: AddressModeOrReference::AddressMode(si.address_mode),
         }
     }
 }

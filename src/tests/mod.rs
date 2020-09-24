@@ -47,7 +47,7 @@ init:
 ";
 
     assert_eq!(
-        Err("Symbol notinit, undefined at line: 6".to_string()),
+        Err("label notinit, undefined at line: 6".to_string()),
         assemble(input)
     )
 }

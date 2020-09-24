@@ -79,6 +79,19 @@ pub fn expect_character<'a>(expected: char) -> impl Parser<'a, &'a str, char> {
     }
 }
 
+pub fn expect_str<'a>(expected: &'static str) -> impl Parser<'a, &'a str, String> {
+    move |input: &'a str| {
+        let preparse_input = input;
+        let expected_len = expected.len();
+        let next: String = input.chars().take(expected_len).collect();
+        if &next == expected {
+            Ok(MatchStatus::Match((&input[expected_len..], next)))
+        } else {
+            Ok(MatchStatus::NoMatch(preparse_input))
+        }
+    }
+}
+
 pub fn unsigned16<'a>() -> impl Parser<'a, &'a str, u16> {
     hex_u16().or(|| binary_u16()).or(|| dec_u16())
 }
