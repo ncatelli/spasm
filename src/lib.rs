@@ -63,7 +63,7 @@ pub fn assemble(source: &str) -> AssemblerResult {
                     |offset| Ok((mnemonic, AddressMode::Absolute(*offset))),
                 ),
                 AddressModeOrReference::Symbol(s) => symbols.get(&s.symbol).map_or(
-                    Err(format!("symbol {}, undefined at line: {}", &s, line)),
+                    Err(format!("symbol {}, undefined at line: {}", &s.symbol, line)),
                     |byte_value| Ok((mnemonic, AddressMode::Immediate(*byte_value))),
                 ),
                 AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
