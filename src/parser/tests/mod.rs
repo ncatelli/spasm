@@ -121,6 +121,37 @@ init:
 }
 
 #[test]
+fn should_parse_symbols() {
+    gen_program_test!(
+        "
+define thisisatest $12
+nop
+lda #$12
+sta $1234
+jmp $1234",
+        vec![
+            iod_symbol!("thisisatest", 0x12),
+            iod_instruction!(instruction!(
+                Mnemonic::NOP,
+                AddressModeOrReference::AddressMode(AddressMode::Implied)
+            )),
+            iod_instruction!(instruction!(
+                Mnemonic::LDA,
+                AddressModeOrReference::AddressMode(AddressMode::Immediate(0x12))
+            )),
+            iod_instruction!(instruction!(
+                Mnemonic::STA,
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
+            )),
+            iod_instruction!(instruction!(
+                Mnemonic::JMP,
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
+            ))
+        ]
+    )
+}
+
+#[test]
 fn should_parse_singleline_comment() {
     gen_instruction_only_program_test!("; test comment", vec![])
 }

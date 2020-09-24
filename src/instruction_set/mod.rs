@@ -263,7 +263,14 @@ macro_rules! iod_instruction {
 
 #[allow(unused_macros)]
 macro_rules! iod_label {
-    ($symbol:expr) => {
-        $crate::instruction_set::InstructionOrDefinition::Label($symbol.to_string())
+    ($label:expr) => {
+        $crate::instruction_set::InstructionOrDefinition::Label($label.to_string())
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! iod_symbol {
+    ($symbol:expr, $value:expr) => {
+        $crate::instruction_set::InstructionOrDefinition::Symbol(($symbol.to_string(), $value))
     };
 }
