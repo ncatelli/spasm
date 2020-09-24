@@ -1,7 +1,7 @@
 extern crate parcel;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
-use parcel::{join, one_or_more, right, take_n};
+use parcel::{join, one_or_more, optional, right, take_n};
 
 macro_rules! char_vec_to_u16_from_radix {
     ($chars:expr, $radix:expr) => {
@@ -101,14 +101,7 @@ pub fn unsigned8<'a>() -> impl Parser<'a, &'a str, u8> {
 }
 
 pub fn signed8<'a>() -> impl Parser<'a, &'a str, i8> {
-    join(sign(), right(join(expect_character('$'), hex_bytes(1)))).map(|(sign, hex)| {
-        let signed_char_vec = if sign == Sign::Negative {
-            vec![vec!['-'], hex].into_iter().flatten().collect()
-        } else {
-            hex
-        };
-        char_vec_to_i8_from_radix!(signed_char_vec, 16)
-    })
+    hex_i8().or(|| binary_i8()).or(|| dec_i8())
 }
 
 fn sign<'a>() -> impl Parser<'a, &'a str, Sign> {
@@ -128,6 +121,10 @@ fn hex_u8<'a>() -> impl Parser<'a, &'a str, u8> {
     right(join(expect_character('$'), hex_bytes(1))).map(|hex| char_vec_to_u8_from_radix!(hex, 16))
 }
 
+fn hex_i8<'a>() -> impl Parser<'a, &'a str, i8> {
+    right(join(expect_character('$'), hex_bytes(1))).map(|hex| char_vec_to_i8_from_radix!(hex, 16))
+}
+
 pub fn hex_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a str, Vec<char>> {
     take_n(hex_digit(), bytes * 2)
 }
@@ -141,12 +138,17 @@ pub fn hex_digit<'a>() -> impl Parser<'a, &'a str, char> {
 
 fn binary_u16<'a>() -> impl Parser<'a, &'a str, u16> {
     right(join(expect_character('%'), binary_bytes(2)))
-        .map(|hex| char_vec_to_u16_from_radix!(hex, 2))
+        .map(|bin| char_vec_to_u16_from_radix!(bin, 2))
 }
 
 fn binary_u8<'a>() -> impl Parser<'a, &'a str, u8> {
     right(join(expect_character('%'), binary_bytes(1)))
-        .map(|hex| char_vec_to_u8_from_radix!(hex, 2))
+        .map(|bin| char_vec_to_u8_from_radix!(bin, 2))
+}
+
+fn binary_i8<'a>() -> impl Parser<'a, &'a str, i8> {
+    right(join(expect_character('%'), binary_bytes(1)))
+        .map(|bin| char_vec_to_i8_from_radix!(bin, 2))
 }
 
 pub fn binary_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a str, Vec<char>> {
@@ -186,6 +188,33 @@ fn dec_u8<'a>() -> impl Parser<'a, &'a str, u8> {
             .map(|digits| {
                 let vd: String = digits.into_iter().collect();
                 u8::from_str_radix(&vd, 10)
+            })
+            .parse(input);
+
+        match res {
+            Ok(MatchStatus::Match((rem, Ok(u)))) => Ok(MatchStatus::Match((rem, u))),
+            Ok(MatchStatus::Match((_, Err(_)))) => Ok(MatchStatus::NoMatch(preparsed_input)),
+            Ok(MatchStatus::NoMatch(rem)) => Ok(MatchStatus::NoMatch(rem)),
+            Err(e) => Err(e),
+        }
+    }
+}
+
+fn dec_i8<'a>() -> impl Parser<'a, &'a str, i8> {
+    move |input: &'a str| {
+        let preparsed_input = input;
+        let res = join(optional(sign()), one_or_more(decimal()))
+            .map(|(sign, digits)| {
+                let pos_or_neg = match sign {
+                    Some(Sign::Negative) => '-',
+                    _ => '+',
+                };
+
+                let vd: String = vec![pos_or_neg]
+                    .into_iter()
+                    .chain(digits.into_iter())
+                    .collect();
+                i8::from_str_radix(&vd, 10)
             })
             .parse(input);
 
