@@ -1,5 +1,7 @@
-use crate::instruction_set::address_mode::AddressModeOrReference;
-use crate::instruction_set::{AddressMode, Mnemonic};
+use crate::instruction_set::address_mode::{
+    AddressMode, AddressModeOrReference, AddressModeType, Symbol,
+};
+use crate::instruction_set::Mnemonic;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
@@ -126,7 +128,7 @@ fn should_parse_symbols() {
         "
 define thisisatest $12
 nop
-lda #$12
+lda #thisisatest
 sta $1234
 jmp $1234",
         vec![
@@ -137,7 +139,10 @@ jmp $1234",
             )),
             iod_instruction!(instruction!(
                 Mnemonic::LDA,
-                AddressModeOrReference::AddressMode(AddressMode::Immediate(0x12))
+                AddressModeOrReference::Symbol(Symbol::new(
+                    AddressModeType::Immediate,
+                    "thisisatest".to_string()
+                ))
             )),
             iod_instruction!(instruction!(
                 Mnemonic::STA,

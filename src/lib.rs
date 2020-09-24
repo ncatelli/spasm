@@ -56,13 +56,13 @@ pub fn assemble(source: &str) -> AssemblerResult {
         .map(|(line, pi)| (line, pi.unwrap()))
         .map(|(line, i)| {
             let mnemonic = i.mnemonic;
-            let amol = i.amol;
-            match amol {
+            let amor = i.amor;
+            match amor {
                 AddressModeOrReference::Label(l) => labels.get(&l).map_or(
                     Err(format!("label {}, undefined at line: {}", &l, line)),
                     |offset| Ok((mnemonic, AddressMode::Absolute(*offset))),
                 ),
-                AddressModeOrReference::Symbol(s) => symbols.get(&s).map_or(
+                AddressModeOrReference::Symbol(s) => symbols.get(&s.symbol).map_or(
                     Err(format!("symbol {}, undefined at line: {}", &s, line)),
                     |byte_value| Ok((mnemonic, AddressMode::Immediate(*byte_value))),
                 ),

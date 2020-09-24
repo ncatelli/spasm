@@ -25,18 +25,18 @@ pub type OpCode = u8;
 #[derive(Clone, PartialEq, Debug)]
 pub struct Instruction {
     pub mnemonic: Mnemonic,
-    pub amol: AddressModeOrReference,
+    pub amor: AddressModeOrReference,
 }
 
 impl Instruction {
-    pub fn new(mnemonic: Mnemonic, amol: AddressModeOrReference) -> Self {
-        Self { mnemonic, amol }
+    pub fn new(mnemonic: Mnemonic, amor: AddressModeOrReference) -> Self {
+        Self { mnemonic, amor }
     }
 }
 
 impl addressing::SizeOf for Instruction {
     fn size_of(&self) -> u16 {
-        self.mnemonic.size_of() + self.amol.size_of()
+        self.mnemonic.size_of() + self.amor.size_of()
     }
 }
 
@@ -44,7 +44,7 @@ impl From<StaticInstruction> for Instruction {
     fn from(si: StaticInstruction) -> Self {
         Self {
             mnemonic: si.mnemonic,
-            amol: AddressModeOrReference::AddressMode(si.address_mode),
+            amor: AddressModeOrReference::AddressMode(si.address_mode),
         }
     }
 }

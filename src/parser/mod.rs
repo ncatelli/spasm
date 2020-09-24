@@ -1,5 +1,7 @@
 extern crate parcel;
-use crate::instruction_set::address_mode::{AddressMode, AddressModeOrReference};
+use crate::instruction_set::address_mode::{
+    AddressMode, AddressModeOrReference, AddressModeType, Symbol,
+};
 use crate::instruction_set::mnemonics::Mnemonic;
 use crate::instruction_set::{Instruction, InstructionOrDefinition};
 use parcel::prelude::v1::*;
@@ -41,7 +43,7 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a str, InstructionOrDefini
         )),
     )
     .map(|(m, a)| match a {
-        Some(amol) => Instruction::new(m, amol),
+        Some(amor) => Instruction::new(m, amor),
         None => Instruction::new(m, AddressModeOrReference::AddressMode(AddressMode::Implied)),
     })
     .map(|i| InstructionOrDefinition::Instruction(i))
@@ -89,7 +91,7 @@ fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference
         .or(|| absolute())
         .or(|| immediate())
         .or(|| indirect())
-        .map(|am| AddressModeOrReference::AddressMode(am))
+        .map(|amor| amor)
         .or(|| label().map(|l| AddressModeOrReference::Label(l)))
     //        .or(|| relative())
 }
@@ -98,43 +100,53 @@ fn label<'a>() -> impl parcel::Parser<'a, &'a str, String> {
     one_or_more(alphabetic()).map(|l| l.into_iter().collect())
 }
 
-fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    expect_character('A').map(|_| AddressMode::Accumulator)
+fn symbol<'a>() -> impl parcel::Parser<'a, &'a str, String> {
+    one_or_more(alphabetic()).map(|l| l.into_iter().collect())
 }
 
-fn absolute<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    unsigned16().map(|h| AddressMode::Absolute(h))
+fn accumulator<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
+    expect_character('A').map(|_| AddressModeOrReference::AddressMode(AddressMode::Accumulator))
 }
 
-fn absolute_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+fn absolute<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
+    unsigned16().map(|h| AddressModeOrReference::AddressMode(AddressMode::Absolute(h)))
+}
+
+fn absolute_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
     left(join(
         unsigned16(),
         join(expect_character(','), expect_character('X')),
     ))
-    .map(|h| AddressMode::AbsoluteIndexedWithX(h))
+    .map(|h| AddressModeOrReference::AddressMode(AddressMode::AbsoluteIndexedWithX(h)))
 }
 
-fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
     left(join(
         unsigned16(),
         join(expect_character(','), expect_character('Y')),
     ))
-    .map(|h| AddressMode::AbsoluteIndexedWithY(h))
+    .map(|h| AddressModeOrReference::AddressMode(AddressMode::AbsoluteIndexedWithY(h)))
 }
 
-fn immediate<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(expect_character('#'), unsigned8())).map(|u| AddressMode::Immediate(u))
+fn immediate<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
+    right(join(expect_character('#'), unsigned8()))
+        .map(|u| AddressModeOrReference::AddressMode(AddressMode::Immediate(u)))
+        .or(|| {
+            right(join(expect_character('#'), symbol())).map(|sym| {
+                AddressModeOrReference::Symbol(Symbol::new(AddressModeType::Immediate, sym))
+            })
+        })
 }
 
-fn indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+fn indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
     right(join(
         expect_character('('),
         left(join(unsigned16(), expect_character(')'))),
     ))
-    .map(|bytes| AddressMode::Indirect(bytes))
+    .map(|bytes| AddressModeOrReference::AddressMode(AddressMode::Indirect(bytes)))
 }
 
-fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
     right(join(
         expect_character('('),
         left(join(
@@ -145,10 +157,25 @@ fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
             ),
         )),
     ))
-    .map(|u| AddressMode::IndexedIndirect(u))
+    .map(|u| AddressModeOrReference::AddressMode(AddressMode::IndexedIndirect(u)))
+    .or(|| {
+        right(join(
+            expect_character('('),
+            left(join(
+                symbol(),
+                join(
+                    join(expect_character(','), expect_character('X')),
+                    expect_character(')'),
+                ),
+            )),
+        ))
+        .map(|sym| {
+            AddressModeOrReference::Symbol(Symbol::new(AddressModeType::IndexedIndirect, sym))
+        })
+    })
 }
 
-fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
     right(join(
         expect_character('('),
         left(join(
@@ -159,31 +186,71 @@ fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
             ),
         )),
     ))
-    .map(|u| AddressMode::IndirectIndexed(u))
+    .map(|u| AddressModeOrReference::AddressMode(AddressMode::IndirectIndexed(u)))
+    .or(|| {
+        right(join(
+            expect_character('('),
+            left(join(
+                symbol(),
+                join(
+                    join(expect_character(')'), expect_character(',')),
+                    expect_character('Y'),
+                ),
+            )),
+        ))
+        .map(|sym| {
+            AddressModeOrReference::Symbol(Symbol::new(AddressModeType::IndirectIndexed, sym))
+        })
+    })
 }
 
 // Needs implementation of signed bits
 #[allow(dead_code)]
-fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    right(join(expect_character('*'), signed8())).map(|i| AddressMode::Relative(i))
+fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
+    right(join(expect_character('*'), signed8()))
+        .map(|i| AddressModeOrReference::AddressMode(AddressMode::Relative(i)))
 }
 
-fn zeropage<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
-    left(join(unsigned8(), whitespace().or(|| eof()))).map(|u| AddressMode::ZeroPage(u))
+fn zeropage<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
+    left(join(unsigned8(), whitespace().or(|| eof())))
+        .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPage(u)))
+        .or(|| {
+            left(join(symbol(), whitespace().or(|| eof()))).map(|sym| {
+                AddressModeOrReference::Symbol(Symbol::new(AddressModeType::ZeroPage, sym))
+            })
+        })
 }
 
-fn zeropage_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+fn zeropage_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
     left(join(
         unsigned8(),
         join(expect_character(','), expect_character('X')),
     ))
-    .map(|u| AddressMode::ZeroPageIndexedWithX(u))
+    .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPageIndexedWithX(u)))
+    .or(|| {
+        left(join(
+            symbol(),
+            join(expect_character(','), expect_character('X')),
+        ))
+        .map(|sym| {
+            AddressModeOrReference::Symbol(Symbol::new(AddressModeType::ZeroPageIndexedWithX, sym))
+        })
+    })
 }
 
-fn zeropage_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressMode> {
+fn zeropage_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
     left(join(
         unsigned8(),
         join(expect_character(','), expect_character('Y')),
     ))
-    .map(|u| AddressMode::ZeroPageIndexedWithY(u))
+    .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPageIndexedWithY(u)))
+    .or(|| {
+        left(join(
+            symbol(),
+            join(expect_character(','), expect_character('Y')),
+        ))
+        .map(|sym| {
+            AddressModeOrReference::Symbol(Symbol::new(AddressModeType::ZeroPageIndexedWithY, sym))
+        })
+    })
 }
