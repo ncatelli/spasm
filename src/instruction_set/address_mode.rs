@@ -114,7 +114,10 @@ impl Into<Vec<u8>> for AddressMode {
             AddressMode::Immediate(operand) => vec![operand],
             AddressMode::Absolute(operand) => operand.to_le_bytes().to_vec(),
             AddressMode::ZeroPage(operand) => vec![operand],
-            //            AddressMode::Relative(operand) => vec![operand], // need to implement for i8
+            AddressMode::Relative(operand) => {
+                let o_to_u8 = unsafe { std::mem::transmute::<i8, u8>(operand) };
+                vec![o_to_u8]
+            }
             AddressMode::Indirect(operand) => operand.to_le_bytes().to_vec(),
             AddressMode::AbsoluteIndexedWithX(operand) => operand.to_le_bytes().to_vec(),
             AddressMode::AbsoluteIndexedWithY(operand) => operand.to_le_bytes().to_vec(),
