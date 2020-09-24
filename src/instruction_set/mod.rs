@@ -1,6 +1,6 @@
 pub mod address_mode;
 pub use address_mode::AddressMode;
-use address_mode::AddressModeOrLabel;
+use address_mode::AddressModeOrReference;
 pub mod mnemonics;
 use crate::addressing;
 pub use mnemonics::Mnemonic;
@@ -8,12 +8,13 @@ pub use mnemonics::Mnemonic;
 #[cfg(test)]
 mod tests;
 
-/// InstructionOrSymbol wraps the token variants that can be derived from the
+/// InstructionOrDefinition wraps the token variants that can be derived from the
 /// parser.
 #[derive(Debug, Clone, PartialEq)]
-pub enum InstructionOrSymbol {
+pub enum InstructionOrDefinition {
     Instruction(Instruction),
     Label(String),
+    Symbol((String, u8)),
 }
 
 /// OpCode represents an unsigned 8bit value.
@@ -24,18 +25,18 @@ pub type OpCode = u8;
 #[derive(Clone, PartialEq, Debug)]
 pub struct Instruction {
     pub mnemonic: Mnemonic,
-    pub amol: AddressModeOrLabel,
+    pub amor: AddressModeOrReference,
 }
 
 impl Instruction {
-    pub fn new(mnemonic: Mnemonic, amol: AddressModeOrLabel) -> Self {
-        Self { mnemonic, amol }
+    pub fn new(mnemonic: Mnemonic, amor: AddressModeOrReference) -> Self {
+        Self { mnemonic, amor }
     }
 }
 
 impl addressing::SizeOf for Instruction {
     fn size_of(&self) -> u16 {
-        self.mnemonic.size_of() + self.amol.size_of()
+        self.mnemonic.size_of() + self.amor.size_of()
     }
 }
 
@@ -43,7 +44,7 @@ impl From<StaticInstruction> for Instruction {
     fn from(si: StaticInstruction) -> Self {
         Self {
             mnemonic: si.mnemonic,
-            amol: AddressModeOrLabel::AddressMode(si.address_mode),
+            amor: AddressModeOrReference::AddressMode(si.address_mode),
         }
     }
 }
@@ -254,15 +255,22 @@ macro_rules! static_instruction {
 }
 
 #[allow(unused_macros)]
-macro_rules! ios_instruction {
+macro_rules! iod_instruction {
     ($inst:expr) => {
-        $crate::instruction_set::InstructionOrSymbol::Instruction($inst)
+        $crate::instruction_set::InstructionOrDefinition::Instruction($inst)
     };
 }
 
 #[allow(unused_macros)]
-macro_rules! ios_label {
-    ($symbol:expr) => {
-        $crate::instruction_set::InstructionOrSymbol::Label($symbol.to_string())
+macro_rules! iod_label {
+    ($label:expr) => {
+        $crate::instruction_set::InstructionOrDefinition::Label($label.to_string())
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! iod_symbol {
+    ($symbol:expr, $value:expr) => {
+        $crate::instruction_set::InstructionOrDefinition::Symbol(($symbol.to_string(), $value))
     };
 }

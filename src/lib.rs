@@ -1,47 +1,52 @@
 use parcel::prelude::v1::*;
 use std::collections::HashMap;
 
-#[cfg(test)]
-mod tests;
-
 #[macro_use]
 pub mod instruction_set;
-use instruction_set::address_mode::{AddressMode, AddressModeOrLabel};
-use instruction_set::{InstructionOrSymbol, Mnemonic, StaticInstruction};
+use instruction_set::address_mode::{AddressMode, AddressModeOrReference};
+use instruction_set::{InstructionOrDefinition, Mnemonic, StaticInstruction};
 mod addressing;
 use addressing::SizeOf;
 mod parser;
+
+#[cfg(test)]
+mod tests;
 
 /// A type storing the results of an assemble representing an array of bytes
 /// or a String Error.
 pub type AssemblerResult = Result<Vec<u8>, String>;
 
-type SymbolConfig = HashMap<String, u16>;
+type LabelMap = HashMap<String, u16>;
+type SymbolMap = HashMap<String, u8>;
 
 // Converts a source string to it's corresponding array of little endinan binary
 // opcodes.
 pub fn assemble(source: &str) -> AssemblerResult {
-    let (_, symbols, insts) = match parser::instructions().parse(&source).unwrap() {
+    let (_, labels, symbols, insts) = match parser::instructions().parse(&source).unwrap() {
         parcel::MatchStatus::Match((_, insts)) => Ok(insts),
         _ => Err("match error".to_string()),
     }?
     .into_iter()
     .enumerate()
     .fold(
-        (0 as u16, SymbolConfig::new(), Vec::new()),
-        |(offset, mut labels, mut insts), (line, ios)| match ios {
-            InstructionOrSymbol::Instruction(i) => {
+        (0 as u16, LabelMap::new(), SymbolMap::new(), Vec::new()),
+        |(offset, mut labels, mut symbols, mut insts), (line, iod)| match iod {
+            InstructionOrDefinition::Instruction(i) => {
                 let size_of = i.size_of();
                 let line_number = line + 1;
                 insts.push((
                     line_number,
                     addressing::Positional::with_position(offset, i),
                 ));
-                (offset + size_of, labels, insts)
+                (offset + size_of, labels, symbols, insts)
             }
-            InstructionOrSymbol::Label(l) => {
+            InstructionOrDefinition::Label(l) => {
                 labels.insert(l, offset);
-                (offset, labels, insts)
+                (offset, labels, symbols, insts)
+            }
+            InstructionOrDefinition::Symbol((s, v)) => {
+                symbols.insert(s, v);
+                (offset, labels, symbols, insts)
             }
         },
     );
@@ -51,13 +56,17 @@ pub fn assemble(source: &str) -> AssemblerResult {
         .map(|(line, pi)| (line, pi.unwrap()))
         .map(|(line, i)| {
             let mnemonic = i.mnemonic;
-            let amol = i.amol;
-            match amol {
-                AddressModeOrLabel::Label(l) => symbols.get(&l).map_or(
-                    Err(format!("Symbol {}, undefined at line: {}", &l, line)),
+            let amor = i.amor;
+            match amor {
+                AddressModeOrReference::Label(l) => labels.get(&l).map_or(
+                    Err(format!("label {}, undefined at line: {}", &l, line)),
                     |offset| Ok((mnemonic, AddressMode::Absolute(*offset))),
                 ),
-                AddressModeOrLabel::AddressMode(am) => Ok((mnemonic, am)),
+                AddressModeOrReference::Symbol(s) => symbols.get(&s.symbol).map_or(
+                    Err(format!("symbol {}, undefined at line: {}", &s.symbol, line)),
+                    |byte_value| Ok((mnemonic, AddressMode::Immediate(*byte_value))),
+                ),
+                AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
             }
         })
         .collect::<Result<Vec<(Mnemonic, AddressMode)>, String>>()?

@@ -1,21 +1,91 @@
 use crate::addressing;
+use std::fmt;
 
 pub type Label = String;
 
-/// AddressModeOrLabel handles for parsing either an explicit address mode or a
-/// label mapping.
 #[derive(Clone, PartialEq, Debug)]
-pub enum AddressModeOrLabel {
-    AddressMode(AddressMode),
-    Label(Label),
+pub struct Symbol {
+    pub address_mode_type: AddressModeType,
+    pub symbol: String,
 }
 
-impl addressing::SizeOf for AddressModeOrLabel {
+impl Symbol {
+    pub fn new(amt: AddressModeType, symbol: String) -> Self {
+        Self {
+            address_mode_type: amt,
+            symbol,
+        }
+    }
+}
+
+impl fmt::Display for Symbol {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}{}", &self.address_mode_type, self.symbol)
+    }
+}
+
+impl addressing::SizeOf for Symbol {
+    fn size_of(&self) -> u16 {
+        1
+    }
+}
+
+/// AddressModeOrReference handles for parsing either an explicit address mode or a
+/// label mapping.
+#[derive(Clone, PartialEq, Debug)]
+pub enum AddressModeOrReference {
+    AddressMode(AddressMode),
+    Label(Label),
+    Symbol(Symbol),
+}
+
+impl addressing::SizeOf for AddressModeOrReference {
     fn size_of(&self) -> u16 {
         match self {
             Self::AddressMode(am) => am.size_of(),
             Self::Label(_) => 2,
+            Self::Symbol(_) => 1,
         }
+    }
+}
+
+/// AddressModeType captures the Address mode type sans the value.
+#[derive(Clone, Copy, PartialEq, Hash, Debug)]
+pub enum AddressModeType {
+    Accumulator,
+    Implied,
+    Immediate,
+    Absolute,
+    ZeroPage,
+    Relative,
+    Indirect,
+    AbsoluteIndexedWithX,
+    AbsoluteIndexedWithY,
+    ZeroPageIndexedWithX,
+    ZeroPageIndexedWithY,
+    IndexedIndirect,
+    IndirectIndexed,
+}
+
+impl fmt::Display for AddressModeType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        /*
+        match self {
+            Accumulator => write!(f, ""),
+            Implied => write!(f, ""),
+            Immediate => write!(f, "#"),
+            Absolute => write!(f, "",),
+            ZeroPage => write!(f, "{}", ""),
+            Relative => write!(f, "{}", ""),
+            Indirect => write!(f, "{}", ""),
+            AbsoluteIndexedWithX => write!(f, "{}", ""),
+            AbsoluteIndexedWithY => write!(f, "{}", ""),
+            ZeroPageIndexedWithX => write!(f, "{}", ""),
+            ZeroPageIndexedWithY => write!(f, "{}", ""),
+            IndexedIndirect => write!(f, "{}", ""),
+            IndirectIndexed => write!(f, "\{\}", ""),
+        }*/
+        write!(f, "{:?}", self)
     }
 }
 

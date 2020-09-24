@@ -4,9 +4,9 @@ An experimental 6502 assembler.
 ## Grammar
 
 ```
-instructions   = ( whitespace | newline )* ( symboldef | comment | instruction )+ ( newline | EOF ) ;
+instructions   = ( whitespace | newline )* ( labeldef | symboldef | comment | instruction )+ ( newline | EOF ) ;
 
-instruction    = whitespace* mnemonic ( whitespace+ ( operand | symbol ) )? whitespace+ comment? ;
+instruction    = whitespace* mnemonic ( whitespace+ ( operand  ) )? whitespace+ comment? ;
 
 mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "STA" | "sta" | "STX" | "stx" | "STY" | "sty"
@@ -35,9 +35,9 @@ mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
 
 comment        = ";" ( whitespace | character )* ;
 
-symboldef      = labeldef ;
+symboldef      = "define" whitespace+ alphabetic* whitespace+ byte ;
 
-symbol         = label ;
+symbol         = alphabetic* ;
 
 labeldef       = alphabetic* ":" ;
 
@@ -60,11 +60,11 @@ accumulator        = "A" ;
 absolute           = word ;
 absolute_x_indexed = word ",X" ;
 absolute_y_indexed = word ",Y" ;
-immediate          = "#" byte ;
+immediate          = "#" ( byte | symbol );
 indirect           = "(" word ")";
-x_indexed_indirect = "(" byte ",X)" ;
-indirect_y_indexed = "(" byte "),Y" ;
-relative           = "*" sign? byte ;
+x_indexed_indirect = "(" ( byte | symbol ) ",X)" ;
+indirect_y_indexed = "(" ( byte | symbol ) "),Y" ;
+relative           = "*" sign? ( byte | symbol ) ;
 zeropage           = byte ;
 zeropage_x_indexed = byte ",X" ;
 zeropage_y_indexed = byte ",Y" ;

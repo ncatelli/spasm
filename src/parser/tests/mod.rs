@@ -1,5 +1,7 @@
-use crate::instruction_set::address_mode::AddressModeOrLabel;
-use crate::instruction_set::{AddressMode, Mnemonic};
+use crate::instruction_set::address_mode::{
+    AddressMode, AddressModeOrReference, AddressModeType, Symbol,
+};
+use crate::instruction_set::Mnemonic;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
@@ -13,7 +15,7 @@ macro_rules! gen_instruction_only_program_test {
                 &$input[$input.len()..],
                 $insts
                     .into_iter()
-                    .map(|i| $crate::instruction_set::InstructionOrSymbol::Instruction(i))
+                    .map(|i| $crate::instruction_set::InstructionOrDefinition::Instruction(i))
                     .collect()
             ))),
             $crate::parser::instructions().parse(&$input)
@@ -40,19 +42,19 @@ jmp $1234",
         vec![
             instruction!(
                 Mnemonic::NOP,
-                AddressModeOrLabel::AddressMode(AddressMode::Implied)
+                AddressModeOrReference::AddressMode(AddressMode::Implied)
             ),
             instruction!(
                 Mnemonic::LDA,
-                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+                AddressModeOrReference::AddressMode(AddressMode::Immediate(0x12))
             ),
             instruction!(
                 Mnemonic::STA,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             ),
             instruction!(
                 Mnemonic::JMP,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )
         ]
     )
@@ -71,19 +73,19 @@ jmp $1234",
         vec![
             instruction!(
                 Mnemonic::NOP,
-                AddressModeOrLabel::AddressMode(AddressMode::Implied)
+                AddressModeOrReference::AddressMode(AddressMode::Implied)
             ),
             instruction!(
                 Mnemonic::LDA,
-                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+                AddressModeOrReference::AddressMode(AddressMode::Immediate(0x12))
             ),
             instruction!(
                 Mnemonic::STA,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             ),
             instruction!(
                 Mnemonic::JMP,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )
         ]
     )
@@ -99,22 +101,56 @@ init:
   sta $1234
   jmp $1234",
         vec![
-            ios_label!("init"),
-            ios_instruction!(instruction!(
+            iod_label!("init"),
+            iod_instruction!(instruction!(
                 Mnemonic::NOP,
-                AddressModeOrLabel::AddressMode(AddressMode::Implied)
+                AddressModeOrReference::AddressMode(AddressMode::Implied)
             )),
-            ios_instruction!(instruction!(
+            iod_instruction!(instruction!(
                 Mnemonic::LDA,
-                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+                AddressModeOrReference::AddressMode(AddressMode::Immediate(0x12))
             )),
-            ios_instruction!(instruction!(
+            iod_instruction!(instruction!(
                 Mnemonic::STA,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )),
-            ios_instruction!(instruction!(
+            iod_instruction!(instruction!(
                 Mnemonic::JMP,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
+            ))
+        ]
+    )
+}
+
+#[test]
+fn should_parse_symbols() {
+    gen_program_test!(
+        "
+define thisisatest $12
+nop
+lda #thisisatest
+sta $1234
+jmp $1234",
+        vec![
+            iod_symbol!("thisisatest", 0x12),
+            iod_instruction!(instruction!(
+                Mnemonic::NOP,
+                AddressModeOrReference::AddressMode(AddressMode::Implied)
+            )),
+            iod_instruction!(instruction!(
+                Mnemonic::LDA,
+                AddressModeOrReference::Symbol(Symbol::new(
+                    AddressModeType::Immediate,
+                    "thisisatest".to_string()
+                ))
+            )),
+            iod_instruction!(instruction!(
+                Mnemonic::STA,
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
+            )),
+            iod_instruction!(instruction!(
+                Mnemonic::JMP,
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             ))
         ]
     )
@@ -135,15 +171,15 @@ jmp $1234",
         vec![
             instruction!(
                 Mnemonic::LDA,
-                AddressModeOrLabel::AddressMode(AddressMode::Immediate(0x12))
+                AddressModeOrReference::AddressMode(AddressMode::Immediate(0x12))
             ),
             instruction!(
                 Mnemonic::STA,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             ),
             instruction!(
                 Mnemonic::JMP,
-                AddressModeOrLabel::AddressMode(AddressMode::Absolute(0x1234))
+                AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )
         ]
     )
