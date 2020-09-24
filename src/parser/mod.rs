@@ -91,9 +91,9 @@ fn address_mode<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference
         .or(|| absolute())
         .or(|| immediate())
         .or(|| indirect())
+        .or(|| relative())
         .map(|amor| amor)
         .or(|| label().map(|l| AddressModeOrReference::Label(l)))
-    //        .or(|| relative())
 }
 
 fn label<'a>() -> impl parcel::Parser<'a, &'a str, String> {
@@ -204,8 +204,6 @@ fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrRef
     })
 }
 
-// Needs implementation of signed bits
-#[allow(dead_code)]
 fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
     right(join(expect_character('*'), signed8()))
         .map(|i| AddressModeOrReference::AddressMode(AddressMode::Relative(i)))
