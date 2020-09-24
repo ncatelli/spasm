@@ -83,3 +83,21 @@ jmp $1234
         assemble(input)
     )
 }
+
+#[test]
+fn should_differentate_between_label_and_symbol_definitions() {
+    let input = "
+define thisisatest $12
+
+init:
+    nop
+    lda #thisisatest
+    sta $1234
+    jmp init
+";
+
+    assert_eq!(
+        Ok(vec![0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x00, 0x00]),
+        assemble(input)
+    )
+}

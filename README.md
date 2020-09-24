@@ -65,9 +65,9 @@ indirect           = "(" word ")";
 x_indexed_indirect = "(" ( byte | symbol ) ",X)" ;
 indirect_y_indexed = "(" ( byte | symbol ) "),Y" ;
 relative           = "*" sign? ( byte | symbol ) ;
-zeropage           = ( byte | symbol ) ;
-zeropage_x_indexed = ( byte | symbol ) ",X" ;
-zeropage_y_indexed = ( byte | symbol ) ",Y" ;
+zeropage           = byte ;
+zeropage_x_indexed = byte ",X" ;
+zeropage_y_indexed = byte ",Y" ;
 
 character      = lower|upper|digit|special ;
 whitespace     = " " | "\t" ;

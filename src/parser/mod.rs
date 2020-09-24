@@ -214,11 +214,6 @@ fn relative<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
 fn zeropage<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
     left(join(unsigned8(), whitespace().or(|| eof())))
         .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPage(u)))
-        .or(|| {
-            left(join(symbol(), whitespace().or(|| eof()))).map(|sym| {
-                AddressModeOrReference::Symbol(Symbol::new(AddressModeType::ZeroPage, sym))
-            })
-        })
 }
 
 fn zeropage_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
@@ -227,15 +222,6 @@ fn zeropage_x_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrRef
         join(expect_character(','), expect_character('X')),
     ))
     .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPageIndexedWithX(u)))
-    .or(|| {
-        left(join(
-            symbol(),
-            join(expect_character(','), expect_character('X')),
-        ))
-        .map(|sym| {
-            AddressModeOrReference::Symbol(Symbol::new(AddressModeType::ZeroPageIndexedWithX, sym))
-        })
-    })
 }
 
 fn zeropage_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrReference> {
@@ -244,13 +230,4 @@ fn zeropage_y_indexed<'a>() -> impl parcel::Parser<'a, &'a str, AddressModeOrRef
         join(expect_character(','), expect_character('Y')),
     ))
     .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPageIndexedWithY(u)))
-    .or(|| {
-        left(join(
-            symbol(),
-            join(expect_character(','), expect_character('Y')),
-        ))
-        .map(|sym| {
-            AddressModeOrReference::Symbol(Symbol::new(AddressModeType::ZeroPageIndexedWithY, sym))
-        })
-    })
 }
