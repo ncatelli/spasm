@@ -142,6 +142,8 @@ fn indirect_indexed_address_mode_should_match_valid_u8() {
 fn relative_address_mode_should_match_valid_u8() {
     gen_am_test!("bpl *$1a", Mnemonic::BPL, AddressMode::Relative(0x1a));
     gen_am_test!("bpl *26", Mnemonic::BPL, AddressMode::Relative(0x1a));
+    gen_am_test!("bpl *+26", Mnemonic::BPL, AddressMode::Relative(0x1a));
+    gen_am_test!("bpl *-26", Mnemonic::BPL, AddressMode::Relative(-26));
     gen_am_test!("bpl *%00011010", Mnemonic::BPL, AddressMode::Relative(0x1a));
 }
 
