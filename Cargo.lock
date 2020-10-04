@@ -6,17 +6,22 @@ version = "1.5.0"
 source = "git+https://github.com/ncatelli/parcel?tag=v1.6.0#6c01cf75438cbf2fd55c88a3a9065b54a0a43310"
 
 [[package]]
+name = "parcel"
+version = "1.8.0"
+source = "git+https://github.com/ncatelli/parcel?tag=v1.8.0#adcd04bec5b8bd7f09efe35c4a5d88b6a7df3928"
+
+[[package]]
 name = "scrap"
 version = "0.1.0"
 source = "git+https://github.com/ncatelli/scrap?tag=v0.1.0#0e1b51915dd0df88d85cf75a6ae17a76dedf407f"
 dependencies = [
- "parcel",
+ "parcel 1.5.0",
 ]
 
 [[package]]
 name = "spasm"
 version = "0.1.0"
 dependencies = [
- "parcel",
+ "parcel 1.8.0",
  "scrap",
 ]

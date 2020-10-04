@@ -9,7 +9,7 @@ mod address_mode;
 mod instructions;
 
 macro_rules! gen_instruction_only_program_test {
-    ($input:literal, $insts:expr) => {
+    ($input:expr, $insts:expr) => {
         assert_eq!(
             Ok(MatchStatus::Match((
                 &$input[$input.len()..],
@@ -18,27 +18,36 @@ macro_rules! gen_instruction_only_program_test {
                     .map(|i| $crate::instruction_set::InstructionOrDefinition::Instruction(i))
                     .collect()
             ))),
-            $crate::parser::instructions().parse(&$input)
+            $crate::parser::instructions().parse($input)
         );
     };
 }
 
 macro_rules! gen_program_test {
-    ($input:literal, $insts:expr) => {
+    ($input:expr, $insts:expr) => {
         assert_eq!(
             Ok(MatchStatus::Match((&$input[$input.len()..], $insts))),
-            $crate::parser::instructions().parse(&$input)
+            $crate::parser::instructions().parse($input)
         );
+    };
+}
+
+macro_rules! chars {
+    ($input:expr) => {
+        $input.chars().collect::<Vec<char>>()
     };
 }
 
 #[test]
 fn should_parse_multiple_instructions_until_eof() {
-    gen_instruction_only_program_test!(
+    let input = chars!(
         "nop
 lda #$12
 sta $1234
-jmp $1234",
+jmp $1234"
+    );
+    gen_instruction_only_program_test!(
+        &input,
         vec![
             instruction!(
                 Mnemonic::NOP,
@@ -57,19 +66,22 @@ jmp $1234",
                 AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )
         ]
-    )
+    );
 }
 
 #[test]
 fn should_parse_arbitrary_newlines_and_whitespaces_before_instruction() {
-    gen_instruction_only_program_test!(
+    let input = chars!(
         "
         
-        nop
+    nop
 lda #$12
 
 sta $1234
-jmp $1234",
+jmp $1234"
+    );
+    gen_instruction_only_program_test!(
+        &input,
         vec![
             instruction!(
                 Mnemonic::NOP,
@@ -88,18 +100,21 @@ jmp $1234",
                 AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )
         ]
-    )
+    );
 }
 
 #[test]
 fn should_parse_labels() {
-    gen_program_test!(
+    let input = chars!(
         "
 init:
   nop
   lda #$12
   sta $1234
-  jmp $1234",
+  jmp $1234"
+    );
+    gen_program_test!(
+        &input,
         vec![
             iod_label!("init"),
             iod_instruction!(instruction!(
@@ -119,18 +134,21 @@ init:
                 AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             ))
         ]
-    )
+    );
 }
 
 #[test]
 fn should_parse_symbols() {
-    gen_program_test!(
+    let input = chars!(
         "
 define thisisatest $12
 nop
 lda #thisisatest
 sta $1234
-jmp $1234",
+jmp $1234"
+    );
+    gen_program_test!(
+        &input,
         vec![
             iod_symbol!("thisisatest", 0x12),
             iod_instruction!(instruction!(
@@ -153,21 +171,25 @@ jmp $1234",
                 AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             ))
         ]
-    )
+    );
 }
 
 #[test]
 fn should_parse_singleline_comment() {
-    gen_instruction_only_program_test!("; test comment", vec![])
+    let input = chars!("; test comment");
+    gen_instruction_only_program_test!(&input, vec![]);
 }
 
 #[test]
 fn should_ignore_comment_lines() {
-    gen_instruction_only_program_test!(
+    let input = chars!(
         "; nop
 lda #$12 ; this is the first instruction
 sta $1234
-jmp $1234",
+jmp $1234"
+    );
+    gen_instruction_only_program_test!(
+        &input,
         vec![
             instruction!(
                 Mnemonic::LDA,
@@ -182,5 +204,5 @@ jmp $1234",
                 AddressModeOrReference::AddressMode(AddressMode::Absolute(0x1234))
             )
         ]
-    )
+    );
 }
