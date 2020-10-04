@@ -38,52 +38,52 @@ impl PartialEq<char> for Sign {
 }
 
 // whitespaces matches any wh
-pub fn whitespace<'a>() -> impl Parser<'a, &'a str, char> {
-    move |input: &'a str| match input.chars().next() {
-        Some(next) if next.is_whitespace() && next != '\n' => {
+pub fn whitespace<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if next.is_whitespace() && next != '\n' => {
             Ok(MatchStatus::Match((&input[1..], next)))
         }
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
 
-pub fn alphabetic<'a>() -> impl Parser<'a, &'a str, char> {
-    move |input: &'a str| match input.chars().next() {
-        Some(next) if next.is_alphabetic() => Ok(MatchStatus::Match((&input[1..], next))),
+pub fn alphabetic<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if next.is_alphabetic() => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
 
-pub fn eof<'a>() -> impl Parser<'a, &'a str, char> {
-    move |input: &'a str| match input.chars().next() {
+pub fn eof<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
         Some(_) => Ok(MatchStatus::NoMatch(input)),
         None => Ok(MatchStatus::Match((&input[0..], ' '))),
     }
 }
 
-pub fn newline<'a>() -> impl Parser<'a, &'a str, char> {
+pub fn newline<'a>() -> impl Parser<'a, &'a [char], char> {
     expect_character('\n')
 }
 
-pub fn character<'a>() -> impl Parser<'a, &'a str, char> {
-    move |input: &'a str| match input.chars().next() {
-        Some(next) if !next.is_whitespace() => Ok(MatchStatus::Match((&input[1..], next))),
+pub fn character<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if !next.is_whitespace() => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
 
-pub fn expect_character<'a>(expected: char) -> impl Parser<'a, &'a str, char> {
-    move |input: &'a str| match input.chars().next() {
-        Some(next) if next == expected => Ok(MatchStatus::Match((&input[1..], next))),
+pub fn expect_character<'a>(expected: char) -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if next == expected => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
 
-pub fn expect_str<'a>(expected: &'static str) -> impl Parser<'a, &'a str, String> {
-    move |input: &'a str| {
+pub fn expect_str<'a>(expected: &'static str) -> impl Parser<'a, &'a [char], String> {
+    move |input: &'a [char]| {
         let preparse_input = input;
         let expected_len = expected.len();
-        let next: String = input.chars().take(expected_len).collect();
+        let next: String = input.iter().take(expected_len).collect();
         if &next == expected {
             Ok(MatchStatus::Match((&input[expected_len..], next)))
         } else {
@@ -92,19 +92,19 @@ pub fn expect_str<'a>(expected: &'static str) -> impl Parser<'a, &'a str, String
     }
 }
 
-pub fn unsigned16<'a>() -> impl Parser<'a, &'a str, u16> {
+pub fn unsigned16<'a>() -> impl Parser<'a, &'a [char], u16> {
     hex_u16().or(|| binary_u16()).or(|| dec_u16())
 }
 
-pub fn unsigned8<'a>() -> impl Parser<'a, &'a str, u8> {
+pub fn unsigned8<'a>() -> impl Parser<'a, &'a [char], u8> {
     hex_u8().or(|| binary_u8()).or(|| dec_u8())
 }
 
-pub fn signed8<'a>() -> impl Parser<'a, &'a str, i8> {
+pub fn signed8<'a>() -> impl Parser<'a, &'a [char], i8> {
     hex_i8().or(|| binary_i8()).or(|| dec_i8())
 }
 
-fn sign<'a>() -> impl Parser<'a, &'a str, Sign> {
+fn sign<'a>() -> impl Parser<'a, &'a [char], Sign> {
     expect_character('+')
         .or(|| expect_character('-'))
         .map(|c| match c {
@@ -113,57 +113,57 @@ fn sign<'a>() -> impl Parser<'a, &'a str, Sign> {
         })
 }
 
-fn hex_u16<'a>() -> impl Parser<'a, &'a str, u16> {
+fn hex_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
     right(join(expect_character('$'), hex_bytes(2))).map(|hex| char_vec_to_u16_from_radix!(hex, 16))
 }
 
-fn hex_u8<'a>() -> impl Parser<'a, &'a str, u8> {
+fn hex_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
     right(join(expect_character('$'), hex_bytes(1))).map(|hex| char_vec_to_u8_from_radix!(hex, 16))
 }
 
-fn hex_i8<'a>() -> impl Parser<'a, &'a str, i8> {
+fn hex_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
     right(join(expect_character('$'), hex_bytes(1))).map(|hex| char_vec_to_i8_from_radix!(hex, 16))
 }
 
-pub fn hex_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a str, Vec<char>> {
+pub fn hex_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a [char], Vec<char>> {
     take_n(hex_digit(), bytes * 2)
 }
 
-pub fn hex_digit<'a>() -> impl Parser<'a, &'a str, char> {
-    move |input: &'a str| match input.chars().next() {
-        Some(next) if next.is_digit(16) => Ok(MatchStatus::Match((&input[1..], next))),
+pub fn hex_digit<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if next.is_digit(16) => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
 
-fn binary_u16<'a>() -> impl Parser<'a, &'a str, u16> {
+fn binary_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
     right(join(expect_character('%'), binary_bytes(2)))
         .map(|bin| char_vec_to_u16_from_radix!(bin, 2))
 }
 
-fn binary_u8<'a>() -> impl Parser<'a, &'a str, u8> {
+fn binary_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
     right(join(expect_character('%'), binary_bytes(1)))
         .map(|bin| char_vec_to_u8_from_radix!(bin, 2))
 }
 
-fn binary_i8<'a>() -> impl Parser<'a, &'a str, i8> {
+fn binary_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
     right(join(expect_character('%'), binary_bytes(1)))
         .map(|bin| char_vec_to_i8_from_radix!(bin, 2))
 }
 
-pub fn binary_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a str, Vec<char>> {
+pub fn binary_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a [char], Vec<char>> {
     take_n(binary(), bytes * 8)
 }
 
-pub fn binary<'a>() -> impl Parser<'a, &'a str, char> {
-    move |input: &'a str| match input.chars().next() {
-        Some(next) if next.is_digit(2) => Ok(MatchStatus::Match((&input[1..], next))),
+pub fn binary<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if next.is_digit(2) => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
 
-fn dec_u16<'a>() -> impl Parser<'a, &'a str, u16> {
-    move |input: &'a str| {
+fn dec_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
+    move |input: &'a [char]| {
         let preparsed_input = input;
         let res = one_or_more(decimal())
             .map(|digits| {
@@ -181,8 +181,8 @@ fn dec_u16<'a>() -> impl Parser<'a, &'a str, u16> {
     }
 }
 
-fn dec_u8<'a>() -> impl Parser<'a, &'a str, u8> {
-    move |input: &'a str| {
+fn dec_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
+    move |input: &'a [char]| {
         let preparsed_input = input;
         let res = one_or_more(decimal())
             .map(|digits| {
@@ -200,8 +200,8 @@ fn dec_u8<'a>() -> impl Parser<'a, &'a str, u8> {
     }
 }
 
-fn dec_i8<'a>() -> impl Parser<'a, &'a str, i8> {
-    move |input: &'a str| {
+fn dec_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
+    move |input: &'a [char]| {
         let preparsed_input = input;
         let res = join(optional(sign()), one_or_more(decimal()))
             .map(|(sign, digits)| {
@@ -228,9 +228,9 @@ fn dec_i8<'a>() -> impl Parser<'a, &'a str, i8> {
 }
 
 #[allow(dead_code)]
-pub fn decimal<'a>() -> impl Parser<'a, &'a str, char> {
-    move |input: &'a str| match input.chars().next() {
-        Some(next) if next.is_digit(10) => Ok(MatchStatus::Match((&input[1..], next))),
+pub fn decimal<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if next.is_digit(10) => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }

@@ -4,7 +4,7 @@ use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
 macro_rules! gen_am_test {
-    ($input:literal, $mnemonic:expr, $am:expr) => {
+    ($input:expr, $mnemonic:expr, $am:expr) => {
         assert_eq!(
             Ok(MatchStatus::Match((
                 &$input[$input.len()..],
@@ -14,46 +14,59 @@ macro_rules! gen_am_test {
                     )
                 )
             ))),
-            instruction().parse(&$input)
+            instruction().parse($input)
         );
+    };
+}
+
+macro_rules! chars {
+    ($input:expr) => {
+        $input.chars().collect::<Vec<char>>()
     };
 }
 
 #[test]
 fn implied_address_mode_should_match_if_no_address_mode_supplied() {
-    gen_am_test!("nop", Mnemonic::NOP, AddressMode::Implied)
+    let input = chars!("nop");
+    gen_am_test!(&input, Mnemonic::NOP, AddressMode::Implied);
 }
 
 #[test]
 fn accumulator_address_mode_should_match_a() {
-    gen_am_test!("asl A", Mnemonic::ASL, AddressMode::Accumulator)
+    let input = chars!("asl A");
+
+    gen_am_test!(&input, Mnemonic::ASL, AddressMode::Accumulator);
 }
 
 #[test]
 fn absolute_address_mode_should_match_valid_u16() {
-    gen_am_test!("lda $1a2b", Mnemonic::LDA, AddressMode::Absolute(0x1a2b));
-    gen_am_test!("lda 6699", Mnemonic::LDA, AddressMode::Absolute(0x1a2b));
-    gen_am_test!(
-        "lda %0001101000101011",
-        Mnemonic::LDA,
-        AddressMode::Absolute(0x1a2b)
-    );
+    let hinput = chars!("lda $1a2b");
+    let binput = chars!("lda %0001101000101011");
+    let dinput = chars!("lda 6699");
+
+    gen_am_test!(&hinput, Mnemonic::LDA, AddressMode::Absolute(0x1a2b));
+    gen_am_test!(&binput, Mnemonic::LDA, AddressMode::Absolute(0x1a2b));
+    gen_am_test!(&dinput, Mnemonic::LDA, AddressMode::Absolute(0x1a2b));
 }
 
 #[test]
 fn absolute_x_indexed_address_mode_should_match_valid_u16() {
+    let hinput = chars!("adc $1a2b,X");
+    let binput = chars!("adc %0001101000101011,X");
+    let dinput = chars!("adc 6699,X");
+
     gen_am_test!(
-        "adc $1a2b,X",
+        &hinput,
         Mnemonic::ADC,
         AddressMode::AbsoluteIndexedWithX(0x1a2b)
     );
     gen_am_test!(
-        "adc 6699,X",
+        &binput,
         Mnemonic::ADC,
         AddressMode::AbsoluteIndexedWithX(0x1a2b)
     );
     gen_am_test!(
-        "adc %0001101000101011,X",
+        &dinput,
         Mnemonic::ADC,
         AddressMode::AbsoluteIndexedWithX(0x1a2b)
     );
@@ -61,18 +74,22 @@ fn absolute_x_indexed_address_mode_should_match_valid_u16() {
 
 #[test]
 fn absolute_y_indexed_address_mode_should_match_valid_u16() {
+    let hinput = chars!("inc $1a2b,Y");
+    let binput = chars!("inc %0001101000101011,Y");
+    let dinput = chars!("inc 6699,Y");
+
     gen_am_test!(
-        "inc $1a2b,Y",
+        &hinput,
         Mnemonic::INC,
         AddressMode::AbsoluteIndexedWithY(0x1a2b)
     );
     gen_am_test!(
-        "inc 6699,Y",
+        &binput,
         Mnemonic::INC,
         AddressMode::AbsoluteIndexedWithY(0x1a2b)
     );
     gen_am_test!(
-        "inc %0001101000101011,Y",
+        &dinput,
         Mnemonic::INC,
         AddressMode::AbsoluteIndexedWithY(0x1a2b)
     );
@@ -80,94 +97,92 @@ fn absolute_y_indexed_address_mode_should_match_valid_u16() {
 
 #[test]
 fn immediate_address_mode_should_match_valid_u8() {
-    gen_am_test!("lda #$1a", Mnemonic::LDA, AddressMode::Immediate(0x1a));
-    gen_am_test!("lda #26", Mnemonic::LDA, AddressMode::Immediate(0x1a));
-    gen_am_test!(
-        "lda #%00011010",
-        Mnemonic::LDA,
-        AddressMode::Immediate(0x1a)
-    );
+    let hinput = chars!("lda #$1a");
+    let binput = chars!("lda #%00011010");
+    let dinput = chars!("lda #26");
+
+    gen_am_test!(&hinput, Mnemonic::LDA, AddressMode::Immediate(0x1a));
+    gen_am_test!(&binput, Mnemonic::LDA, AddressMode::Immediate(0x1a));
+    gen_am_test!(&dinput, Mnemonic::LDA, AddressMode::Immediate(0x1a));
 }
 
 #[test]
 fn indirect_address_mode_should_match_valid_u16() {
-    gen_am_test!("jmp ($1a2b)", Mnemonic::JMP, AddressMode::Indirect(0x1a2b));
-    gen_am_test!("jmp (6699)", Mnemonic::JMP, AddressMode::Indirect(0x1a2b));
-    gen_am_test!(
-        "jmp (%0001101000101011)",
-        Mnemonic::JMP,
-        AddressMode::Indirect(0x1a2b)
-    );
+    let hinput = chars!("jmp ($1a2b)");
+    let binput = chars!("jmp (%0001101000101011)");
+    let dinput = chars!("jmp (6699)");
+
+    gen_am_test!(&hinput, Mnemonic::JMP, AddressMode::Indirect(0x1a2b));
+    gen_am_test!(&binput, Mnemonic::JMP, AddressMode::Indirect(0x1a2b));
+    gen_am_test!(&dinput, Mnemonic::JMP, AddressMode::Indirect(0x1a2b));
 }
 
 #[test]
 fn indexed_indirect_address_mode_should_match_valid_u8() {
-    gen_am_test!(
-        "sta ($1a,X)",
-        Mnemonic::STA,
-        AddressMode::IndexedIndirect(0x1a)
-    );
-    gen_am_test!(
-        "sta (26,X)",
-        Mnemonic::STA,
-        AddressMode::IndexedIndirect(0x1a)
-    );
-    gen_am_test!(
-        "sta (%00011010,X)",
-        Mnemonic::STA,
-        AddressMode::IndexedIndirect(0x1a)
-    );
+    let hinput = chars!("sta ($1a,X)");
+    let binput = chars!("sta (%00011010,X)");
+    let dinput = chars!("sta (26,X)");
+
+    gen_am_test!(&hinput, Mnemonic::STA, AddressMode::IndexedIndirect(0x1a));
+    gen_am_test!(&binput, Mnemonic::STA, AddressMode::IndexedIndirect(0x1a));
+    gen_am_test!(&dinput, Mnemonic::STA, AddressMode::IndexedIndirect(0x1a));
 }
 
 #[test]
 fn indirect_indexed_address_mode_should_match_valid_u8() {
-    gen_am_test!(
-        "eor ($1a),Y",
-        Mnemonic::EOR,
-        AddressMode::IndirectIndexed(0x1a)
-    );
-    gen_am_test!(
-        "eor (26),Y",
-        Mnemonic::EOR,
-        AddressMode::IndirectIndexed(0x1a)
-    );
-    gen_am_test!(
-        "eor (%00011010),Y",
-        Mnemonic::EOR,
-        AddressMode::IndirectIndexed(0x1a)
-    );
+    let hinput = chars!("eor ($1a),Y");
+    let binput = chars!("eor (%00011010),Y");
+    let dinput = chars!("eor (26),Y");
+
+    gen_am_test!(&hinput, Mnemonic::EOR, AddressMode::IndirectIndexed(0x1a));
+    gen_am_test!(&dinput, Mnemonic::EOR, AddressMode::IndirectIndexed(0x1a));
+    gen_am_test!(&binput, Mnemonic::EOR, AddressMode::IndirectIndexed(0x1a));
 }
 
 #[test]
 fn relative_address_mode_should_match_valid_u8() {
-    gen_am_test!("bpl *$1a", Mnemonic::BPL, AddressMode::Relative(0x1a));
-    gen_am_test!("bpl *26", Mnemonic::BPL, AddressMode::Relative(0x1a));
-    gen_am_test!("bpl *+26", Mnemonic::BPL, AddressMode::Relative(0x1a));
-    gen_am_test!("bpl *-26", Mnemonic::BPL, AddressMode::Relative(-26));
-    gen_am_test!("bpl *%00011010", Mnemonic::BPL, AddressMode::Relative(0x1a));
+    let hinput = chars!("bpl *$1a");
+    let binput = chars!("bpl *%00011010");
+    let dinput = chars!("bpl *26");
+    let dspinput = chars!("bpl *+26");
+    let dsninput = chars!("bpl *-26");
+
+    gen_am_test!(&hinput, Mnemonic::BPL, AddressMode::Relative(0x1a));
+    gen_am_test!(&dinput, Mnemonic::BPL, AddressMode::Relative(0x1a));
+    gen_am_test!(&dspinput, Mnemonic::BPL, AddressMode::Relative(0x1a));
+    gen_am_test!(&dsninput, Mnemonic::BPL, AddressMode::Relative(-26));
+    gen_am_test!(&binput, Mnemonic::BPL, AddressMode::Relative(0x1a));
 }
 
 #[test]
 fn zeropage_address_mode_should_match_valid_u8() {
-    gen_am_test!("ldy $1a", Mnemonic::LDY, AddressMode::ZeroPage(0x1a));
-    gen_am_test!("ldy 26", Mnemonic::LDY, AddressMode::ZeroPage(0x1a));
-    gen_am_test!("ldy %00011010", Mnemonic::LDY, AddressMode::ZeroPage(0x1a));
+    let hinput = chars!("ldy $1a");
+    let binput = chars!("ldy %00011010");
+    let dinput = chars!("ldy 26");
+
+    gen_am_test!(&hinput, Mnemonic::LDY, AddressMode::ZeroPage(0x1a));
+    gen_am_test!(&dinput, Mnemonic::LDY, AddressMode::ZeroPage(0x1a));
+    gen_am_test!(&binput, Mnemonic::LDY, AddressMode::ZeroPage(0x1a));
 }
 
 #[test]
 fn zeropage_x_indexed_address_mode_should_match_valid_u8() {
+    let hinput = chars!("lda $1a,X");
+    let binput = chars!("lda %00011010,X");
+    let dinput = chars!("lda 26,X");
+
     gen_am_test!(
-        "lda $1a,X",
+        &hinput,
         Mnemonic::LDA,
         AddressMode::ZeroPageIndexedWithX(0x1a)
     );
     gen_am_test!(
-        "lda 26,X",
+        &dinput,
         Mnemonic::LDA,
         AddressMode::ZeroPageIndexedWithX(0x1a)
     );
     gen_am_test!(
-        "lda %00011010,X",
+        &binput,
         Mnemonic::LDA,
         AddressMode::ZeroPageIndexedWithX(0x1a)
     );
@@ -175,18 +190,22 @@ fn zeropage_x_indexed_address_mode_should_match_valid_u8() {
 
 #[test]
 fn zeropage_y_indexed_address_mode_should_match_valid_u8() {
+    let hinput = chars!("lda $1a,Y");
+    let dinput = chars!("lda 26,Y");
+    let binput = chars!("lda %00011010,Y");
+
     gen_am_test!(
-        "lda $1a,Y",
+        &hinput,
         Mnemonic::LDA,
         AddressMode::ZeroPageIndexedWithY(0x1a)
     );
     gen_am_test!(
-        "lda 26,Y",
+        &dinput,
         Mnemonic::LDA,
         AddressMode::ZeroPageIndexedWithY(0x1a)
     );
     gen_am_test!(
-        "lda %00011010,Y",
+        &binput,
         Mnemonic::LDA,
         AddressMode::ZeroPageIndexedWithY(0x1a)
     );

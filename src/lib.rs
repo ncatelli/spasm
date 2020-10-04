@@ -22,7 +22,8 @@ type SymbolMap = HashMap<String, u8>;
 // Converts a source string to it's corresponding array of little endinan binary
 // opcodes.
 pub fn assemble(source: &str) -> AssemblerResult {
-    let (_, labels, symbols, insts) = match parser::instructions().parse(&source).unwrap() {
+    let src = source.chars().collect::<Vec<char>>();
+    let (_, labels, symbols, insts) = match parser::instructions().parse(&src).unwrap() {
         parcel::MatchStatus::Match((_, insts)) => Ok(insts),
         _ => Err("match error".to_string()),
     }?
