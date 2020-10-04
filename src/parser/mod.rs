@@ -4,6 +4,7 @@ use crate::instruction_set::address_mode::{
 };
 use crate::instruction_set::mnemonics::Mnemonic;
 use crate::instruction_set::{Instruction, InstructionOrDefinition};
+use parcel::parsers::character::*;
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
 use std::convert::TryFrom;
@@ -16,7 +17,7 @@ mod tests;
 
 pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<InstructionOrDefinition>> {
     one_or_more(right(join(
-        zero_or_more(whitespace().or(|| newline())),
+        zero_or_more(non_newline_whitespace().or(|| newline())),
         left(join(
             labeldef()
                 .map(|iod| Some(iod))
@@ -36,10 +37,13 @@ pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Instruction
 
 pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDefinition> {
     join(
-        right(join(zero_or_more(whitespace()), mnemonic())),
+        right(join(zero_or_more(non_newline_whitespace()), mnemonic())),
         left(join(
-            optional(right(join(one_or_more(whitespace()), address_mode()))),
-            join(zero_or_more(whitespace()), optional(comment())),
+            optional(right(join(
+                one_or_more(non_newline_whitespace()),
+                address_mode(),
+            ))),
+            join(zero_or_more(non_newline_whitespace()), optional(comment())),
         )),
     )
     .map(|(m, a)| match a {
@@ -52,7 +56,7 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDef
 fn comment<'a>() -> impl parcel::Parser<'a, &'a [char], ()> {
     right(join(
         expect_character(';'),
-        zero_or_more(character().or(|| whitespace())),
+        zero_or_more(non_whitespace_character().or(|| non_newline_whitespace())),
     ))
     .map(|_| ())
 }
@@ -64,9 +68,12 @@ fn labeldef<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDefinition
 
 fn symboldef<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDefinition> {
     right(join(
-        join(expect_str("define"), one_or_more(whitespace())),
+        join(expect_str("define"), one_or_more(non_newline_whitespace())),
         join(
-            left(join(one_or_more(alphabetic()), one_or_more(whitespace()))),
+            left(join(
+                one_or_more(alphabetic()),
+                one_or_more(non_newline_whitespace()),
+            )),
             unsigned8(),
         ),
     ))
@@ -210,7 +217,7 @@ fn relative<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference>
 }
 
 fn zeropage<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    left(join(unsigned8(), whitespace().or(|| eof())))
+    left(join(unsigned8(), non_newline_whitespace().or(|| eof())))
         .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPage(u)))
 }
 

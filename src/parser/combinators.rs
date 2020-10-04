@@ -1,4 +1,5 @@
 extern crate parcel;
+use parcel::parsers::character::expect_character;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 use parcel::{join, one_or_more, optional, right, take_n};
@@ -37,58 +38,10 @@ impl PartialEq<char> for Sign {
     }
 }
 
-// whitespaces matches any wh
-pub fn whitespace<'a>() -> impl Parser<'a, &'a [char], char> {
-    move |input: &'a [char]| match input.get(0) {
-        Some(&next) if next.is_whitespace() && next != '\n' => {
-            Ok(MatchStatus::Match((&input[1..], next)))
-        }
-        _ => Ok(MatchStatus::NoMatch(input)),
-    }
-}
-
-pub fn alphabetic<'a>() -> impl Parser<'a, &'a [char], char> {
-    move |input: &'a [char]| match input.get(0) {
-        Some(&next) if next.is_alphabetic() => Ok(MatchStatus::Match((&input[1..], next))),
-        _ => Ok(MatchStatus::NoMatch(input)),
-    }
-}
-
-pub fn eof<'a>() -> impl Parser<'a, &'a [char], char> {
-    move |input: &'a [char]| match input.get(0) {
-        Some(_) => Ok(MatchStatus::NoMatch(input)),
-        None => Ok(MatchStatus::Match((&input[0..], ' '))),
-    }
-}
-
-pub fn newline<'a>() -> impl Parser<'a, &'a [char], char> {
-    expect_character('\n')
-}
-
-pub fn character<'a>() -> impl Parser<'a, &'a [char], char> {
+pub fn non_whitespace_character<'a>() -> impl Parser<'a, &'a [char], char> {
     move |input: &'a [char]| match input.get(0) {
         Some(&next) if !next.is_whitespace() => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
-    }
-}
-
-pub fn expect_character<'a>(expected: char) -> impl Parser<'a, &'a [char], char> {
-    move |input: &'a [char]| match input.get(0) {
-        Some(&next) if next == expected => Ok(MatchStatus::Match((&input[1..], next))),
-        _ => Ok(MatchStatus::NoMatch(input)),
-    }
-}
-
-pub fn expect_str<'a>(expected: &'static str) -> impl Parser<'a, &'a [char], String> {
-    move |input: &'a [char]| {
-        let preparse_input = input;
-        let expected_len = expected.len();
-        let next: String = input.iter().take(expected_len).collect();
-        if &next == expected {
-            Ok(MatchStatus::Match((&input[expected_len..], next)))
-        } else {
-            Ok(MatchStatus::NoMatch(preparse_input))
-        }
     }
 }
 
