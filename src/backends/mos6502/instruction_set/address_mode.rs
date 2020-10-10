@@ -71,22 +71,6 @@ pub enum AddressModeType {
 
 impl fmt::Display for AddressModeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        /*
-        match self {
-            Accumulator => write!(f, ""),
-            Implied => write!(f, ""),
-            Immediate => write!(f, "#"),
-            Absolute => write!(f, "",),
-            ZeroPage => write!(f, "{}", ""),
-            Relative => write!(f, "{}", ""),
-            Indirect => write!(f, "{}", ""),
-            AbsoluteIndexedWithX => write!(f, "{}", ""),
-            AbsoluteIndexedWithY => write!(f, "{}", ""),
-            ZeroPageIndexedWithX => write!(f, "{}", ""),
-            ZeroPageIndexedWithY => write!(f, "{}", ""),
-            IndexedIndirect => write!(f, "{}", ""),
-            IndirectIndexed => write!(f, "\{\}", ""),
-        }*/
         write!(f, "{:?}", self)
     }
 }
