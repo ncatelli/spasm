@@ -1,4 +1,5 @@
 use crate::assemble;
+use crate::backends::Backend;
 
 #[test]
 fn should_generate_expected_opcode() {
@@ -13,7 +14,7 @@ jmp $1234\n";
         Ok(vec![
             0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x10, 0x1a, 0x10, 0xf0, 0x4c, 0x34, 0x12
         ]),
-        assemble(input)
+        assemble(Backend::MOS6502, input)
     )
 }
 
@@ -34,7 +35,7 @@ init:
         Ok(vec![
             0xea, 0xa9, 0x12, 0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x03, 0x00
         ]),
-        assemble(input)
+        assemble(Backend::MOS6502, input)
     )
 }
 
@@ -52,7 +53,7 @@ init:
 
     assert_eq!(
         Err("label notinit, undefined at line: 6".to_string()),
-        assemble(input)
+        assemble(Backend::MOS6502, input)
     )
 }
 
@@ -69,7 +70,7 @@ jmp $1234
 
     assert_eq!(
         Ok(vec![0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x34, 0x12]),
-        assemble(input)
+        assemble(Backend::MOS6502, input)
     )
 }
 
@@ -84,7 +85,7 @@ jmp $1234
 
     assert_eq!(
         Err("symbol test, undefined at line: 2".to_string()),
-        assemble(input)
+        assemble(Backend::MOS6502, input)
     )
 }
 
@@ -102,6 +103,6 @@ init:
 
     assert_eq!(
         Ok(vec![0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x00, 0x00]),
-        assemble(input)
+        assemble(Backend::MOS6502, input)
     )
 }

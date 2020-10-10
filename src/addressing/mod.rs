@@ -1,7 +1,7 @@
 /// SizeOf provides the trait to implement referencing the size of an object
 // in bytes.
 pub trait SizeOf {
-    fn size_of(&self) -> u16;
+    fn size_of(&self) -> usize;
 }
 
 /// Positional functions to store an object wrapped with an offset position.
@@ -10,7 +10,7 @@ pub struct Positional<T>
 where
     T: SizeOf,
 {
-    pub position: u16,
+    pub position: usize,
     contents: T,
 }
 
@@ -26,7 +26,7 @@ where
     }
 
     /// with_position instantiates a new position, taking a starting offset and a contents to wrap.
-    pub fn with_position(position: u16, contents: T) -> Self {
+    pub fn with_position(position: usize, contents: T) -> Self {
         Self { position, contents }
     }
 

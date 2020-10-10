@@ -82,7 +82,7 @@ pub enum Mnemonic {
 }
 
 impl addressing::SizeOf for Mnemonic {
-    fn size_of(&self) -> u16 {
+    fn size_of(&self) -> usize {
         1
     }
 }

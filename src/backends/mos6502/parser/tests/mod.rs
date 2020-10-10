@@ -1,7 +1,7 @@
-use crate::instruction_set::address_mode::{
+use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference, AddressModeType, Symbol,
 };
-use crate::instruction_set::Mnemonic;
+use crate::backends::mos6502::instruction_set::Mnemonic;
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 
@@ -15,10 +15,10 @@ macro_rules! gen_instruction_only_program_test {
                 &$input[$input.len()..],
                 $insts
                     .into_iter()
-                    .map(|i| $crate::instruction_set::InstructionOrDefinition::Instruction(i))
+                    .map(|i| $crate::backends::mos6502::instruction_set::InstructionOrDefinition::Instruction(i))
                     .collect()
             ))),
-            $crate::parser::instructions().parse($input)
+            $crate::backends::mos6502::parser::instructions().parse($input)
         );
     };
 }
@@ -27,7 +27,7 @@ macro_rules! gen_program_test {
     ($input:expr, $insts:expr) => {
         assert_eq!(
             Ok(MatchStatus::Match((&$input[$input.len()..], $insts))),
-            $crate::parser::instructions().parse($input)
+            $crate::backends::mos6502::parser::instructions().parse($input)
         );
     };
 }

@@ -1,4 +1,5 @@
-use crate::{addressing::SizeOf, instruction_set::address_mode::AddressMode};
+use crate::addressing::SizeOf;
+use crate::backends::mos6502::instruction_set::address_mode::AddressMode;
 
 #[test]
 fn address_mode_with_operand_should_be_comparable_to_address_mode() {
@@ -48,7 +49,7 @@ fn validate_address_mode_with_operands_into_bytes_returns_correct_endian_bytes()
 
 #[test]
 fn validate_address_mode_maps_to_the_correct_size_of() {
-    let address_sizing: Vec<u16> = vec![
+    let address_sizing: Vec<usize> = vec![
         AddressMode::Absolute(0x8008),
         AddressMode::AbsoluteIndexedWithX(0x8008),
         AddressMode::AbsoluteIndexedWithY(0x8008),
