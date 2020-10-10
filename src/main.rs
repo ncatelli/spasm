@@ -1,6 +1,7 @@
 extern crate scrap;
 use scrap::prelude::v1::*;
 use spasm::assemble;
+use spasm::Backend;
 use std::env;
 use std::fmt;
 use std::fs::{File, OpenOptions};
@@ -145,7 +146,7 @@ fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
 }
 
 fn assemble_object(asm_src: &str, reset_vector: u16, bin_size: usize) -> RuntimeResult<Vec<u8>> {
-    let obj = assemble(asm_src)
+    let obj = assemble(Backend::MOS6502, asm_src)
         .map_err(RuntimeError::Undefined)
         .map(|bin| bin)?;
 

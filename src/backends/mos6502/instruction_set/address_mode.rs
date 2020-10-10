@@ -1,4 +1,5 @@
 use crate::addressing;
+use crate::Emitter;
 use std::fmt;
 
 pub type Label = String;
@@ -25,7 +26,7 @@ impl fmt::Display for Symbol {
 }
 
 impl addressing::SizeOf for Symbol {
-    fn size_of(&self) -> u16 {
+    fn size_of(&self) -> usize {
         1
     }
 }
@@ -40,7 +41,7 @@ pub enum AddressModeOrReference {
 }
 
 impl addressing::SizeOf for AddressModeOrReference {
-    fn size_of(&self) -> u16 {
+    fn size_of(&self) -> usize {
         match self {
             Self::AddressMode(am) => am.size_of(),
             Self::Label(_) => 2,
@@ -50,6 +51,7 @@ impl addressing::SizeOf for AddressModeOrReference {
 }
 
 /// AddressModeType captures the Address mode type sans the value.
+#[allow(dead_code)]
 #[derive(Clone, Copy, PartialEq, Hash, Debug)]
 pub enum AddressModeType {
     Accumulator,
@@ -69,22 +71,6 @@ pub enum AddressModeType {
 
 impl fmt::Display for AddressModeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        /*
-        match self {
-            Accumulator => write!(f, ""),
-            Implied => write!(f, ""),
-            Immediate => write!(f, "#"),
-            Absolute => write!(f, "",),
-            ZeroPage => write!(f, "{}", ""),
-            Relative => write!(f, "{}", ""),
-            Indirect => write!(f, "{}", ""),
-            AbsoluteIndexedWithX => write!(f, "{}", ""),
-            AbsoluteIndexedWithY => write!(f, "{}", ""),
-            ZeroPageIndexedWithX => write!(f, "{}", ""),
-            ZeroPageIndexedWithY => write!(f, "{}", ""),
-            IndexedIndirect => write!(f, "{}", ""),
-            IndirectIndexed => write!(f, "\{\}", ""),
-        }*/
         write!(f, "{:?}", self)
     }
 }
@@ -130,8 +116,14 @@ impl Into<Vec<u8>> for AddressMode {
     }
 }
 
+impl Emitter<Vec<u8>> for AddressMode {
+    fn emit(&self) -> Vec<u8> {
+        Into::<Vec<u8>>::into(*self)
+    }
+}
+
 impl addressing::SizeOf for AddressMode {
-    fn size_of(&self) -> u16 {
+    fn size_of(&self) -> usize {
         match self {
             AddressMode::Accumulator | AddressMode::Implied => 0,
             AddressMode::Absolute(_)

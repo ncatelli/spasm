@@ -3,6 +3,7 @@ pub use address_mode::AddressMode;
 use address_mode::AddressModeOrReference;
 pub mod mnemonics;
 use crate::addressing;
+use crate::Emitter;
 pub use mnemonics::Mnemonic;
 
 #[cfg(test)]
@@ -35,7 +36,7 @@ impl Instruction {
 }
 
 impl addressing::SizeOf for Instruction {
-    fn size_of(&self) -> u16 {
+    fn size_of(&self) -> usize {
         self.mnemonic.size_of() + self.amor.size_of()
     }
 }
@@ -67,13 +68,13 @@ impl StaticInstruction {
 }
 
 impl addressing::SizeOf for StaticInstruction {
-    fn size_of(&self) -> u16 {
+    fn size_of(&self) -> usize {
         self.mnemonic.size_of() + self.address_mode.size_of()
     }
 }
 
-impl Into<OpCode> for StaticInstruction {
-    fn into(self) -> OpCode {
+impl Emitter<OpCode> for StaticInstruction {
+    fn emit(&self) -> OpCode {
         match (self.mnemonic, self.address_mode) {
             (Mnemonic::BRK, AddressMode::Implied) => 0x00,
             (Mnemonic::ORA, AddressMode::IndexedIndirect(_)) => 0x01,
@@ -231,11 +232,11 @@ impl Into<OpCode> for StaticInstruction {
     }
 }
 
-impl Into<Vec<u8>> for StaticInstruction {
-    fn into(self) -> Vec<u8> {
-        vec![self.into()]
+impl Emitter<Vec<u8>> for StaticInstruction {
+    fn emit(&self) -> Vec<u8> {
+        vec![self.emit()]
             .into_iter()
-            .chain(Into::<Vec<u8>>::into(self.address_mode))
+            .chain(self.address_mode.emit())
             .collect()
     }
 }
@@ -243,34 +244,39 @@ impl Into<Vec<u8>> for StaticInstruction {
 #[allow(unused_macros)]
 macro_rules! instruction {
     ($mnemonic:expr, $amos:expr) => {
-        $crate::instruction_set::Instruction::new($mnemonic, $amos)
+        $crate::backends::mos6502::instruction_set::Instruction::new($mnemonic, $amos)
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! static_instruction {
     ($mnemonic:expr, $am:expr) => {
-        $crate::instruction_set::StaticInstruction::new($mnemonic, $am)
+        $crate::backends::mos6502::instruction_set::StaticInstruction::new($mnemonic, $am)
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! iod_instruction {
     ($inst:expr) => {
-        $crate::instruction_set::InstructionOrDefinition::Instruction($inst)
+        $crate::backends::mos6502::instruction_set::InstructionOrDefinition::Instruction($inst)
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! iod_label {
     ($label:expr) => {
-        $crate::instruction_set::InstructionOrDefinition::Label($label.to_string())
+        $crate::backends::mos6502::instruction_set::InstructionOrDefinition::Label(
+            $label.to_string(),
+        )
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! iod_symbol {
     ($symbol:expr, $value:expr) => {
-        $crate::instruction_set::InstructionOrDefinition::Symbol(($symbol.to_string(), $value))
+        $crate::backends::mos6502::instruction_set::InstructionOrDefinition::Symbol((
+            $symbol.to_string(),
+            $value,
+        ))
     };
 }

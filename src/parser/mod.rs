@@ -1,238 +1,189 @@
 extern crate parcel;
-use crate::instruction_set::address_mode::{
-    AddressMode, AddressModeOrReference, AddressModeType, Symbol,
-};
-use crate::instruction_set::mnemonics::Mnemonic;
-use crate::instruction_set::{Instruction, InstructionOrDefinition};
-use parcel::parsers::character::*;
+use parcel::parsers::character::expect_character;
 use parcel::prelude::v1::*;
-use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
-use std::convert::TryFrom;
+use parcel::MatchStatus;
+use parcel::{join, one_or_more, optional, right, take_n};
 
-mod combinators;
-use combinators::*;
-
-#[cfg(test)]
-mod tests;
-
-pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<InstructionOrDefinition>> {
-    one_or_more(right(join(
-        zero_or_more(non_newline_whitespace().or(|| newline())),
-        left(join(
-            labeldef()
-                .map(|iod| Some(iod))
-                .or(|| symboldef().map(|iod| Some(iod)))
-                .or(|| comment().map(|_| None))
-                .or(|| instruction().map(|i| Some(i))),
-            newline().or(|| eof()),
-        )),
-    )))
-    .map(|ioc| {
-        ioc.into_iter()
-            .filter(|oi| oi.is_some())
-            .map(|oi| oi.unwrap())
-            .collect()
-    })
+macro_rules! char_vec_to_u16_from_radix {
+    ($chars:expr, $radix:expr) => {
+        u16::from_le(u16::from_str_radix(&$chars.into_iter().collect::<String>(), $radix).unwrap())
+    };
 }
 
-pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDefinition> {
-    join(
-        right(join(zero_or_more(non_newline_whitespace()), mnemonic())),
-        left(join(
-            optional(right(join(
-                one_or_more(non_newline_whitespace()),
-                address_mode(),
-            ))),
-            join(zero_or_more(non_newline_whitespace()), optional(comment())),
-        )),
-    )
-    .map(|(m, a)| match a {
-        Some(amor) => Instruction::new(m, amor),
-        None => Instruction::new(m, AddressModeOrReference::AddressMode(AddressMode::Implied)),
-    })
-    .map(|i| InstructionOrDefinition::Instruction(i))
+macro_rules! char_vec_to_u8_from_radix {
+    ($chars:expr, $radix:expr) => {
+        u8::from_le(u8::from_str_radix(&$chars.into_iter().collect::<String>(), $radix).unwrap())
+    };
 }
 
-fn comment<'a>() -> impl parcel::Parser<'a, &'a [char], ()> {
-    right(join(
-        expect_character(';'),
-        zero_or_more(non_whitespace_character().or(|| non_newline_whitespace())),
-    ))
-    .map(|_| ())
+macro_rules! char_vec_to_i8_from_radix {
+    ($chars:expr, $radix:expr) => {
+        i8::from_le(i8::from_str_radix(&$chars.into_iter().collect::<String>(), $radix).unwrap())
+    };
 }
 
-fn labeldef<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDefinition> {
-    left(join(one_or_more(alphabetic()), expect_character(':')))
-        .map(|cv| InstructionOrDefinition::Label(cv.into_iter().collect()))
+#[derive(Clone, Copy, PartialEq)]
+enum Sign {
+    Positive,
+    Negative,
 }
 
-fn symboldef<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDefinition> {
-    right(join(
-        join(expect_str("define"), one_or_more(non_newline_whitespace())),
-        join(
-            left(join(
-                one_or_more(alphabetic()),
-                one_or_more(non_newline_whitespace()),
-            )),
-            unsigned8(),
-        ),
-    ))
-    .map(|(s, v)| InstructionOrDefinition::Symbol((s.into_iter().collect(), v)))
+impl PartialEq<char> for Sign {
+    fn eq(&self, other: &char) -> bool {
+        match self {
+            &Self::Positive if *other == '+' => true,
+            &Self::Negative if *other == '-' => true,
+            _ => false,
+        }
+    }
 }
 
-fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a [char], Mnemonic> {
-    take_n(alphabetic(), 3)
-        .map(|m| Mnemonic::try_from(m.into_iter().collect::<String>().as_str()).unwrap())
+pub fn non_whitespace_character<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if !next.is_whitespace() => Ok(MatchStatus::Match((&input[1..], next))),
+        _ => Ok(MatchStatus::NoMatch(input)),
+    }
 }
 
-#[allow(clippy::redundant_closure)]
-fn address_mode<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    accumulator()
-        .or(|| zeropage())
-        .or(|| zeropage_x_indexed())
-        .or(|| zeropage_y_indexed())
-        .or(|| absolute_x_indexed())
-        .or(|| absolute_y_indexed())
-        .or(|| x_indexed_indirect())
-        .or(|| indirect_y_indexed())
-        .or(|| absolute())
-        .or(|| immediate())
-        .or(|| indirect())
-        .or(|| relative())
-        .map(|amor| amor)
-        .or(|| label().map(|l| AddressModeOrReference::Label(l)))
+pub fn unsigned16<'a>() -> impl Parser<'a, &'a [char], u16> {
+    hex_u16().or(|| binary_u16()).or(|| dec_u16())
 }
 
-fn label<'a>() -> impl parcel::Parser<'a, &'a [char], String> {
-    one_or_more(alphabetic()).map(|l| l.into_iter().collect())
+pub fn unsigned8<'a>() -> impl Parser<'a, &'a [char], u8> {
+    hex_u8().or(|| binary_u8()).or(|| dec_u8())
 }
 
-fn symbol<'a>() -> impl parcel::Parser<'a, &'a [char], String> {
-    one_or_more(alphabetic()).map(|l| l.into_iter().collect())
+pub fn signed8<'a>() -> impl Parser<'a, &'a [char], i8> {
+    hex_i8().or(|| binary_i8()).or(|| dec_i8())
 }
 
-fn accumulator<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    expect_character('A').map(|_| AddressModeOrReference::AddressMode(AddressMode::Accumulator))
+fn sign<'a>() -> impl Parser<'a, &'a [char], Sign> {
+    expect_character('+')
+        .or(|| expect_character('-'))
+        .map(|c| match c {
+            '-' => Sign::Negative,
+            _ => Sign::Positive,
+        })
 }
 
-fn absolute<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    unsigned16().map(|h| AddressModeOrReference::AddressMode(AddressMode::Absolute(h)))
+fn hex_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
+    right(join(expect_character('$'), hex_bytes(2))).map(|hex| char_vec_to_u16_from_radix!(hex, 16))
 }
 
-fn absolute_x_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    left(join(
-        unsigned16(),
-        join(expect_character(','), expect_character('X')),
-    ))
-    .map(|h| AddressModeOrReference::AddressMode(AddressMode::AbsoluteIndexedWithX(h)))
+fn hex_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
+    right(join(expect_character('$'), hex_bytes(1))).map(|hex| char_vec_to_u8_from_radix!(hex, 16))
 }
 
-fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    left(join(
-        unsigned16(),
-        join(expect_character(','), expect_character('Y')),
-    ))
-    .map(|h| AddressModeOrReference::AddressMode(AddressMode::AbsoluteIndexedWithY(h)))
+fn hex_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
+    right(join(expect_character('$'), hex_bytes(1))).map(|hex| char_vec_to_i8_from_radix!(hex, 16))
 }
 
-fn immediate<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    right(join(expect_character('#'), unsigned8()))
-        .map(|u| AddressModeOrReference::AddressMode(AddressMode::Immediate(u)))
-        .or(|| {
-            right(join(expect_character('#'), symbol())).map(|sym| {
-                AddressModeOrReference::Symbol(Symbol::new(AddressModeType::Immediate, sym))
+pub fn hex_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a [char], Vec<char>> {
+    take_n(hex_digit(), bytes * 2)
+}
+
+pub fn hex_digit<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if next.is_digit(16) => Ok(MatchStatus::Match((&input[1..], next))),
+        _ => Ok(MatchStatus::NoMatch(input)),
+    }
+}
+
+fn binary_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
+    right(join(expect_character('%'), binary_bytes(2)))
+        .map(|bin| char_vec_to_u16_from_radix!(bin, 2))
+}
+
+fn binary_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
+    right(join(expect_character('%'), binary_bytes(1)))
+        .map(|bin| char_vec_to_u8_from_radix!(bin, 2))
+}
+
+fn binary_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
+    right(join(expect_character('%'), binary_bytes(1)))
+        .map(|bin| char_vec_to_i8_from_radix!(bin, 2))
+}
+
+pub fn binary_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a [char], Vec<char>> {
+    take_n(binary(), bytes * 8)
+}
+
+pub fn binary<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if next.is_digit(2) => Ok(MatchStatus::Match((&input[1..], next))),
+        _ => Ok(MatchStatus::NoMatch(input)),
+    }
+}
+
+fn dec_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
+    move |input: &'a [char]| {
+        let preparsed_input = input;
+        let res = one_or_more(decimal())
+            .map(|digits| {
+                let vd: String = digits.into_iter().collect();
+                u16::from_str_radix(&vd, 10)
             })
-        })
+            .parse(input);
+
+        match res {
+            Ok(MatchStatus::Match((rem, Ok(u)))) => Ok(MatchStatus::Match((rem, u))),
+            Ok(MatchStatus::Match((_, Err(_)))) => Ok(MatchStatus::NoMatch(preparsed_input)),
+            Ok(MatchStatus::NoMatch(rem)) => Ok(MatchStatus::NoMatch(rem)),
+            Err(e) => Err(e),
+        }
+    }
 }
 
-fn indirect<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    right(join(
-        expect_character('('),
-        left(join(unsigned16(), expect_character(')'))),
-    ))
-    .map(|bytes| AddressModeOrReference::AddressMode(AddressMode::Indirect(bytes)))
+fn dec_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
+    move |input: &'a [char]| {
+        let preparsed_input = input;
+        let res = one_or_more(decimal())
+            .map(|digits| {
+                let vd: String = digits.into_iter().collect();
+                u8::from_str_radix(&vd, 10)
+            })
+            .parse(input);
+
+        match res {
+            Ok(MatchStatus::Match((rem, Ok(u)))) => Ok(MatchStatus::Match((rem, u))),
+            Ok(MatchStatus::Match((_, Err(_)))) => Ok(MatchStatus::NoMatch(preparsed_input)),
+            Ok(MatchStatus::NoMatch(rem)) => Ok(MatchStatus::NoMatch(rem)),
+            Err(e) => Err(e),
+        }
+    }
 }
 
-fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    right(join(
-        expect_character('('),
-        left(join(
-            unsigned8(),
-            join(
-                join(expect_character(','), expect_character('X')),
-                expect_character(')'),
-            ),
-        )),
-    ))
-    .map(|u| AddressModeOrReference::AddressMode(AddressMode::IndexedIndirect(u)))
-    .or(|| {
-        right(join(
-            expect_character('('),
-            left(join(
-                symbol(),
-                join(
-                    join(expect_character(','), expect_character('X')),
-                    expect_character(')'),
-                ),
-            )),
-        ))
-        .map(|sym| {
-            AddressModeOrReference::Symbol(Symbol::new(AddressModeType::IndexedIndirect, sym))
-        })
-    })
+fn dec_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
+    move |input: &'a [char]| {
+        let preparsed_input = input;
+        let res = join(optional(sign()), one_or_more(decimal()))
+            .map(|(sign, digits)| {
+                let pos_or_neg = match sign {
+                    Some(Sign::Negative) => '-',
+                    _ => '+',
+                };
+
+                let vd: String = vec![pos_or_neg]
+                    .into_iter()
+                    .chain(digits.into_iter())
+                    .collect();
+                i8::from_str_radix(&vd, 10)
+            })
+            .parse(input);
+
+        match res {
+            Ok(MatchStatus::Match((rem, Ok(u)))) => Ok(MatchStatus::Match((rem, u))),
+            Ok(MatchStatus::Match((_, Err(_)))) => Ok(MatchStatus::NoMatch(preparsed_input)),
+            Ok(MatchStatus::NoMatch(rem)) => Ok(MatchStatus::NoMatch(rem)),
+            Err(e) => Err(e),
+        }
+    }
 }
 
-fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    right(join(
-        expect_character('('),
-        left(join(
-            unsigned8(),
-            join(
-                join(expect_character(')'), expect_character(',')),
-                expect_character('Y'),
-            ),
-        )),
-    ))
-    .map(|u| AddressModeOrReference::AddressMode(AddressMode::IndirectIndexed(u)))
-    .or(|| {
-        right(join(
-            expect_character('('),
-            left(join(
-                symbol(),
-                join(
-                    join(expect_character(')'), expect_character(',')),
-                    expect_character('Y'),
-                ),
-            )),
-        ))
-        .map(|sym| {
-            AddressModeOrReference::Symbol(Symbol::new(AddressModeType::IndirectIndexed, sym))
-        })
-    })
-}
-
-fn relative<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    right(join(expect_character('*'), signed8()))
-        .map(|i| AddressModeOrReference::AddressMode(AddressMode::Relative(i)))
-}
-
-fn zeropage<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    left(join(unsigned8(), non_newline_whitespace().or(|| eof())))
-        .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPage(u)))
-}
-
-fn zeropage_x_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    left(join(
-        unsigned8(),
-        join(expect_character(','), expect_character('X')),
-    ))
-    .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPageIndexedWithX(u)))
-}
-
-fn zeropage_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    left(join(
-        unsigned8(),
-        join(expect_character(','), expect_character('Y')),
-    ))
-    .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPageIndexedWithY(u)))
+#[allow(dead_code)]
+pub fn decimal<'a>() -> impl Parser<'a, &'a [char], char> {
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if next.is_digit(10) => Ok(MatchStatus::Match((&input[1..], next))),
+        _ => Ok(MatchStatus::NoMatch(input)),
+    }
 }
