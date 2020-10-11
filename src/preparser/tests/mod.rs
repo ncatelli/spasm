@@ -1,4 +1,4 @@
-use crate::preparser::parser::{statement, Token};
+use crate::preparser::{PreParser, Token};
 use parcel::prelude::v1::*;
 
 macro_rules! chars {
@@ -16,6 +16,6 @@ fn should_parse_instruction_to_string() {
             &input[3..],
             vec![Token::Instruction("nop".to_string())]
         ))),
-        statement().parse(&input)
+        PreParser::new().parse(&input)
     );
 }
