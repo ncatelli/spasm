@@ -35,7 +35,7 @@ fn should_parse_label() {
 
 #[test]
 fn should_parse_single_byte_constant() {
-    let input = chars!(".1byte test $ff");
+    let input = chars!(".1byte test 255");
 
     assert_eq!(
         Ok(MatchStatus::Match((
@@ -48,7 +48,7 @@ fn should_parse_single_byte_constant() {
 
 #[test]
 fn should_parse_two_byte_constant() {
-    let input = chars!(".2byte test $FFFF");
+    let input = chars!(".2byte test 65535");
 
     assert_eq!(
         Ok(MatchStatus::Match((
@@ -61,7 +61,7 @@ fn should_parse_two_byte_constant() {
 
 #[test]
 fn should_parse_four_byte_constant() {
-    let input = chars!(".4byte test $FFFFFFFF");
+    let input = chars!(".4byte test 4294967295");
 
     assert_eq!(
         Ok(MatchStatus::Match((
