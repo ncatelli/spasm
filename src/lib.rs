@@ -2,6 +2,7 @@ mod addressing;
 mod backends;
 pub use backends::Backend;
 mod parser;
+mod preparser;
 
 #[cfg(test)]
 mod tests;
