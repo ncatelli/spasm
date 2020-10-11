@@ -23,7 +23,7 @@ comment        = ";" ( whitespace | character )* ;
 symboldef      = bytedef | twobytedef | fourbytedef | offset;
 
 bytedef        = ".1byte" whitespace+ alphabetic* whitespace+ byte ;
-twobytedef     = ".4byte" whitespace+ alphabetic* whitespace+ byte byte ;
+twobytedef     = ".2byte" whitespace+ alphabetic* whitespace+ byte byte ;
 fourbytedef    = ".4byte" whitespace+ alphabetic* whitespace+ byte byte byte byte ;
 offset        = ".offset" whitespace+ byte byte byte byte ;
 
