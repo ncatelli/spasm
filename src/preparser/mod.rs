@@ -1,4 +1,5 @@
 extern crate parcel;
+use crate::Emitter;
 use parcel::parsers::character::*;
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_of, one_or_more, right, zero_or_more};
@@ -9,13 +10,30 @@ use crate::parser::*;
 #[cfg(test)]
 mod tests;
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum ByteValue {
+    One(u8),
+    Two(u16),
+    Four(u32),
+}
+
+impl Emitter<Vec<u8>> for ByteValue {
+    fn emit(&self) -> Vec<u8> {
+        match self {
+            ByteValue::One(v) => v.to_ne_bytes().to_vec(),
+            ByteValue::Two(v) => v.to_ne_bytes().to_vec(),
+            ByteValue::Four(v) => v.to_ne_bytes().to_vec(),
+        }
+    }
+}
+
 /// Token wraps the token variants that can be derived from the
 /// parser.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Instruction(String),
     Label(String),
-    Symbol((String, u8)),
+    Symbol((String, ByteValue)),
 }
 
 #[derive(Default)]
@@ -98,8 +116,12 @@ fn labeldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
 }
 
 fn symboldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+    byte_def().or(|| two_byte_def()).or(|| four_byte_def())
+}
+
+fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
     right(join(
-        join(expect_str("define"), one_or_more(non_newline_whitespace())),
+        join(expect_str(".1byte"), one_or_more(non_newline_whitespace())),
         join(
             left(join(
                 one_or_more(alphabetic()),
@@ -108,5 +130,33 @@ fn symboldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
             unsigned8(),
         ),
     ))
-    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), v)))
+    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::One(v))))
+}
+
+fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+    right(join(
+        join(expect_str(".2byte"), one_or_more(non_newline_whitespace())),
+        join(
+            left(join(
+                one_or_more(alphabetic()),
+                one_or_more(non_newline_whitespace()),
+            )),
+            unsigned16(),
+        ),
+    ))
+    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Two(v))))
+}
+
+fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+    right(join(
+        join(expect_str(".4byte"), one_or_more(non_newline_whitespace())),
+        join(
+            left(join(
+                one_or_more(alphabetic()),
+                one_or_more(non_newline_whitespace()),
+            )),
+            unsigned32(),
+        ),
+    ))
+    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Four(v))))
 }

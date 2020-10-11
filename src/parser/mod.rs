@@ -4,6 +4,12 @@ use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 use parcel::{join, one_or_more, optional, right, take_n};
 
+macro_rules! char_vec_to_u32_from_radix {
+    ($chars:expr, $radix:expr) => {
+        u32::from_le(u32::from_str_radix(&$chars.into_iter().collect::<String>(), $radix).unwrap())
+    };
+}
+
 macro_rules! char_vec_to_u16_from_radix {
     ($chars:expr, $radix:expr) => {
         u16::from_le(u16::from_str_radix(&$chars.into_iter().collect::<String>(), $radix).unwrap())
@@ -45,6 +51,10 @@ pub fn non_whitespace_character<'a>() -> impl Parser<'a, &'a [char], char> {
     }
 }
 
+pub fn unsigned32<'a>() -> impl Parser<'a, &'a [char], u32> {
+    hex_u32().or(|| binary_u32()).or(|| dec_u32())
+}
+
 pub fn unsigned16<'a>() -> impl Parser<'a, &'a [char], u16> {
     hex_u16().or(|| binary_u16()).or(|| dec_u16())
 }
@@ -64,6 +74,10 @@ fn sign<'a>() -> impl Parser<'a, &'a [char], Sign> {
             '-' => Sign::Negative,
             _ => Sign::Positive,
         })
+}
+
+fn hex_u32<'a>() -> impl Parser<'a, &'a [char], u32> {
+    right(join(expect_character('$'), hex_bytes(4))).map(|hex| char_vec_to_u32_from_radix!(hex, 16))
 }
 
 fn hex_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
@@ -89,6 +103,11 @@ pub fn hex_digit<'a>() -> impl Parser<'a, &'a [char], char> {
     }
 }
 
+fn binary_u32<'a>() -> impl Parser<'a, &'a [char], u32> {
+    right(join(expect_character('%'), binary_bytes(4)))
+        .map(|bin| char_vec_to_u32_from_radix!(bin, 2))
+}
+
 fn binary_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
     right(join(expect_character('%'), binary_bytes(2)))
         .map(|bin| char_vec_to_u16_from_radix!(bin, 2))
@@ -112,6 +131,25 @@ pub fn binary<'a>() -> impl Parser<'a, &'a [char], char> {
     move |input: &'a [char]| match input.get(0) {
         Some(&next) if next.is_digit(2) => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
+    }
+}
+
+fn dec_u32<'a>() -> impl Parser<'a, &'a [char], u32> {
+    move |input: &'a [char]| {
+        let preparsed_input = input;
+        let res = one_or_more(decimal())
+            .map(|digits| {
+                let vd: String = digits.into_iter().collect();
+                u32::from_str_radix(&vd, 10)
+            })
+            .parse(input);
+
+        match res {
+            Ok(MatchStatus::Match((rem, Ok(u)))) => Ok(MatchStatus::Match((rem, u))),
+            Ok(MatchStatus::Match((_, Err(_)))) => Ok(MatchStatus::NoMatch(preparsed_input)),
+            Ok(MatchStatus::NoMatch(rem)) => Ok(MatchStatus::NoMatch(rem)),
+            Err(e) => Err(e),
+        }
     }
 }
 
