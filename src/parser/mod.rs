@@ -104,23 +104,19 @@ pub fn hex_digit<'a>() -> impl Parser<'a, &'a [char], char> {
 }
 
 fn binary_u32<'a>() -> impl Parser<'a, &'a [char], u32> {
-    right(join(expect_character('%'), binary_bytes(4)))
-        .map(|bin| char_vec_to_u32_from_radix!(bin, 2))
+    right(join(expect_str("0b"), binary_bytes(4))).map(|bin| char_vec_to_u32_from_radix!(bin, 2))
 }
 
 fn binary_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
-    right(join(expect_character('%'), binary_bytes(2)))
-        .map(|bin| char_vec_to_u16_from_radix!(bin, 2))
+    right(join(expect_str("0b"), binary_bytes(2))).map(|bin| char_vec_to_u16_from_radix!(bin, 2))
 }
 
 fn binary_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
-    right(join(expect_character('%'), binary_bytes(1)))
-        .map(|bin| char_vec_to_u8_from_radix!(bin, 2))
+    right(join(expect_str("0b"), binary_bytes(1))).map(|bin| char_vec_to_u8_from_radix!(bin, 2))
 }
 
 fn binary_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
-    right(join(expect_character('%'), binary_bytes(1)))
-        .map(|bin| char_vec_to_i8_from_radix!(bin, 2))
+    right(join(expect_str("0b"), binary_bytes(1))).map(|bin| char_vec_to_i8_from_radix!(bin, 2))
 }
 
 pub fn binary_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a [char], Vec<char>> {

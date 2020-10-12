@@ -4,7 +4,7 @@ use crate::backends::Backend;
 #[test]
 fn should_generate_expected_opcode() {
     let input = "nop
-lda #%00010010
+lda #0b00010010
 sta 4660
 bpl *0x1a
 bpl *-16
@@ -26,7 +26,7 @@ lda #0x12
 
 init:
   nop
-  lda #%00010010
+  lda #0b00010010
   sta 4660
   jmp init
 ";
@@ -46,7 +46,7 @@ nop
 
 init:
   nop
-  lda #%00010010
+  lda #0b00010010
   sta 4660
   jmp notinit
 ";

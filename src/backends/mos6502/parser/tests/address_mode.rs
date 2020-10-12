@@ -43,7 +43,7 @@ fn accumulator_address_mode_should_match_a() {
 #[test]
 fn absolute_address_mode_should_match_valid_u16() {
     let hinput = chars!("lda 0x1a2b");
-    let binput = chars!("lda %0001101000101011");
+    let binput = chars!("lda 0b0001101000101011");
     let dinput = chars!("lda 6699");
 
     gen_am_test!(&hinput, Mnemonic::LDA, AddressMode::Absolute(0x1a2b));
@@ -54,7 +54,7 @@ fn absolute_address_mode_should_match_valid_u16() {
 #[test]
 fn absolute_x_indexed_address_mode_should_match_valid_u16() {
     let hinput = chars!("adc 0x1a2b,X");
-    let binput = chars!("adc %0001101000101011,X");
+    let binput = chars!("adc 0b0001101000101011,X");
     let dinput = chars!("adc 6699,X");
 
     gen_am_test!(
@@ -77,7 +77,7 @@ fn absolute_x_indexed_address_mode_should_match_valid_u16() {
 #[test]
 fn absolute_y_indexed_address_mode_should_match_valid_u16() {
     let hinput = chars!("inc 0x1a2b,Y");
-    let binput = chars!("inc %0001101000101011,Y");
+    let binput = chars!("inc 0b0001101000101011,Y");
     let dinput = chars!("inc 6699,Y");
 
     gen_am_test!(
@@ -100,7 +100,7 @@ fn absolute_y_indexed_address_mode_should_match_valid_u16() {
 #[test]
 fn immediate_address_mode_should_match_valid_u8() {
     let hinput = chars!("lda #0x1a");
-    let binput = chars!("lda #%00011010");
+    let binput = chars!("lda #0b00011010");
     let dinput = chars!("lda #26");
 
     gen_am_test!(&hinput, Mnemonic::LDA, AddressMode::Immediate(0x1a));
@@ -111,7 +111,7 @@ fn immediate_address_mode_should_match_valid_u8() {
 #[test]
 fn indirect_address_mode_should_match_valid_u16() {
     let hinput = chars!("jmp (0x1a2b)");
-    let binput = chars!("jmp (%0001101000101011)");
+    let binput = chars!("jmp (0b0001101000101011)");
     let dinput = chars!("jmp (6699)");
 
     gen_am_test!(&hinput, Mnemonic::JMP, AddressMode::Indirect(0x1a2b));
@@ -122,7 +122,7 @@ fn indirect_address_mode_should_match_valid_u16() {
 #[test]
 fn indexed_indirect_address_mode_should_match_valid_u8() {
     let hinput = chars!("sta (0x1a,X)");
-    let binput = chars!("sta (%00011010,X)");
+    let binput = chars!("sta (0b00011010,X)");
     let dinput = chars!("sta (26,X)");
 
     gen_am_test!(&hinput, Mnemonic::STA, AddressMode::IndexedIndirect(0x1a));
@@ -133,7 +133,7 @@ fn indexed_indirect_address_mode_should_match_valid_u8() {
 #[test]
 fn indirect_indexed_address_mode_should_match_valid_u8() {
     let hinput = chars!("eor (0x1a),Y");
-    let binput = chars!("eor (%00011010),Y");
+    let binput = chars!("eor (0b00011010),Y");
     let dinput = chars!("eor (26),Y");
 
     gen_am_test!(&hinput, Mnemonic::EOR, AddressMode::IndirectIndexed(0x1a));
@@ -144,7 +144,7 @@ fn indirect_indexed_address_mode_should_match_valid_u8() {
 #[test]
 fn relative_address_mode_should_match_valid_u8() {
     let hinput = chars!("bpl *0x1a");
-    let binput = chars!("bpl *%00011010");
+    let binput = chars!("bpl *0b00011010");
     let dinput = chars!("bpl *26");
     let dspinput = chars!("bpl *+26");
     let dsninput = chars!("bpl *-26");
@@ -159,7 +159,7 @@ fn relative_address_mode_should_match_valid_u8() {
 #[test]
 fn zeropage_address_mode_should_match_valid_u8() {
     let hinput = chars!("ldy 0x1a");
-    let binput = chars!("ldy %00011010");
+    let binput = chars!("ldy 0b00011010");
     let dinput = chars!("ldy 26");
 
     gen_am_test!(&hinput, Mnemonic::LDY, AddressMode::ZeroPage(0x1a));
@@ -170,7 +170,7 @@ fn zeropage_address_mode_should_match_valid_u8() {
 #[test]
 fn zeropage_x_indexed_address_mode_should_match_valid_u8() {
     let hinput = chars!("lda 0x1a,X");
-    let binput = chars!("lda %00011010,X");
+    let binput = chars!("lda 0b00011010,X");
     let dinput = chars!("lda 26,X");
 
     gen_am_test!(
@@ -194,7 +194,7 @@ fn zeropage_x_indexed_address_mode_should_match_valid_u8() {
 fn zeropage_y_indexed_address_mode_should_match_valid_u8() {
     let hinput = chars!("lda 0x1a,Y");
     let dinput = chars!("lda 26,Y");
-    let binput = chars!("lda %00011010,Y");
+    let binput = chars!("lda 0b00011010,Y");
 
     gen_am_test!(
         &hinput,

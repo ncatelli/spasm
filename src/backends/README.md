@@ -77,7 +77,7 @@ upper          = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"
                |"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z" ;
 word           = ( "$" hex hex hex hex ) | digit+ 
                | binarybyte binarybyte ;
-byte           = ( "0x" hex hex ) | digit+ | binarybyte ;
+byte           = ( "0x" hex hex ) | digit+ | ("0b" binarybyte ) ;
 hex            = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"a"|"b"|"c"
                |"d"|"e"|"f"|"A"|"B"|"C"|"D"|"E"|"F" ;
 number         = digit+ ;
