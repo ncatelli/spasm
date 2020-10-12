@@ -14,18 +14,21 @@ This feature-set is small to begin with but functions to standardize and consoli
 ### Grammar
 
 ```
-statement      = ( whitespace | newline )* ( labeldef | symboldef | comment | instruction )+ comment? ( newline | EOF ) ;
+statement      = ( whitespace | newline )* ( labeldef | symboldef | orientation | comment | instruction )+ comment? ( newline | EOF ) ;
 
 instruction    = ( alphabetic | digit | special | ";"! )+ ;
 
 comment        = ";" ( whitespace | character )* ;
 
-symboldef      = bytedef | twobytedef | fourbytedef | offset;
+symboldef      = bytedef | twobytedef | fourbytedef ;
 
 bytedef        = ".1byte" whitespace+ alphabetic* whitespace+ byte ;
 twobytedef     = ".2byte" whitespace+ alphabetic* whitespace+ byte byte ;
 fourbytedef    = ".4byte" whitespace+ alphabetic* whitespace+ byte byte byte byte ;
-offset        = ".offset" whitespace+ byte byte byte byte ;
+
+orientation    = offset ;
+offset         = ".offset" whitespace+ byte byte byte byte ;
+
 
 labeldef       = alphabetic* ":" ;
 

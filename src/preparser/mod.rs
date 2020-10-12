@@ -34,6 +34,7 @@ pub enum Token {
     Instruction(String),
     Label(String),
     Symbol((String, ByteValue)),
+    Offset(usize),
 }
 
 #[derive(Default)]
@@ -60,6 +61,7 @@ pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token>> {
             labeldef()
                 .map(|tok| Some(tok))
                 .or(|| symboldef().map(|tok| Some(tok)))
+                .or(|| orientation().map(|tok| Some(tok)))
                 .or(|| instruction().map(|tok| Some(tok)))
                 .or(|| comment().map(|_| None)),
             newline().or(|| eof()),
@@ -159,4 +161,16 @@ fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
         ),
     ))
     .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Four(v))))
+}
+
+fn orientation<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+    offset()
+}
+
+fn offset<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+    right(join(
+        join(expect_str(".offset"), one_or_more(non_newline_whitespace())),
+        unsigned16(),
+    ))
+    .map(|o| Token::Offset(usize::from(o)))
 }

@@ -74,3 +74,16 @@ fn should_parse_four_byte_constant() {
         PreParser::new().parse(&input)
     );
 }
+
+#[test]
+fn should_parse_offset() {
+    let input = chars!(".offset 0x1a2b");
+
+    assert_eq!(
+        Ok(MatchStatus::Match((
+            &input[input.len()..],
+            vec![Token::Offset(0x1a2b)]
+        ))),
+        PreParser::new().parse(&input)
+    );
+}
