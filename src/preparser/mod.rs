@@ -34,7 +34,7 @@ pub enum Token {
     Instruction(String),
     Label(String),
     Symbol((String, ByteValue)),
-    Offset(usize),
+    Offset(u32),
 }
 
 #[derive(Default)]
@@ -170,7 +170,7 @@ fn orientation<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
 fn offset<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
     right(join(
         join(expect_str(".offset"), one_or_more(non_newline_whitespace())),
-        unsigned16(),
+        unsigned32(),
     ))
-    .map(|o| Token::Offset(usize::from(o)))
+    .map(|o| Token::Offset(o))
 }
