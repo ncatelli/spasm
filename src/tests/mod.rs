@@ -6,9 +6,9 @@ fn should_generate_expected_opcode() {
     let input = "nop
 lda #%00010010
 sta 4660
-bpl *$1a
+bpl *0x1a
 bpl *-16
-jmp $1234\n";
+jmp 0x1234\n";
 
     assert_eq!(
         Ok(vec![
@@ -22,7 +22,7 @@ jmp $1234\n";
 fn should_generate_expected_opcodes_with_label() {
     let input = "
 nop
-lda #$12
+lda #0x12
 
 init:
   nop
@@ -60,12 +60,12 @@ init:
 #[test]
 fn should_generate_expected_opcodes_from_address_mode_symbols() {
     let input = "
-define test $12
+define test 0x12
 
 nop
 lda #test
-sta $1234
-jmp $1234
+sta 0x1234
+jmp 0x1234
 ";
 
     assert_eq!(
@@ -79,8 +79,8 @@ fn should_throw_an_error_if_a_symbol_doesnt_exist() {
     let input = "
 nop
 lda #test
-sta $1234
-jmp $1234
+sta 0x1234
+jmp 0x1234
 ";
 
     assert_eq!(
@@ -92,12 +92,12 @@ jmp $1234
 #[test]
 fn should_differentate_between_label_and_symbol_definitions() {
     let input = "
-define thisisatest $12
+define thisisatest 0x12
 
 init:
     nop
     lda #thisisatest
-    sta $1234
+    sta 0x1234
     jmp init
 ";
 

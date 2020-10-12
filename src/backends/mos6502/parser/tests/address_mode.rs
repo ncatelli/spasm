@@ -42,7 +42,7 @@ fn accumulator_address_mode_should_match_a() {
 
 #[test]
 fn absolute_address_mode_should_match_valid_u16() {
-    let hinput = chars!("lda $1a2b");
+    let hinput = chars!("lda 0x1a2b");
     let binput = chars!("lda %0001101000101011");
     let dinput = chars!("lda 6699");
 
@@ -53,7 +53,7 @@ fn absolute_address_mode_should_match_valid_u16() {
 
 #[test]
 fn absolute_x_indexed_address_mode_should_match_valid_u16() {
-    let hinput = chars!("adc $1a2b,X");
+    let hinput = chars!("adc 0x1a2b,X");
     let binput = chars!("adc %0001101000101011,X");
     let dinput = chars!("adc 6699,X");
 
@@ -76,7 +76,7 @@ fn absolute_x_indexed_address_mode_should_match_valid_u16() {
 
 #[test]
 fn absolute_y_indexed_address_mode_should_match_valid_u16() {
-    let hinput = chars!("inc $1a2b,Y");
+    let hinput = chars!("inc 0x1a2b,Y");
     let binput = chars!("inc %0001101000101011,Y");
     let dinput = chars!("inc 6699,Y");
 
@@ -99,7 +99,7 @@ fn absolute_y_indexed_address_mode_should_match_valid_u16() {
 
 #[test]
 fn immediate_address_mode_should_match_valid_u8() {
-    let hinput = chars!("lda #$1a");
+    let hinput = chars!("lda #0x1a");
     let binput = chars!("lda #%00011010");
     let dinput = chars!("lda #26");
 
@@ -110,7 +110,7 @@ fn immediate_address_mode_should_match_valid_u8() {
 
 #[test]
 fn indirect_address_mode_should_match_valid_u16() {
-    let hinput = chars!("jmp ($1a2b)");
+    let hinput = chars!("jmp (0x1a2b)");
     let binput = chars!("jmp (%0001101000101011)");
     let dinput = chars!("jmp (6699)");
 
@@ -121,7 +121,7 @@ fn indirect_address_mode_should_match_valid_u16() {
 
 #[test]
 fn indexed_indirect_address_mode_should_match_valid_u8() {
-    let hinput = chars!("sta ($1a,X)");
+    let hinput = chars!("sta (0x1a,X)");
     let binput = chars!("sta (%00011010,X)");
     let dinput = chars!("sta (26,X)");
 
@@ -132,7 +132,7 @@ fn indexed_indirect_address_mode_should_match_valid_u8() {
 
 #[test]
 fn indirect_indexed_address_mode_should_match_valid_u8() {
-    let hinput = chars!("eor ($1a),Y");
+    let hinput = chars!("eor (0x1a),Y");
     let binput = chars!("eor (%00011010),Y");
     let dinput = chars!("eor (26),Y");
 
@@ -143,7 +143,7 @@ fn indirect_indexed_address_mode_should_match_valid_u8() {
 
 #[test]
 fn relative_address_mode_should_match_valid_u8() {
-    let hinput = chars!("bpl *$1a");
+    let hinput = chars!("bpl *0x1a");
     let binput = chars!("bpl *%00011010");
     let dinput = chars!("bpl *26");
     let dspinput = chars!("bpl *+26");
@@ -158,7 +158,7 @@ fn relative_address_mode_should_match_valid_u8() {
 
 #[test]
 fn zeropage_address_mode_should_match_valid_u8() {
-    let hinput = chars!("ldy $1a");
+    let hinput = chars!("ldy 0x1a");
     let binput = chars!("ldy %00011010");
     let dinput = chars!("ldy 26");
 
@@ -169,7 +169,7 @@ fn zeropage_address_mode_should_match_valid_u8() {
 
 #[test]
 fn zeropage_x_indexed_address_mode_should_match_valid_u8() {
-    let hinput = chars!("lda $1a,X");
+    let hinput = chars!("lda 0x1a,X");
     let binput = chars!("lda %00011010,X");
     let dinput = chars!("lda 26,X");
 
@@ -192,7 +192,7 @@ fn zeropage_x_indexed_address_mode_should_match_valid_u8() {
 
 #[test]
 fn zeropage_y_indexed_address_mode_should_match_valid_u8() {
-    let hinput = chars!("lda $1a,Y");
+    let hinput = chars!("lda 0x1a,Y");
     let dinput = chars!("lda 26,Y");
     let binput = chars!("lda %00011010,Y");
 

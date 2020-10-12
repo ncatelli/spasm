@@ -1,5 +1,5 @@
 extern crate parcel;
-use parcel::parsers::character::expect_character;
+use parcel::parsers::character::{expect_character, expect_str};
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 use parcel::{join, one_or_more, optional, right, take_n};
@@ -77,19 +77,19 @@ fn sign<'a>() -> impl Parser<'a, &'a [char], Sign> {
 }
 
 fn hex_u32<'a>() -> impl Parser<'a, &'a [char], u32> {
-    right(join(expect_character('$'), hex_bytes(4))).map(|hex| char_vec_to_u32_from_radix!(hex, 16))
+    right(join(expect_str("0x"), hex_bytes(4))).map(|hex| char_vec_to_u32_from_radix!(hex, 16))
 }
 
 fn hex_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
-    right(join(expect_character('$'), hex_bytes(2))).map(|hex| char_vec_to_u16_from_radix!(hex, 16))
+    right(join(expect_str("0x"), hex_bytes(2))).map(|hex| char_vec_to_u16_from_radix!(hex, 16))
 }
 
 fn hex_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
-    right(join(expect_character('$'), hex_bytes(1))).map(|hex| char_vec_to_u8_from_radix!(hex, 16))
+    right(join(expect_str("0x"), hex_bytes(1))).map(|hex| char_vec_to_u8_from_radix!(hex, 16))
 }
 
 fn hex_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
-    right(join(expect_character('$'), hex_bytes(1))).map(|hex| char_vec_to_i8_from_radix!(hex, 16))
+    right(join(expect_str("0x"), hex_bytes(1))).map(|hex| char_vec_to_i8_from_radix!(hex, 16))
 }
 
 pub fn hex_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a [char], Vec<char>> {

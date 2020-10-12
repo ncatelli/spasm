@@ -42,9 +42,9 @@ macro_rules! chars {
 fn should_parse_multiple_instructions_until_eof() {
     let input = chars!(
         "nop
-lda #$12
-sta $1234
-jmp $1234"
+lda #0x12
+sta 0x1234
+jmp 0x1234"
     );
     gen_instruction_only_program_test!(
         &input,
@@ -75,10 +75,10 @@ fn should_parse_arbitrary_newlines_and_whitespaces_before_instruction() {
         "
         
     nop
-lda #$12
+lda #0x12
 
-sta $1234
-jmp $1234"
+sta 0x1234
+jmp 0x1234"
     );
     gen_instruction_only_program_test!(
         &input,
@@ -109,9 +109,9 @@ fn should_parse_labels() {
         "
 init:
   nop
-  lda #$12
-  sta $1234
-  jmp $1234"
+  lda #0x12
+  sta 0x1234
+  jmp 0x1234"
     );
     gen_program_test!(
         &input,
@@ -141,11 +141,11 @@ init:
 fn should_parse_symbols() {
     let input = chars!(
         "
-define thisisatest $12
+define thisisatest 0x12
 nop
 lda #thisisatest
-sta $1234
-jmp $1234"
+sta 0x1234
+jmp 0x1234"
     );
     gen_program_test!(
         &input,
@@ -184,9 +184,9 @@ fn should_parse_singleline_comment() {
 fn should_ignore_comment_lines() {
     let input = chars!(
         "; nop
-lda #$12 ; this is the first instruction
-sta $1234
-jmp $1234"
+lda #0x12 ; this is the first instruction
+sta 0x1234
+jmp 0x1234"
     );
     gen_instruction_only_program_test!(
         &input,
