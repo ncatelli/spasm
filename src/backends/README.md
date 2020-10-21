@@ -2,9 +2,9 @@
 ## Grammar
 
 ```
-instructions   = ( whitespace | newline )* ( labeldef | symboldef | comment | instruction )+ ( newline | EOF ) ;
+instructions   = ( whitespace | newline )* ( instruction )+ ( newline | EOF ) ;
 
-instruction    = whitespace* mnemonic ( whitespace+ ( operand  ) )? whitespace+ comment? ;
+instruction    = whitespace* mnemonic ( whitespace+ ( operand  ) )? whitespace+ ;
 
 mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "STA" | "sta" | "STX" | "stx" | "STY" | "sty"
@@ -31,13 +31,7 @@ mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "SEC" | "sec" | "SED" | "sed" | SEI" | "sei"
                | "BRK" | "brk" | "NOP" | "nop"
 
-comment        = ";" ( whitespace | character )* ;
-
-symboldef      = "define" whitespace+ alphabetic* whitespace+ byte ;
-
 symbol         = alphabetic* ;
-
-labeldef       = alphabetic* ":" ;
 
 label          = alphabetic* ;
 

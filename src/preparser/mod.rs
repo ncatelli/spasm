@@ -10,6 +10,14 @@ use crate::parser::*;
 #[cfg(test)]
 mod tests;
 
+/// Label represents a the string representation of a label.
+pub type Label = String;
+
+/// SymbolId represents a symbol identifier.
+pub type SymbolId = String;
+
+/// ByteValue represents a parser token value either representing a 1, 2, or
+/// 4 byte value.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ByteValue {
     One(u8),
@@ -32,8 +40,8 @@ impl Emitter<Vec<u8>> for ByteValue {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Instruction(String),
-    Label(String),
-    Symbol((String, ByteValue)),
+    Label(Label),
+    Symbol((SymbolId, ByteValue)),
     Offset(u32),
 }
 
