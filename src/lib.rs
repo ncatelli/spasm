@@ -31,8 +31,11 @@ impl Emitter<Vec<u8>> for Vec<u8> {
 /// or a String Error.
 pub type AssemblerResult = Result<Vec<u8>, String>;
 
-pub trait Assembler {
-    fn assemble(&self, source: &str) -> AssemblerResult;
+/// The Assembler trait takes in an arbitrary length str, assembling it against
+// a target and returning a result containing either the assembled bytecode or
+// an error.
+pub trait Assembler<T> {
+    fn assemble(&self, source: T) -> AssemblerResult;
 }
 
 // Converts a source string to it's corresponding array of little endinan binary

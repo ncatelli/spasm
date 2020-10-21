@@ -28,7 +28,7 @@ impl MOS6502Assembler {
     }
 }
 
-impl Assembler for MOS6502Assembler {
+impl Assembler<&str> for MOS6502Assembler {
     fn assemble(&self, source: &str) -> AssemblerResult {
         let src = source.chars().collect::<Vec<char>>();
         let (_, labels, symbols, insts) = match parser::instructions().parse(&src).unwrap() {
