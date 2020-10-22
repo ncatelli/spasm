@@ -22,21 +22,13 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Instruction> {
                 one_or_more(non_newline_whitespace()),
                 address_mode(),
             ))),
-            join(zero_or_more(non_newline_whitespace()), optional(comment())),
+            zero_or_more(non_newline_whitespace()),
         )),
     )
     .map(|(m, a)| match a {
         Some(amor) => Instruction::new(m, amor),
         None => Instruction::new(m, AddressModeOrReference::AddressMode(AddressMode::Implied)),
     })
-}
-
-fn comment<'a>() -> impl parcel::Parser<'a, &'a [char], ()> {
-    right(join(
-        expect_character(';'),
-        zero_or_more(non_whitespace_character().or(|| non_newline_whitespace())),
-    ))
-    .map(|_| ())
 }
 
 fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a [char], Mnemonic> {

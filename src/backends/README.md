@@ -2,9 +2,7 @@
 ## Grammar
 
 ```
-instruction    = whitespace* mnemonic ( whitespace+ ( operand  ) )? whitespace+ comment? ;
-
-comment        = ";" ( whitespace | character )* 
+instruction    = whitespace* mnemonic ( whitespace+ ( operand ) )? whitespace+ ;
 
 mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "STA" | "sta" | "STX" | "stx" | "STY" | "sty"

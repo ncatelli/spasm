@@ -14,7 +14,7 @@ This feature-set is small to begin with but functions to standardize and consoli
 ### Grammar
 
 ```
-statement      = ( whitespace | newline )* ( labeldef | symboldef | orientation | comment | instruction )+ comment? ( newline | EOF ) ;
+statement      = ( whitespace | newline )* ( labeldef | symboldef | orientation | instruction | comment )+ comment? ( newline | EOF ) ;
 
 instruction    = ( alphabetic | digit | special | ";"! )+ ;
 
