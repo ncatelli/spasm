@@ -2,9 +2,7 @@
 ## Grammar
 
 ```
-instructions   = ( whitespace | newline )* ( labeldef | symboldef | comment | instruction )+ ( newline | EOF ) ;
-
-instruction    = whitespace* mnemonic ( whitespace+ ( operand  ) )? whitespace+ comment? ;
+instruction    = whitespace* mnemonic ( whitespace+ ( operand ) )? whitespace+ ;
 
 mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "STA" | "sta" | "STX" | "stx" | "STY" | "sty"
@@ -31,13 +29,7 @@ mnemonic       = "LDA" | "lda" | "LDX" | "ldx" | "LDY" | "ldy"
                | "SEC" | "sec" | "SED" | "sed" | SEI" | "sei"
                | "BRK" | "brk" | "NOP" | "nop"
 
-comment        = ";" ( whitespace | character )* ;
-
-symboldef      = "define" whitespace+ alphabetic* whitespace+ byte ;
-
 symbol         = alphabetic* ;
-
-labeldef       = alphabetic* ":" ;
 
 label          = alphabetic* ;
 
@@ -77,7 +69,7 @@ upper          = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"
                |"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z" ;
 word           = ( "$" hex hex hex hex ) | digit+ 
                | binarybyte binarybyte ;
-byte           = ( "$" hex hex ) | digit+ | binarybyte ;
+byte           = ( "0x" hex hex ) | digit+ | ("0b" binarybyte ) ;
 hex            = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"a"|"b"|"c"
                |"d"|"e"|"f"|"A"|"B"|"C"|"D"|"E"|"F" ;
 number         = digit+ ;

@@ -9,15 +9,6 @@ pub use mnemonics::Mnemonic;
 #[cfg(test)]
 mod tests;
 
-/// InstructionOrDefinition wraps the token variants that can be derived from the
-/// parser.
-#[derive(Debug, Clone, PartialEq)]
-pub enum InstructionOrDefinition {
-    Instruction(Instruction),
-    Label(String),
-    Symbol((String, u8)),
-}
-
 /// OpCode represents an unsigned 8bit value.
 pub type OpCode = u8;
 
@@ -252,31 +243,5 @@ macro_rules! instruction {
 macro_rules! static_instruction {
     ($mnemonic:expr, $am:expr) => {
         $crate::backends::mos6502::instruction_set::StaticInstruction::new($mnemonic, $am)
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! iod_instruction {
-    ($inst:expr) => {
-        $crate::backends::mos6502::instruction_set::InstructionOrDefinition::Instruction($inst)
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! iod_label {
-    ($label:expr) => {
-        $crate::backends::mos6502::instruction_set::InstructionOrDefinition::Label(
-            $label.to_string(),
-        )
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! iod_symbol {
-    ($symbol:expr, $value:expr) => {
-        $crate::backends::mos6502::instruction_set::InstructionOrDefinition::Symbol((
-            $symbol.to_string(),
-            $value,
-        ))
     };
 }

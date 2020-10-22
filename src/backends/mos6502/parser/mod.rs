@@ -3,7 +3,7 @@ use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference, AddressModeType, Symbol,
 };
 use crate::backends::mos6502::instruction_set::mnemonics::Mnemonic;
-use crate::backends::mos6502::instruction_set::{Instruction, InstructionOrDefinition};
+use crate::backends::mos6502::instruction_set::Instruction;
 use parcel::parsers::character::*;
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
@@ -14,27 +14,7 @@ use crate::parser::*;
 #[cfg(test)]
 mod tests;
 
-pub fn instructions<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<InstructionOrDefinition>> {
-    one_or_more(right(join(
-        zero_or_more(non_newline_whitespace().or(|| newline())),
-        left(join(
-            labeldef()
-                .map(|iod| Some(iod))
-                .or(|| symboldef().map(|iod| Some(iod)))
-                .or(|| comment().map(|_| None))
-                .or(|| instruction().map(|i| Some(i))),
-            newline().or(|| eof()),
-        )),
-    )))
-    .map(|ioc| {
-        ioc.into_iter()
-            .filter(|oi| oi.is_some())
-            .map(|oi| oi.unwrap())
-            .collect()
-    })
-}
-
-pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDefinition> {
+pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Instruction> {
     join(
         right(join(zero_or_more(non_newline_whitespace()), mnemonic())),
         left(join(
@@ -42,41 +22,13 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDef
                 one_or_more(non_newline_whitespace()),
                 address_mode(),
             ))),
-            join(zero_or_more(non_newline_whitespace()), optional(comment())),
+            zero_or_more(non_newline_whitespace()),
         )),
     )
     .map(|(m, a)| match a {
         Some(amor) => Instruction::new(m, amor),
         None => Instruction::new(m, AddressModeOrReference::AddressMode(AddressMode::Implied)),
     })
-    .map(|i| InstructionOrDefinition::Instruction(i))
-}
-
-fn comment<'a>() -> impl parcel::Parser<'a, &'a [char], ()> {
-    right(join(
-        expect_character(';'),
-        zero_or_more(non_whitespace_character().or(|| non_newline_whitespace())),
-    ))
-    .map(|_| ())
-}
-
-fn labeldef<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDefinition> {
-    left(join(one_or_more(alphabetic()), expect_character(':')))
-        .map(|cv| InstructionOrDefinition::Label(cv.into_iter().collect()))
-}
-
-fn symboldef<'a>() -> impl parcel::Parser<'a, &'a [char], InstructionOrDefinition> {
-    right(join(
-        join(expect_str("define"), one_or_more(non_newline_whitespace())),
-        join(
-            left(join(
-                one_or_more(alphabetic()),
-                one_or_more(non_newline_whitespace()),
-            )),
-            unsigned8(),
-        ),
-    ))
-    .map(|(s, v)| InstructionOrDefinition::Symbol((s.into_iter().collect(), v)))
 }
 
 fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a [char], Mnemonic> {

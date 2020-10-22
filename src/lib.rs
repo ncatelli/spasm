@@ -1,7 +1,9 @@
+use parcel::prelude::v1::*;
 mod addressing;
 mod backends;
 pub use backends::Backend;
 mod parser;
+mod preparser;
 
 #[cfg(test)]
 mod tests;
@@ -30,14 +32,20 @@ impl Emitter<Vec<u8>> for Vec<u8> {
 /// or a String Error.
 pub type AssemblerResult = Result<Vec<u8>, String>;
 
-pub trait Assembler {
-    fn assemble(&self, source: &str) -> AssemblerResult;
+/// The Assembler trait takes in an arbitrary length str, assembling it against
+// a target and returning a result containing either the assembled bytecode or
+// an error.
+pub trait Assembler<T> {
+    fn assemble(&self, source: T) -> AssemblerResult;
 }
 
 // Converts a source string to it's corresponding array of little endinan binary
 // opcodes.
 pub fn assemble(backend: Backend, source: &str) -> AssemblerResult {
+    let input: Vec<char> = source.chars().collect();
+    let tokens = preparser::PreParser::new().parse(&input).unwrap().unwrap();
+
     match backend {
-        Backend::MOS6502 => backends::mos6502::MOS6502Assembler::new().assemble(source),
+        Backend::MOS6502 => backends::mos6502::MOS6502Assembler::new().assemble(tokens),
     }
 }
