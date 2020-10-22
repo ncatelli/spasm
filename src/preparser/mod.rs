@@ -38,8 +38,8 @@ impl Emitter<Vec<u8>> for ByteValue {
 /// Token wraps the token variants that can be derived from the
 /// parser.
 #[derive(Debug, Clone, PartialEq)]
-pub enum Token {
-    Instruction(String),
+pub enum Token<T> {
+    Instruction(T),
     Label(Label),
     Symbol((SymbolId, ByteValue)),
     Offset(u32),
@@ -55,14 +55,14 @@ impl PreParser {
     }
 }
 
-impl<'a> Parser<'a, &'a [char], Vec<Token>> for PreParser {
-    fn parse(&self, input: &'a [char]) -> ParseResult<'a, &'a [char], Vec<Token>> {
+impl<'a> Parser<'a, &'a [char], Vec<Token<String>>> for PreParser {
+    fn parse(&self, input: &'a [char]) -> ParseResult<'a, &'a [char], Vec<Token<String>>> {
         statement().parse(input)
     }
 }
 
 #[allow(dead_code)]
-pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token>> {
+pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token<String>>> {
     one_or_more(right(join(
         zero_or_more(non_newline_whitespace().or(|| newline())),
         left(join(
@@ -84,7 +84,7 @@ pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token>> {
 }
 
 #[allow(dead_code)]
-fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     one_or_more(alphabetic().or(|| {
         non_newline_whitespace().or(|| digit(10)).or(|| {
             one_of(vec![
@@ -120,16 +120,16 @@ fn comment<'a>() -> impl parcel::Parser<'a, &'a [char], ()> {
     .map(|_| ())
 }
 
-fn labeldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+fn labeldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     left(join(one_or_more(alphabetic()), expect_character(':')))
         .map(|cv| Token::Label(cv.into_iter().collect()))
 }
 
-fn symboldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+fn symboldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     byte_def().or(|| two_byte_def()).or(|| four_byte_def())
 }
 
-fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     right(join(
         join(expect_str(".1byte"), one_or_more(non_newline_whitespace())),
         join(
@@ -143,7 +143,7 @@ fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
     .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::One(v))))
 }
 
-fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     right(join(
         join(expect_str(".2byte"), one_or_more(non_newline_whitespace())),
         join(
@@ -157,7 +157,7 @@ fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
     .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Two(v))))
 }
 
-fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     right(join(
         join(expect_str(".4byte"), one_or_more(non_newline_whitespace())),
         join(
@@ -171,11 +171,11 @@ fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
     .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Four(v))))
 }
 
-fn orientation<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+fn orientation<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     offset()
 }
 
-fn offset<'a>() -> impl parcel::Parser<'a, &'a [char], Token> {
+fn offset<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     right(join(
         join(expect_str(".offset"), one_or_more(non_newline_whitespace())),
         unsigned32(),

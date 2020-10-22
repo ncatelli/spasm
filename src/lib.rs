@@ -1,3 +1,4 @@
+use parcel::prelude::v1::*;
 mod addressing;
 mod backends;
 pub use backends::Backend;
@@ -41,7 +42,10 @@ pub trait Assembler<T> {
 // Converts a source string to it's corresponding array of little endinan binary
 // opcodes.
 pub fn assemble(backend: Backend, source: &str) -> AssemblerResult {
+    let input: Vec<char> = source.chars().collect();
+    let tokens = preparser::PreParser::new().parse(&input).unwrap().unwrap();
+
     match backend {
-        Backend::MOS6502 => backends::mos6502::MOS6502Assembler::new().assemble(source),
+        Backend::MOS6502 => backends::mos6502::MOS6502Assembler::new().assemble(tokens),
     }
 }

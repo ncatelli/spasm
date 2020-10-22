@@ -60,7 +60,7 @@ init:
 #[test]
 fn should_generate_expected_opcodes_from_address_mode_symbols() {
     let input = "
-define test 0x12
+.1byte test 0x12
 
 nop
 lda #test
@@ -92,7 +92,7 @@ jmp 0x1234
 #[test]
 fn should_differentate_between_label_and_symbol_definitions() {
     let input = "
-define thisisatest 0x12
+.1byte thisisatest 0x12
 
 init:
     nop
