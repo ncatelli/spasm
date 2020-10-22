@@ -106,3 +106,21 @@ init:
         assemble(Backend::MOS6502, input)
     )
 }
+
+#[test]
+fn should_ignore_comments_on_each_statement_type() {
+    let input = "
+.1byte test 0x12 ; test
+
+init: ; test
+    nop ; test
+    lda #test ; test 
+    sta 0x1234 ; test
+    jmp init ; test
+";
+
+    assert_eq!(
+        Ok(vec![0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x00, 0x00]),
+        assemble(Backend::MOS6502, input)
+    )
+}
