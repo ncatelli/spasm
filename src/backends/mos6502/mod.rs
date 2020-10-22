@@ -40,7 +40,7 @@ impl Assembler<Vec<Token<String>>> for MOS6502Assembler {
                     let res = match parser::instruction().parse(&input) {
                         Ok(MatchStatus::Match((_, iod))) => Ok(Token::Instruction(iod)),
                         Ok(MatchStatus::NoMatch(remainder)) => Err(format!(
-                            "Unabled to parse: {}",
+                            "Unable to parse: {}",
                             remainder.into_iter().collect::<String>()
                         )),
                         Err(e) => Err(e),
