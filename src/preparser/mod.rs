@@ -2,7 +2,7 @@ extern crate parcel;
 use crate::Emitter;
 use parcel::parsers::character::*;
 use parcel::prelude::v1::*;
-use parcel::{join, left, one_of, one_or_more, right, zero_or_more};
+use parcel::{join, left, one_of, one_or_more, optional, right, zero_or_more};
 
 // Pull in shared combinators
 use crate::parser::*;
@@ -72,7 +72,7 @@ pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token<String>>
                 .or(|| orientation().map(|tok| Some(tok)))
                 .or(|| instruction().map(|tok| Some(tok)))
                 .or(|| comment().map(|_| None)),
-            newline().or(|| eof()),
+            right(join(optional(comment()), newline().or(|| eof()))),
         )),
     )))
     .map(|ioc| {
