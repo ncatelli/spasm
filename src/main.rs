@@ -66,14 +66,6 @@ fn main() {
                 )
                 .flag(
                     Flag::new()
-                        .name("reset-vector")
-                        .short_code("r")
-                        .help_string("the address offset of the starting byte of rom")
-                        .value_type(ValueType::Integer)
-                        .default_value(Value::Integer(32768)),
-                )
-                .flag(
-                    Flag::new()
                         .name("padding")
                         .short_code("p")
                         .help_string("size in bytes to pad the output binary to")
@@ -82,23 +74,17 @@ fn main() {
                 )
                 .handler(Box::new(|c| {
                     {
-                        match (
-                            c.get("in-file"),
-                            c.get("out-file"),
-                            c.get("reset-vector"),
-                            c.get("padding"),
-                        ) {
+                        match (c.get("in-file"), c.get("out-file"), c.get("padding")) {
                             (
                                 Some(Value::Str(in_f)),
                                 Some(Value::Str(out_f)),
-                                Some(&Value::Integer(reset_vector)),
                                 Some(&Value::Integer(bin_size)),
-                            ) => Ok((in_f, out_f, reset_vector as u16, bin_size as usize)),
+                            ) => Ok((in_f, out_f, bin_size as usize)),
                             _ => Err(RuntimeError::InvalidArguments),
                         }
-                        .map(|(in_f, out_f, rv, padding)| {
+                        .map(|(in_f, out_f, padding)| {
                             read_src_file(&in_f)
-                                .map(|input| assemble_object(&input, rv, padding))?
+                                .map(|input| assemble_object(&input, padding))?
                                 .map(|bin_data| {
                                     write_dest_file(&out_f, &bin_data).map(|_| EXIT_SUCCESS)
                                 })?
@@ -145,7 +131,7 @@ fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
     }
 }
 
-fn assemble_object(asm_src: &str, reset_vector: u16, bin_size: usize) -> RuntimeResult<Vec<u8>> {
+fn assemble_object(asm_src: &str, bin_size: usize) -> RuntimeResult<Vec<u8>> {
     let obj = assemble(Backend::MOS6502, asm_src)
         .map_err(RuntimeError::Undefined)
         .map(|bin| bin)?;
@@ -153,12 +139,7 @@ fn assemble_object(asm_src: &str, reset_vector: u16, bin_size: usize) -> Runtime
     let data_len = obj.len();
     let padding = bin_size - data_len;
 
-    let mut bin: Vec<u8> = obj.into_iter().chain((0..padding).map(|_| 0xea)).collect();
-
-    let [lsb, msb] = reset_vector.to_le_bytes();
-    // reset vector
-    bin[0x7ffc] = lsb;
-    bin[0x7ffd] = msb;
+    let bin: Vec<u8> = obj.into_iter().chain((0..padding).map(|_| 0xea)).collect();
 
     Ok(bin)
 }
