@@ -33,7 +33,7 @@ impl Assembler<Vec<Token<String>>> for MOS6502Assembler {
             .into_iter()
             .map(|tok| match tok {
                 Token::Label(v) => Ok(Token::Label(v)),
-                Token::Offset(u) => Ok(Token::Offset(u)),
+                Token::Origin(u) => Ok(Token::Origin(u)),
                 Token::Symbol(v) => Ok(Token::Symbol(v)),
                 Token::Instruction(inst) => {
                     let input = inst.chars().collect::<Vec<char>>();
@@ -76,7 +76,7 @@ impl Assembler<Vec<Token<String>>> for MOS6502Assembler {
                         symbols.insert(id, sv);
                         (offset, labels, symbols, insts)
                     }
-                    Token::Offset(o) => (o as usize, labels, symbols, insts),
+                    Token::Origin(o) => (o as usize, labels, symbols, insts),
                 },
             );
 

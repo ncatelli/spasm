@@ -42,7 +42,7 @@ pub enum Token<T> {
     Instruction(T),
     Label(Label),
     Symbol((SymbolId, ByteValue)),
-    Offset(u32),
+    Origin(u32),
 }
 
 #[derive(Default)]
@@ -69,7 +69,7 @@ pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token<String>>
             labeldef()
                 .map(|tok| Some(tok))
                 .or(|| symboldef().map(|tok| Some(tok)))
-                .or(|| orientation().map(|tok| Some(tok)))
+                .or(|| origin().map(|tok| Some(tok)))
                 .or(|| instruction().map(|tok| Some(tok)))
                 .or(|| comment().map(|_| None)),
             right(join(
@@ -174,14 +174,10 @@ fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Four(v))))
 }
 
-fn orientation<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
-    offset()
-}
-
-fn offset<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
+fn origin<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     right(join(
-        join(expect_str(".offset"), one_or_more(non_newline_whitespace())),
+        join(expect_str(".origin"), one_or_more(non_newline_whitespace())),
         unsigned32(),
     ))
-    .map(|o| Token::Offset(o))
+    .map(|offset| Token::Origin(offset))
 }

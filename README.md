@@ -14,7 +14,7 @@ This feature-set is small to begin with but functions to standardize and consoli
 ### Grammar
 
 ```
-statement      = ( whitespace | newline )* ( labeldef | symboldef | orientation | instruction | comment )+ comment? ( newline | EOF ) ;
+statement      = ( whitespace | newline )* ( labeldef | symboldef | origin | instruction | comment )+ comment? ( newline | EOF ) ;
 
 instruction    = ( alphabetic | digit | special | ";"! )+ ;
 
@@ -26,8 +26,7 @@ bytedef        = ".1byte" whitespace+ alphabetic* whitespace+ byte ;
 twobytedef     = ".2byte" whitespace+ alphabetic* whitespace+ byte byte ;
 fourbytedef    = ".4byte" whitespace+ alphabetic* whitespace+ byte byte byte byte ;
 
-orientation    = offset ;
-offset         = ".offset" whitespace+ byte byte byte byte ;
+origin         = ".origin" whitespace+ byte byte byte byte ;
 
 
 labeldef       = alphabetic* ":" ;

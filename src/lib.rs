@@ -16,6 +16,12 @@ pub trait Emitter<T> {
     fn emit(&self) -> T;
 }
 
+/// Origin provides a structure for denoting memory offsets.
+pub struct Origin<U> {
+    pub offset: usize,
+    pub instructions: U,
+}
+
 impl Emitter<Vec<u8>> for u8 {
     fn emit(&self) -> Vec<u8> {
         vec![*self]
