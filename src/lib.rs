@@ -17,9 +17,25 @@ pub trait Emitter<T> {
 }
 
 /// Origin provides a structure for denoting memory offsets.
-pub struct Origin<U> {
+pub struct Origin<T> {
     pub offset: usize,
-    pub instructions: U,
+    pub instructions: T,
+}
+
+impl<T> Origin<T> {
+    pub fn new(instructions: T) -> Self {
+        Self {
+            offset: 0,
+            instructions,
+        }
+    }
+
+    pub fn with_offset(offset: usize, instructions: T) -> Self {
+        Self {
+            offset,
+            instructions,
+        }
+    }
 }
 
 impl Emitter<Vec<u8>> for u8 {
