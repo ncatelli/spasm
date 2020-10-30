@@ -20,7 +20,7 @@ fn should_parse_instruction_to_string() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            zero_origin!(vec![Token::Instruction("nop".to_string())])
+            vec![zero_origin!(vec![Token::Instruction("nop".to_string())])]
         ))),
         PreParser::new().parse(&input)
     );
@@ -33,7 +33,7 @@ fn should_parse_label() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            zero_origin!(vec![Token::Label("test".to_string())])
+            vec![zero_origin!(vec![Token::Label("test".to_string())])]
         ))),
         PreParser::new().parse(&input)
     );
@@ -46,10 +46,10 @@ fn should_parse_single_byte_constant() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            zero_origin!(vec![Token::Symbol((
+            vec![zero_origin!(vec![Token::Symbol((
                 "test".to_string(),
                 ByteValue::One(255)
-            ))])
+            ))])]
         ))),
         PreParser::new().parse(&input)
     );
@@ -62,10 +62,10 @@ fn should_parse_two_byte_constant() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            zero_origin!(vec![Token::Symbol((
+            vec![zero_origin!(vec![Token::Symbol((
                 "test".to_string(),
                 ByteValue::Two(65535)
-            ))])
+            ))])]
         ))),
         PreParser::new().parse(&input)
     );
@@ -78,10 +78,10 @@ fn should_parse_four_byte_constant() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            zero_origin!(vec![Token::Symbol((
+            vec![zero_origin!(vec![Token::Symbol((
                 "test".to_string(),
                 ByteValue::Four(4294967295)
-            ))])
+            ))])]
         ))),
         PreParser::new().parse(&input)
     );
@@ -89,12 +89,15 @@ fn should_parse_four_byte_constant() {
 
 #[test]
 fn should_parse_origin() {
-    let input = chars!(".origin 0x00001a2b");
+    let input = chars!(".origin 0x00001a2b\nnop");
 
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            zero_origin!(vec![Token::Origin(0x1a2b)])
+            vec![crate::Origin::with_offset(
+                0x1a2b,
+                vec![Token::Instruction("nop".to_string())]
+            )]
         ))),
         PreParser::new().parse(&input)
     );

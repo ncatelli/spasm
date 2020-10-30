@@ -42,7 +42,6 @@ pub enum Token<T> {
     Instruction(T),
     Label(Label),
     Symbol((SymbolId, ByteValue)),
-    Origin(u32),
 }
 
 #[derive(Default)]
@@ -56,11 +55,31 @@ impl PreParser {
 }
 
 type PreparseTokenStream = Vec<Token<String>>;
+type OriginStream = Vec<Origin<PreparseTokenStream>>;
 
-impl<'a> Parser<'a, &'a [char], Origin<PreparseTokenStream>> for PreParser {
-    fn parse(&self, input: &'a [char]) -> ParseResult<'a, &'a [char], Origin<PreparseTokenStream>> {
-        statements().map(|tokens| Origin::new(tokens)).parse(input)
+impl<'a> Parser<'a, &'a [char], OriginStream> for PreParser {
+    fn parse(&self, input: &'a [char]) -> ParseResult<'a, &'a [char], OriginStream> {
+        join(
+            origin_statements().or(|| statements().map(|tokens| Origin::new(tokens))),
+            zero_or_more(origin_statements()),
+        )
+        .map(|(head, tail)| vec![head].into_iter().chain(tail.into_iter()).collect())
+        .parse(input)
     }
+}
+
+#[allow(dead_code)]
+pub fn origin_statements<'a>() -> impl parcel::Parser<'a, &'a [char], Origin<PreparseTokenStream>> {
+    join(
+        origin(),
+        zero_or_more(statement()).map(|ioc| {
+            ioc.into_iter()
+                .filter(|oi| oi.is_some())
+                .map(|oi| oi.unwrap())
+                .collect()
+        }),
+    )
+    .map(|(offset, statements)| Origin::with_offset(offset as usize, statements))
 }
 
 #[allow(dead_code)]
@@ -81,7 +100,6 @@ pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Option<Token<Strin
             labeldef()
                 .map(|tok| Some(tok))
                 .or(|| symboldef().map(|tok| Some(tok)))
-                .or(|| origin().map(|tok| Some(tok)))
                 .or(|| instruction().map(|tok| Some(tok)))
                 .or(|| comment().map(|_| None)),
             right(join(
@@ -180,10 +198,9 @@ fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Four(v))))
 }
 
-fn origin<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
+fn origin<'a>() -> impl parcel::Parser<'a, &'a [char], u32> {
     right(join(
         join(expect_str(".origin"), one_or_more(non_newline_whitespace())),
         unsigned32(),
     ))
-    .map(|offset| Token::Origin(offset))
 }

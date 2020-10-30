@@ -67,7 +67,11 @@ pub trait Assembler<T> {
 pub fn assemble(backend: Backend, source: &str) -> AssemblerResult {
     let input: Vec<char> = source.chars().collect();
     let origin_tokens = preparser::PreParser::new().parse(&input).unwrap().unwrap();
-    let tokens = origin_tokens.instructions; // This will need to eventually be removed.
+    let tokens = origin_tokens
+        .into_iter()
+        .map(|origin| origin.instructions)
+        .flatten()
+        .collect(); // This will need to eventually be removed.
 
     match backend {
         Backend::MOS6502 => backends::mos6502::MOS6502Assembler::new().assemble(tokens),
