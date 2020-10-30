@@ -27,13 +27,22 @@ struct SymbolTable {
 }
 
 impl SymbolTable {
-    fn new(l: LabelMap, s: SymbolMap) -> Self {
+    fn new() -> Self {
         Self {
-            labels: l,
-            symbols: s,
+            labels: LabelMap::new(),
+            symbols: SymbolMap::new(),
         }
     }
 
+    #[allow(dead_code)]
+    fn from() -> Self {
+        Self {
+            labels: LabelMap::new(),
+            symbols: SymbolMap::new(),
+        }
+    }
+
+    #[allow(dead_code)]
     fn into_tuple(self) -> (LabelMap, SymbolMap) {
         (self.labels, self.symbols)
     }
@@ -75,20 +84,20 @@ impl MOS6502Assembler {
 
 impl Assembler<UnparsedTokenStream> for MOS6502Assembler {
     fn assemble(&self, source: UnparsedTokenStream) -> AssemblerResult {
-        let (_, labels, symbols, insts) = self
+        let (_, symbol_table, insts) = self
             .parse_string_instructions_to_token(source)?
             .into_iter()
             .fold(
-                (0, LabelMap::new(), SymbolMap::new(), Vec::new()),
-                |(offset, mut labels, mut symbols, mut insts), tok| match tok {
+                (0, SymbolTable::new(), Vec::new()),
+                |(offset, mut st, mut insts), tok| match tok {
                     Token::Instruction(i) => {
                         let size_of = i.size_of();
                         insts.push(addressing::Positional::with_position(offset, i));
-                        (offset + size_of, labels, symbols, insts)
+                        (offset + size_of, st, insts)
                     }
                     Token::Label(l) => {
-                        labels.insert(l, offset as u16);
-                        (offset, labels, symbols, insts)
+                        st.labels.insert(l, offset as u16);
+                        (offset, st, insts)
                     }
                     Token::Symbol((id, bv)) => {
                         let sv = match bv {
@@ -96,8 +105,8 @@ impl Assembler<UnparsedTokenStream> for MOS6502Assembler {
                             e @ _ => panic!(format!("Backend only supports u8: passed {:?}", e)),
                         };
 
-                        symbols.insert(id, sv);
-                        (offset, labels, symbols, insts)
+                        st.symbols.insert(id, sv);
+                        (offset, st, insts)
                     }
                 },
             );
@@ -109,15 +118,18 @@ impl Assembler<UnparsedTokenStream> for MOS6502Assembler {
                 let mnemonic = i.mnemonic;
                 let amor = i.amor;
                 match amor {
-                    AddressModeOrReference::Label(l) => labels
+                    AddressModeOrReference::Label(l) => symbol_table
+                        .labels
                         .get(&l)
                         .map_or(Err(format!("label {} undefined", &l)), |offset| {
                             Ok((mnemonic, AddressMode::Absolute(*offset)))
                         }),
-                    AddressModeOrReference::Symbol(s) => symbols.get(&s.symbol).map_or(
-                        Err(format!("symbol {} undefined", &s.symbol)),
-                        |byte_value| Ok((mnemonic, AddressMode::Immediate(*byte_value))),
-                    ),
+                    AddressModeOrReference::Symbol(s) => {
+                        symbol_table.symbols.get(&s.symbol).map_or(
+                            Err(format!("symbol {} undefined", &s.symbol)),
+                            |byte_value| Ok((mnemonic, AddressMode::Immediate(*byte_value))),
+                        )
+                    }
                     AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
                 }
             })
