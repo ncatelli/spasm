@@ -6,18 +6,12 @@ pub trait SizeOf {
 
 /// Positional functions to store an object wrapped with an offset position.
 #[derive(Debug, Clone, PartialEq)]
-pub struct Positional<T>
-where
-    T: SizeOf,
-{
+pub struct Positional<T> {
     pub position: usize,
     contents: T,
 }
 
-impl<T> Positional<T>
-where
-    T: SizeOf,
-{
+impl<T> Positional<T> {
     /// new instantiates a Positional with an offset of 0 that wraps a value T.
     /// Essentially this calls Self::with_position(0, T).
     #[allow(dead_code)]
