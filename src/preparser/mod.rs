@@ -57,13 +57,23 @@ impl PreParser {
 
 impl<'a> Parser<'a, &'a [char], Vec<Token<String>>> for PreParser {
     fn parse(&self, input: &'a [char]) -> ParseResult<'a, &'a [char], Vec<Token<String>>> {
-        statement().parse(input)
+        statements().parse(input)
     }
 }
 
 #[allow(dead_code)]
-pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token<String>>> {
-    one_or_more(right(join(
+pub fn statements<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token<String>>> {
+    one_or_more(statement()).map(|ioc| {
+        ioc.into_iter()
+            .filter(|oi| oi.is_some())
+            .map(|oi| oi.unwrap())
+            .collect()
+    })
+}
+
+#[allow(dead_code)]
+pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Option<Token<String>>> {
+    right(join(
         zero_or_more(non_newline_whitespace().or(|| newline())),
         left(join(
             labeldef()
@@ -77,13 +87,7 @@ pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token<String>>
                 newline().or(|| eof()),
             )),
         )),
-    )))
-    .map(|ioc| {
-        ioc.into_iter()
-            .filter(|oi| oi.is_some())
-            .map(|oi| oi.unwrap())
-            .collect()
-    })
+    ))
 }
 
 #[allow(dead_code)]

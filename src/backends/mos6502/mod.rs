@@ -18,6 +18,24 @@ use crate::{Assembler, AssemblerResult};
 type LabelMap = HashMap<String, u16>;
 type SymbolMap = HashMap<String, u8>;
 
+struct SymbolTable {
+    labels: LabelMap,
+    symbols: SymbolMap,
+}
+
+impl SymbolTable {
+    fn new(l: LabelMap, s: SymbolMap) -> Self {
+        Self {
+            labels: l,
+            symbols: s,
+        }
+    }
+
+    fn into_tuple(self) -> (LabelMap, SymbolMap) {
+        (self.labels, self.symbols)
+    }
+}
+
 #[derive(Default)]
 pub struct MOS6502Assembler {}
 
@@ -25,11 +43,12 @@ impl MOS6502Assembler {
     pub fn new() -> Self {
         Self::default()
     }
-}
 
-impl Assembler<Vec<Token<String>>> for MOS6502Assembler {
-    fn assemble(&self, source: Vec<Token<String>>) -> AssemblerResult {
-        let (_, labels, symbols, insts) = source
+    fn parse_string_instructions_to_token(
+        &self,
+        source: Vec<Token<String>>,
+    ) -> Result<Vec<Token<Instruction>>, String> {
+        source
             .into_iter()
             .map(|tok| match tok {
                 Token::Label(v) => Ok(Token::Label(v)),
@@ -38,7 +57,7 @@ impl Assembler<Vec<Token<String>>> for MOS6502Assembler {
                 Token::Instruction(inst) => {
                     let input = inst.chars().collect::<Vec<char>>();
                     let res = match parser::instruction().parse(&input) {
-                        Ok(MatchStatus::Match((_, iod))) => Ok(Token::Instruction(iod)),
+                        Ok(MatchStatus::Match((_, inst))) => Ok(Token::Instruction(inst)),
                         Ok(MatchStatus::NoMatch(remainder)) => Err(format!(
                             "Unable to parse: {}",
                             remainder.into_iter().collect::<String>()
@@ -48,7 +67,14 @@ impl Assembler<Vec<Token<String>>> for MOS6502Assembler {
                     res
                 }
             })
-            .collect::<Result<Vec<Token<Instruction>>, String>>()?
+            .collect()
+    }
+}
+
+impl Assembler<Vec<Token<String>>> for MOS6502Assembler {
+    fn assemble(&self, source: Vec<Token<String>>) -> AssemblerResult {
+        let (_, labels, symbols, insts) = self
+            .parse_string_instructions_to_token(source)?
             .into_iter()
             .enumerate()
             .fold(
