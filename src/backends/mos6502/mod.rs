@@ -15,6 +15,9 @@ use crate::preparser::{ByteValue, Token};
 use crate::Emitter;
 use crate::{Assembler, AssemblerResult};
 
+type UnparsedTokenStream = Vec<Token<String>>;
+type ParsedTokenStream = Vec<Token<Instruction>>;
+
 type LabelMap = HashMap<String, u16>;
 type SymbolMap = HashMap<String, u8>;
 
@@ -46,8 +49,8 @@ impl MOS6502Assembler {
 
     fn parse_string_instructions_to_token(
         &self,
-        source: Vec<Token<String>>,
-    ) -> Result<Vec<Token<Instruction>>, String> {
+        source: UnparsedTokenStream,
+    ) -> Result<ParsedTokenStream, String> {
         source
             .into_iter()
             .map(|tok| match tok {
@@ -70,8 +73,8 @@ impl MOS6502Assembler {
     }
 }
 
-impl Assembler<Vec<Token<String>>> for MOS6502Assembler {
-    fn assemble(&self, source: Vec<Token<String>>) -> AssemblerResult {
+impl Assembler<UnparsedTokenStream> for MOS6502Assembler {
+    fn assemble(&self, source: UnparsedTokenStream) -> AssemblerResult {
         let (_, labels, symbols, insts) = self
             .parse_string_instructions_to_token(source)?
             .into_iter()
