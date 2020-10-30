@@ -1,5 +1,5 @@
 extern crate parcel;
-use crate::Emitter;
+use crate::{Emitter, Origin};
 use parcel::parsers::character::*;
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_of, one_or_more, optional, right, zero_or_more};
@@ -55,14 +55,16 @@ impl PreParser {
     }
 }
 
-impl<'a> Parser<'a, &'a [char], Vec<Token<String>>> for PreParser {
-    fn parse(&self, input: &'a [char]) -> ParseResult<'a, &'a [char], Vec<Token<String>>> {
-        statements().parse(input)
+type PreparseTokenStream = Vec<Token<String>>;
+
+impl<'a> Parser<'a, &'a [char], Origin<PreparseTokenStream>> for PreParser {
+    fn parse(&self, input: &'a [char]) -> ParseResult<'a, &'a [char], Origin<PreparseTokenStream>> {
+        statements().map(|tokens| Origin::new(tokens)).parse(input)
     }
 }
 
 #[allow(dead_code)]
-pub fn statements<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token<String>>> {
+pub fn statements<'a>() -> impl parcel::Parser<'a, &'a [char], PreparseTokenStream> {
     one_or_more(statement()).map(|ioc| {
         ioc.into_iter()
             .filter(|oi| oi.is_some())

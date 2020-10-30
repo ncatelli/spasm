@@ -17,6 +17,7 @@ pub trait Emitter<T> {
 }
 
 /// Origin provides a structure for denoting memory offsets.
+#[derive(Debug, PartialEq)]
 pub struct Origin<T> {
     pub offset: usize,
     pub instructions: T,
@@ -65,7 +66,8 @@ pub trait Assembler<T> {
 // opcodes.
 pub fn assemble(backend: Backend, source: &str) -> AssemblerResult {
     let input: Vec<char> = source.chars().collect();
-    let tokens = preparser::PreParser::new().parse(&input).unwrap().unwrap();
+    let origin_tokens = preparser::PreParser::new().parse(&input).unwrap().unwrap();
+    let tokens = origin_tokens.instructions; // This will need to eventually be removed.
 
     match backend {
         Backend::MOS6502 => backends::mos6502::MOS6502Assembler::new().assemble(tokens),

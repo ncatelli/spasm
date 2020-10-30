@@ -7,6 +7,12 @@ macro_rules! chars {
     };
 }
 
+macro_rules! zero_origin {
+    ($insts:expr) => {
+        $crate::Origin::new($insts)
+    };
+}
+
 #[test]
 fn should_parse_instruction_to_string() {
     let input = chars!("nop");
@@ -14,7 +20,7 @@ fn should_parse_instruction_to_string() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![Token::Instruction("nop".to_string())]
+            zero_origin!(vec![Token::Instruction("nop".to_string())])
         ))),
         PreParser::new().parse(&input)
     );
@@ -27,7 +33,7 @@ fn should_parse_label() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![Token::Label("test".to_string())]
+            zero_origin!(vec![Token::Label("test".to_string())])
         ))),
         PreParser::new().parse(&input)
     );
@@ -40,7 +46,10 @@ fn should_parse_single_byte_constant() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![Token::Symbol(("test".to_string(), ByteValue::One(255)))]
+            zero_origin!(vec![Token::Symbol((
+                "test".to_string(),
+                ByteValue::One(255)
+            ))])
         ))),
         PreParser::new().parse(&input)
     );
@@ -53,7 +62,10 @@ fn should_parse_two_byte_constant() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![Token::Symbol(("test".to_string(), ByteValue::Two(65535)))]
+            zero_origin!(vec![Token::Symbol((
+                "test".to_string(),
+                ByteValue::Two(65535)
+            ))])
         ))),
         PreParser::new().parse(&input)
     );
@@ -66,10 +78,10 @@ fn should_parse_four_byte_constant() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![Token::Symbol((
+            zero_origin!(vec![Token::Symbol((
                 "test".to_string(),
                 ByteValue::Four(4294967295)
-            ))]
+            ))])
         ))),
         PreParser::new().parse(&input)
     );
@@ -82,7 +94,7 @@ fn should_parse_origin() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![Token::Origin(0x1a2b)]
+            zero_origin!(vec![Token::Origin(0x1a2b)])
         ))),
         PreParser::new().parse(&input)
     );
