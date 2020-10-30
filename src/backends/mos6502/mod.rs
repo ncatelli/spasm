@@ -113,7 +113,7 @@ impl Assembler<UnparsedTokenStream> for MOS6502Assembler {
 
         let opcodes = insts
             .into_iter()
-            .map(|pi| (pi.unwrap()))
+            .map(|pi| pi.unwrap())
             .map(|i| {
                 let mnemonic = i.mnemonic;
                 let amor = i.amor;
