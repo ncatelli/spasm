@@ -52,7 +52,7 @@ init:
 ";
 
     assert_eq!(
-        Err("label notinit, undefined at line: 6".to_string()),
+        Err("label notinit undefined".to_string()),
         assemble(Backend::MOS6502, input)
     )
 }
@@ -84,7 +84,7 @@ jmp 0x1234
 ";
 
     assert_eq!(
-        Err("symbol test, undefined at line: 2".to_string()),
+        Err("symbol test undefined".to_string()),
         assemble(Backend::MOS6502, input)
     )
 }

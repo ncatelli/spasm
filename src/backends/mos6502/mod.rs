@@ -58,7 +58,7 @@ impl MOS6502Assembler {
                     let res = match parser::instruction().parse(&input) {
                         Ok(MatchStatus::Match((_, inst))) => Ok(Token::Instruction(inst)),
                         Ok(MatchStatus::NoMatch(remainder)) => Err(format!(
-                            "Unable to parse: {}",
+                            "no match found while parsing: {}",
                             remainder.into_iter().collect::<String>()
                         )),
                         Err(e) => Err(e),
@@ -75,17 +75,12 @@ impl Assembler<Vec<Token<String>>> for MOS6502Assembler {
         let (_, labels, symbols, insts) = self
             .parse_string_instructions_to_token(source)?
             .into_iter()
-            .enumerate()
             .fold(
                 (0, LabelMap::new(), SymbolMap::new(), Vec::new()),
-                |(offset, mut labels, mut symbols, mut insts), (line, tok)| match tok {
+                |(offset, mut labels, mut symbols, mut insts), tok| match tok {
                     Token::Instruction(i) => {
                         let size_of = i.size_of();
-                        let line_number = line + 1;
-                        insts.push((
-                            line_number,
-                            addressing::Positional::with_position(offset, i),
-                        ));
+                        insts.push(addressing::Positional::with_position(offset, i));
                         (offset + size_of, labels, symbols, insts)
                     }
                     Token::Label(l) => {
@@ -106,17 +101,18 @@ impl Assembler<Vec<Token<String>>> for MOS6502Assembler {
 
         let opcodes = insts
             .into_iter()
-            .map(|(line, pi)| (line, pi.unwrap()))
-            .map(|(line, i)| {
+            .map(|pi| (pi.unwrap()))
+            .map(|i| {
                 let mnemonic = i.mnemonic;
                 let amor = i.amor;
                 match amor {
-                    AddressModeOrReference::Label(l) => labels.get(&l).map_or(
-                        Err(format!("label {}, undefined at line: {}", &l, line)),
-                        |offset| Ok((mnemonic, AddressMode::Absolute(*offset))),
-                    ),
+                    AddressModeOrReference::Label(l) => labels
+                        .get(&l)
+                        .map_or(Err(format!("label {} undefined", &l)), |offset| {
+                            Ok((mnemonic, AddressMode::Absolute(*offset)))
+                        }),
                     AddressModeOrReference::Symbol(s) => symbols.get(&s.symbol).map_or(
-                        Err(format!("symbol {}, undefined at line: {}", &s.symbol, line)),
+                        Err(format!("symbol {} undefined", &s.symbol)),
                         |byte_value| Ok((mnemonic, AddressMode::Immediate(*byte_value))),
                     ),
                     AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
