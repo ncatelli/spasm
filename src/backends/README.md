@@ -1,5 +1,4 @@
 # MOS Technology 6502 Backend
-
 ## Grammar
 
 ```
