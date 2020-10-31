@@ -1,5 +1,6 @@
 use crate::assemble;
 use crate::backends::Backend;
+use crate::Emitter;
 
 macro_rules! zero_origin {
     ($insts:expr) => {
@@ -138,18 +139,17 @@ init: ; test
 }
 
 #[test]
-fn should_parse_origins() {
+fn should_pad_assembled_output() {
     let input = "
 nop
-.origin 0x0000000b
+.origin 0x00000003
+nop
+.origin 0x00000006
 nop
 ";
 
     assert_eq!(
-        Ok(vec![
-            crate::Origin::new(vec![0xea]),
-            crate::Origin::with_offset(11, vec![0xea])
-        ]),
-        assemble(Backend::MOS6502, input)
-    )
+        Ok(vec![0xea, 0x00, 0x00, 0xea, 0x00, 0x00, 0xea]),
+        assemble(Backend::MOS6502, input).map(|res| res.emit())
+    );
 }

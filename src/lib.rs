@@ -71,14 +71,18 @@ impl Emitter<Vec<u8>> for Vec<Origin<Vec<u8>>> {
             .into_iter()
             .map(|origin| {
                 (
-                    (origin.offset, origin.instructions.len()),
+                    (
+                        origin.offset,
+                        (origin.offset + origin.instructions.len() - 1),
+                    ),
                     origin.instructions,
                 )
             })
             .unzip();
 
         let (offset_start, offset_end): (Vec<usize>, Vec<usize>) = offsets.into_iter().unzip();
-        let padding: Vec<usize> = offset_start[1..]
+
+        let padding = offset_start[1..]
             .into_iter()
             .map(|offset| *offset)
             .zip(
@@ -88,15 +92,16 @@ impl Emitter<Vec<u8>> for Vec<Origin<Vec<u8>>> {
             )
             .map(|(end_of_last, start_of_next)| start_of_next - end_of_last)
             .chain(vec![0].into_iter())
-            .collect();
+            .collect::<Vec<usize>>();
 
         unpadded_bytecode
             .into_iter()
             .zip(padding)
             .map(|(bytecode, pad_size)| {
+                let normaized_pad_size = if pad_size > 0 { pad_size - 1 } else { 0 };
                 bytecode
                     .into_iter()
-                    .chain(vec![0 as u8].into_iter().cycle().take(pad_size))
+                    .chain(vec![0 as u8].into_iter().cycle().take(normaized_pad_size))
                     .collect::<Vec<u8>>()
             })
             .flatten()
