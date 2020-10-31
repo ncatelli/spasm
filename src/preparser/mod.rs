@@ -174,7 +174,10 @@ fn symboldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
 
 fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     right(join(
-        join(expect_str(".1byte"), one_or_more(non_newline_whitespace())),
+        join(
+            expect_str(".define byte"),
+            one_or_more(non_newline_whitespace()),
+        ),
         join(
             left(join(
                 one_or_more(alphabetic()),
@@ -188,7 +191,10 @@ fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
 
 fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     right(join(
-        join(expect_str(".2byte"), one_or_more(non_newline_whitespace())),
+        join(
+            expect_str(".define word"),
+            one_or_more(non_newline_whitespace()),
+        ),
         join(
             left(join(
                 one_or_more(alphabetic()),
@@ -202,7 +208,10 @@ fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
 
 fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     right(join(
-        join(expect_str(".4byte"), one_or_more(non_newline_whitespace())),
+        join(
+            expect_str(".define doubleword"),
+            one_or_more(non_newline_whitespace()),
+        ),
         join(
             left(join(
                 one_or_more(alphabetic()),
