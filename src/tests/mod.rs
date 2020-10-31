@@ -67,7 +67,7 @@ init:
 #[test]
 fn should_generate_expected_opcodes_from_address_mode_symbols() {
     let input = "
-.1byte test 0x12
+.define byte test 0x12
 
 nop
 lda #test
@@ -101,7 +101,7 @@ jmp 0x1234
 #[test]
 fn should_differentate_between_label_and_symbol_definitions() {
     let input = "
-.1byte thisisatest 0x12
+.define byte thisisatest 0x12
 
 init:
     nop
@@ -121,7 +121,7 @@ init:
 #[test]
 fn should_ignore_comments_on_each_statement_type() {
     let input = "
-.1byte test 0x12 ; test
+.define byte test 0x12 ; test
 
 init: ; test
     nop ; test
