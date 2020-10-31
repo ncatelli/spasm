@@ -14,11 +14,13 @@ This feature-set is small to begin with but functions to standardize and consoli
 ### Grammar
 
 ```
-program        = ( origin | statement )+ ;
+program        = ( whitespace | newline )* ( origin | statement )+ ;
 
-statement      = ( whitespace | newline )* ( labeldef | symboldef | origin | instruction | comment )+ comment?  ( newline | EOF );
+statements     = statement+ ;
 
-instruction    = ( alphabetic | digit | special | ";"! )+ ;
+statement      = ( whitespace | newline )* ( labeldef | symboldef | instruction | comment ) comment?  ( newline | EOF );
+
+instruction    = alphabetic ( alphabetic | digit | special | ";"! )+ ;
 
 comment        = ";" ( whitespace | character )* ;
 

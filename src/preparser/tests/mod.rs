@@ -89,15 +89,15 @@ fn should_parse_four_byte_constant() {
 
 #[test]
 fn should_parse_origin() {
-    let input = chars!(".origin 0x00001a2b\nnop");
+    let input = chars!("nop\n.origin 0x00001a2b\nnop");
 
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![crate::Origin::with_offset(
-                0x1a2b,
-                vec![Token::Instruction("nop".to_string())]
-            )]
+            vec![
+                crate::Origin::new(vec![Token::Instruction("nop".to_string())]),
+                crate::Origin::with_offset(0x1a2b, vec![Token::Instruction("nop".to_string())])
+            ]
         ))),
         PreParser::new().parse(&input)
     );

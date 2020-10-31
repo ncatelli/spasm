@@ -136,3 +136,20 @@ init: ; test
         assemble(Backend::MOS6502, input)
     )
 }
+
+#[test]
+fn should_parse_origins() {
+    let input = "
+nop
+.origin 0x0000000b
+nop
+";
+
+    assert_eq!(
+        Ok(vec![
+            crate::Origin::new(vec![0xea]),
+            crate::Origin::with_offset(11, vec![0xea])
+        ]),
+        assemble(Backend::MOS6502, input)
+    )
+}

@@ -70,15 +70,18 @@ impl<'a> Parser<'a, &'a [char], OriginStream> for PreParser {
 
 #[allow(dead_code)]
 pub fn origin_statements<'a>() -> impl parcel::Parser<'a, &'a [char], Origin<PreparseTokenStream>> {
-    join(
-        origin(),
-        zero_or_more(statement()).map(|ioc| {
-            ioc.into_iter()
-                .filter(|oi| oi.is_some())
-                .map(|oi| oi.unwrap())
-                .collect()
-        }),
-    )
+    right(join(
+        zero_or_more(non_newline_whitespace().or(|| newline())),
+        join(
+            origin(),
+            zero_or_more(statement()).map(|ioc| {
+                ioc.into_iter()
+                    .filter(|oi| oi.is_some())
+                    .map(|oi| oi.unwrap())
+                    .collect()
+            }),
+        ),
+    ))
     .map(|(offset, statements)| Origin::with_offset(offset as usize, statements))
 }
 
@@ -112,31 +115,36 @@ pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Option<Token<Strin
 
 #[allow(dead_code)]
 fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
-    one_or_more(alphabetic().or(|| {
-        non_newline_whitespace().or(|| digit(10)).or(|| {
-            one_of(vec![
-                expect_character('-'),
-                expect_character('_'),
-                expect_character('\\'),
-                expect_character('#'),
-                expect_character('&'),
-                expect_character('\''),
-                expect_character('|'),
-                expect_character('('),
-                expect_character(')'),
-                expect_character('*'),
-                expect_character('+'),
-                expect_character(','),
-                expect_character('.'),
-                expect_character('/'),
-                expect_character(':'),
-                expect_character('<'),
-                expect_character('='),
-                expect_character('>'),
-            ])
-        })
-    }))
-    .map(|v| Token::Instruction(v.into_iter().collect()))
+    join(
+        alphabetic(),
+        one_or_more(alphabetic().or(|| {
+            non_newline_whitespace().or(|| digit(10)).or(|| {
+                one_of(vec![
+                    expect_character('-'),
+                    expect_character('_'),
+                    expect_character('\\'),
+                    expect_character('#'),
+                    expect_character('&'),
+                    expect_character('\''),
+                    expect_character('|'),
+                    expect_character('('),
+                    expect_character(')'),
+                    expect_character('*'),
+                    expect_character('+'),
+                    expect_character(','),
+                    expect_character('.'),
+                    expect_character('/'),
+                    expect_character(':'),
+                    expect_character('<'),
+                    expect_character('='),
+                    expect_character('>'),
+                ])
+            })
+        })),
+    )
+    .map(|(head, tail)| {
+        Token::Instruction(vec![head].into_iter().chain(tail.into_iter()).collect())
+    })
 }
 
 fn comment<'a>() -> impl parcel::Parser<'a, &'a [char], ()> {
