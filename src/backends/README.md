@@ -1,9 +1,5 @@
 # MOS Technology 6502 Backend
 
-## Special Labels
-### init
-The `init` label holds special significance, defining the entrance into the program. The address at the `init` label will be set to the value of the reset vector.
-
 ## Grammar
 
 ```
