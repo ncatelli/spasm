@@ -128,6 +128,8 @@ fn generate_symbol_table_from_instructions(
     Ok((symbol_table, tokens))
 }
 
+/// MOS6502Assembler functions as a wrapper struct to facilitate an
+/// implementation of the Assembler trait for the 6502 instruction set.
 #[derive(Default)]
 pub struct MOS6502Assembler {}
 
