@@ -2,6 +2,7 @@ extern crate scrap;
 use scrap::prelude::v1::*;
 use spasm::assemble;
 use spasm::Backend;
+use spasm::Emitter;
 use std::env;
 use std::fmt;
 use std::fs::{File, OpenOptions};
@@ -64,27 +65,15 @@ fn main() {
                         .value_type(ValueType::Str)
                         .default_value(Value::Str("a.out".to_string())),
                 )
-                .flag(
-                    Flag::new()
-                        .name("padding")
-                        .short_code("p")
-                        .help_string("size in bytes to pad the output binary to")
-                        .value_type(ValueType::Integer)
-                        .default_value(Value::Integer(32768)),
-                )
                 .handler(Box::new(|c| {
                     {
-                        match (c.get("in-file"), c.get("out-file"), c.get("padding")) {
-                            (
-                                Some(Value::Str(in_f)),
-                                Some(Value::Str(out_f)),
-                                Some(&Value::Integer(bin_size)),
-                            ) => Ok((in_f, out_f, bin_size as usize)),
+                        match (c.get("in-file"), c.get("out-file")) {
+                            (Some(Value::Str(in_f)), Some(Value::Str(out_f))) => Ok((in_f, out_f)),
                             _ => Err(RuntimeError::InvalidArguments),
                         }
-                        .map(|(in_f, out_f, padding)| {
+                        .map(|(in_f, out_f)| {
                             read_src_file(&in_f)
-                                .map(|input| assemble_object(&input, padding))?
+                                .map(|input| assemble_object(&input))?
                                 .map(|bin_data| {
                                     write_dest_file(&out_f, &bin_data).map(|_| EXIT_SUCCESS)
                                 })?
@@ -131,15 +120,12 @@ fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
     }
 }
 
-fn assemble_object(asm_src: &str, bin_size: usize) -> RuntimeResult<Vec<u8>> {
+fn assemble_object(asm_src: &str) -> RuntimeResult<Vec<u8>> {
     let obj = assemble(Backend::MOS6502, asm_src)
         .map_err(RuntimeError::Undefined)
         .map(|bin| bin)?;
 
-    let data_len = obj.len();
-    let padding = bin_size - data_len;
-
-    let bin: Vec<u8> = obj.into_iter().chain((0..padding).map(|_| 0xea)).collect();
+    let bin: Vec<u8> = obj.emit();
 
     Ok(bin)
 }

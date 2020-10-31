@@ -1,8 +1,14 @@
 use crate::assemble;
 use crate::backends::Backend;
 
+macro_rules! zero_origin {
+    ($insts:expr) => {
+        $crate::Origin::new($insts)
+    };
+}
+
 #[test]
-fn should_generate_expected_opcode() {
+fn should_generate_expected_origin() {
     let input = "nop
 lda #0b00010010
 sta 4660
@@ -11,9 +17,9 @@ bpl *-16
 jmp 0x1234\n";
 
     assert_eq!(
-        Ok(vec![
+        Ok(vec![zero_origin!(vec![
             0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x10, 0x1a, 0x10, 0xf0, 0x4c, 0x34, 0x12
-        ]),
+        ])]),
         assemble(Backend::MOS6502, input)
     )
 }
@@ -32,9 +38,9 @@ init:
 ";
 
     assert_eq!(
-        Ok(vec![
+        Ok(vec![zero_origin!(vec![
             0xea, 0xa9, 0x12, 0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x03, 0x00
-        ]),
+        ])]),
         assemble(Backend::MOS6502, input)
     )
 }
@@ -69,7 +75,9 @@ jmp 0x1234
 ";
 
     assert_eq!(
-        Ok(vec![0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x34, 0x12]),
+        Ok(vec![zero_origin!(vec![
+            0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x34, 0x12
+        ])]),
         assemble(Backend::MOS6502, input)
     )
 }
@@ -102,7 +110,9 @@ init:
 ";
 
     assert_eq!(
-        Ok(vec![0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x00, 0x00]),
+        Ok(vec![zero_origin!(vec![
+            0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x00, 0x00
+        ])]),
         assemble(Backend::MOS6502, input)
     )
 }
@@ -120,7 +130,9 @@ init: ; test
 ";
 
     assert_eq!(
-        Ok(vec![0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x00, 0x00]),
+        Ok(vec![zero_origin!(vec![
+            0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x00, 0x00
+        ])]),
         assemble(Backend::MOS6502, input)
     )
 }
