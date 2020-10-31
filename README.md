@@ -4,6 +4,7 @@ An experimental multi-target assembler assembler.
 ## Preparser
 The preparser functions to provide many quality-of-life features that were previously introduced in a single backend. These include:
 
+- Origin and byte offsetting
 - Constants
     - Sized
 - Labels
