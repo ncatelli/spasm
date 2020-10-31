@@ -66,15 +66,12 @@ impl Emitter<Vec<u8>> for Vec<u8> {
 impl Emitter<Vec<u8>> for Vec<Origin<Vec<u8>>> {
     fn emit(&self) -> Vec<u8> {
         let mut origins = self.clone();
-        origins.sort_by(|a, b| b.offset.cmp(&a.offset));
+        origins.sort_by(|a, b| a.offset.cmp(&b.offset));
         let (offsets, unpadded_bytecode): (Vec<(usize, usize)>, Vec<Vec<u8>>) = origins
             .into_iter()
             .map(|origin| {
                 (
-                    (
-                        origin.offset,
-                        (origin.offset + origin.instructions.len() - 1),
-                    ),
+                    (origin.offset, (origin.offset + origin.instructions.len())),
                     origin.instructions,
                 )
             })
@@ -90,7 +87,7 @@ impl Emitter<Vec<u8>> for Vec<Origin<Vec<u8>>> {
                     .into_iter()
                     .map(|offset| *offset),
             )
-            .map(|(end_of_last, start_of_next)| start_of_next - end_of_last)
+            .map(|(start_of_next, end_of_last)| start_of_next - end_of_last)
             .chain(vec![0].into_iter())
             .collect::<Vec<usize>>();
 
@@ -98,10 +95,9 @@ impl Emitter<Vec<u8>> for Vec<Origin<Vec<u8>>> {
             .into_iter()
             .zip(padding)
             .map(|(bytecode, pad_size)| {
-                let normaized_pad_size = if pad_size > 0 { pad_size - 1 } else { 0 };
                 bytecode
                     .into_iter()
-                    .chain(vec![0 as u8].into_iter().cycle().take(normaized_pad_size))
+                    .chain(vec![0 as u8].into_iter().cycle().take(pad_size))
                     .collect::<Vec<u8>>()
             })
             .flatten()
