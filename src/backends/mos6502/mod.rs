@@ -10,7 +10,7 @@ use crate::addressing::{Positional, SizeOf};
 use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference,
 };
-use crate::backends::mos6502::instruction_set::{Instruction, Mnemonic, StaticInstruction};
+use crate::backends::mos6502::instruction_set::{Instruction, StaticInstruction};
 use crate::preparser::{ByteValue, Token};
 use crate::{Assembler, AssemblerResult};
 use crate::{Emitter, Origin};
@@ -52,6 +52,12 @@ impl From<Vec<SymbolTable>> for SymbolTable {
     }
 }
 
+/// Stores either an instruction or a constant value for assembling into a byte value
+enum InstructionOrConstant<T> {
+    Instruction(T),
+    Constant(ByteValue),
+}
+
 fn parse_string_instructions_origin_to_token_instructions_origin(
     source: Origin<UnparsedTokenStream>,
 ) -> Result<Origin<Token6502InstStream>, String> {
@@ -62,6 +68,7 @@ fn parse_string_instructions_origin_to_token_instructions_origin(
         .map(|tok| match tok {
             Token::Label(v) => Ok(Token::Label(v)),
             Token::Symbol(v) => Ok(Token::Symbol(v)),
+            Token::Constant(v) => Ok(Token::Constant(v)),
             Token::Instruction(inst) => {
                 let input = inst.chars().collect::<Vec<char>>();
                 let res = match parser::instruction().parse(&input) {
@@ -111,7 +118,7 @@ fn convert_token_instructions_origins_to_positional_tokens_origin(
 
 fn generate_symbol_table_from_instructions_origin(
     source: Origin<PositionalToken6502Stream>,
-) -> Result<(SymbolTable, Origin<Vec<Instruction>>), String> {
+) -> Result<(SymbolTable, Origin<Vec<InstructionOrConstant<Instruction>>>), String> {
     let (origin_offset, instructions) = source.into();
     let (symbol_table, tokens) = instructions.into_iter().fold(
         (SymbolTable::default(), Vec::new()),
@@ -120,7 +127,11 @@ fn generate_symbol_table_from_instructions_origin(
             let token = positional_token.unwrap();
             match token {
                 Token::Instruction(i) => {
-                    insts.push(i);
+                    insts.push(InstructionOrConstant::Instruction(i));
+                    (st, insts)
+                }
+                Token::Constant(v) => {
+                    insts.push(InstructionOrConstant::Constant(v));
                     (st, insts)
                 }
                 Token::Label(l) => {
@@ -129,7 +140,7 @@ fn generate_symbol_table_from_instructions_origin(
                 }
                 Token::Symbol((id, bv)) => {
                     let sv = match bv {
-                        ByteValue::One(v) => v,
+                        ByteValue::Byte(v) => v,
                         e @ _ => panic!(format!("Backend only supports u8: passed {:?}", e)),
                     };
 
@@ -169,13 +180,15 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
 
         // Collect the symbols and instructions into a vector with each item
         // representing an origins contents
-        let (symbol_tables, instructions): (Vec<SymbolTable>, Vec<Origin<Vec<Instruction>>>) =
-            positional_tokens
-                .into_iter()
-                .map(|origin| generate_symbol_table_from_instructions_origin(origin))
-                .collect::<Result<Vec<(SymbolTable, Origin<Vec<Instruction>>)>, String>>()?
-                .into_iter()
-                .unzip();
+        let (symbol_tables, instructions): (
+            Vec<SymbolTable>,
+            Vec<Origin<Vec<InstructionOrConstant<Instruction>>>>,
+        ) = positional_tokens
+            .into_iter()
+            .map(|origin| generate_symbol_table_from_instructions_origin(origin))
+            .collect::<Result<Vec<(SymbolTable, Origin<Vec<InstructionOrConstant<Instruction>>>)>, String>>()?
+            .into_iter()
+            .unzip();
 
         // Join all the origin's symbol tables
         let symbol_table: SymbolTable = SymbolTable::from(symbol_tables);
@@ -188,33 +201,46 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
 
                 let assembled_instructions = instructions
                     .into_iter()
-                    .map(|i| {
-                        let mnemonic = i.mnemonic;
-                        let amor = i.amor;
-                        match amor {
-                            AddressModeOrReference::Label(l) => symbol_table
-                                .labels
-                                .get(&l)
-                                .map_or(Err(format!("label {} undefined", &l)), |offset| {
-                                    Ok((mnemonic, AddressMode::Absolute(*offset)))
-                                }),
-                            AddressModeOrReference::Symbol(s) => {
-                                symbol_table.symbols.get(&s.symbol).map_or(
-                                    Err(format!("symbol {} undefined", &s.symbol)),
-                                    |byte_value| {
-                                        Ok((mnemonic, AddressMode::Immediate(*byte_value)))
-                                    },
-                                )
+                    .map(|ioc| match ioc {
+                        InstructionOrConstant::Instruction(i) => {
+                            let mnemonic = i.mnemonic;
+                            let amor = i.amor;
+                            match amor {
+                                AddressModeOrReference::Label(l) => symbol_table
+                                    .labels
+                                    .get(&l)
+                                    .map_or(Err(format!("label {} undefined", &l)), |offset| {
+                                        Ok((mnemonic, AddressMode::Absolute(*offset)))
+                                    }),
+                                AddressModeOrReference::Symbol(s) => {
+                                    symbol_table.symbols.get(&s.symbol).map_or(
+                                        Err(format!("symbol {} undefined", &s.symbol)),
+                                        |byte_value| {
+                                            Ok((mnemonic, AddressMode::Immediate(*byte_value)))
+                                        },
+                                    )
+                                }
+                                AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
                             }
-                            AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
+                            .map(|(m, am)| {
+                                InstructionOrConstant::Instruction(StaticInstruction::new(m, am))
+                            })
+                        }
+                        InstructionOrConstant::Constant(v) => {
+                            Ok(InstructionOrConstant::Constant(v))
                         }
                     })
-                    .collect::<Result<Vec<(Mnemonic, AddressMode)>, String>>()?
+                    .collect::<Result<Vec<InstructionOrConstant<StaticInstruction>>, String>>()?
                     .into_iter()
-                    .map(|ti| StaticInstruction::new(ti.0, ti.1))
-                    .map(|si| {
-                        let mc: Vec<u8> = si.emit();
-                        mc
+                    .map(|ioc| match ioc {
+                        InstructionOrConstant::Instruction(si) => {
+                            let mc: Vec<u8> = si.emit();
+                            mc
+                        }
+                        InstructionOrConstant::Constant(v) => {
+                            let mc: Vec<u8> = v.emit();
+                            mc
+                        }
                     })
                     .flatten()
                     .collect::<Vec<u8>>();
