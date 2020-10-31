@@ -1,5 +1,5 @@
 # spasm
-An experimental 6502 assembler.
+An experimental multi-target assembler assembler.
 
 ## Preparser
 The preparser functions to provide many quality-of-life features that were previously introduced in a single backend. These include:
@@ -14,7 +14,9 @@ This feature-set is small to begin with but functions to standardize and consoli
 ### Grammar
 
 ```
-statement      = ( whitespace | newline )* ( labeldef | symboldef | origin | instruction | comment )+ comment? ( newline | EOF ) ;
+program        = ( origin | statement )+ ;
+
+statement      = ( whitespace | newline )* ( labeldef | symboldef | origin | instruction | comment )+ comment?  ( newline | EOF );
 
 instruction    = ( alphabetic | digit | special | ";"! )+ ;
 

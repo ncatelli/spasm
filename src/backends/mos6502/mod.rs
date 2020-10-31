@@ -6,7 +6,7 @@ use parcel::prelude::v1::*;
 use std::collections::HashMap;
 
 use crate::addressing;
-use crate::addressing::SizeOf;
+use crate::addressing::{Positional, SizeOf};
 use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference,
 };
@@ -16,7 +16,8 @@ use crate::Emitter;
 use crate::{Assembler, AssemblerResult};
 
 type UnparsedTokenStream = Vec<Token<String>>;
-type ParsedTokenStream = Vec<Token<Instruction>>;
+type Token6502InstStream = Vec<Token<Instruction>>;
+type PositionalToken6502Stream = Vec<Positional<Token<Instruction>>>;
 
 type LabelMap = HashMap<String, u16>;
 type SymbolMap = HashMap<String, u8>;
@@ -48,6 +49,85 @@ impl SymbolTable {
     }
 }
 
+fn parse_string_instructions_to_token_instructions(
+    source: UnparsedTokenStream,
+) -> Result<Token6502InstStream, String> {
+    source
+        .into_iter()
+        .map(|tok| match tok {
+            Token::Label(v) => Ok(Token::Label(v)),
+            Token::Symbol(v) => Ok(Token::Symbol(v)),
+            Token::Instruction(inst) => {
+                let input = inst.chars().collect::<Vec<char>>();
+                let res = match parser::instruction().parse(&input) {
+                    Ok(MatchStatus::Match((_, inst))) => Ok(Token::Instruction(inst)),
+                    Ok(MatchStatus::NoMatch(remainder)) => Err(format!(
+                        "no match found while parsing: {}",
+                        remainder.into_iter().collect::<String>()
+                    )),
+                    Err(e) => Err(e),
+                };
+                res
+            }
+        })
+        .collect()
+}
+
+fn convert_token_instructions_to_positional_tokens(
+    source: Token6502InstStream,
+) -> Result<PositionalToken6502Stream, String> {
+    let positional_instructions = source
+        .into_iter()
+        .fold((0, Vec::new()), |(offset, mut tokens), token| match token {
+            Token::Instruction(i) => {
+                let size_of = i.size_of();
+                tokens.push(addressing::Positional::with_position(
+                    offset,
+                    Token::Instruction(i),
+                ));
+                (offset + size_of, tokens)
+            }
+            t @ _ => {
+                tokens.push(addressing::Positional::with_position(offset, t));
+                (offset, tokens)
+            }
+        })
+        .1;
+    Ok(positional_instructions)
+}
+
+fn generate_symbol_table_from_instructions(
+    source: PositionalToken6502Stream,
+) -> Result<(SymbolTable, Vec<Instruction>), String> {
+    let (symbol_table, tokens) = source.into_iter().fold(
+        (SymbolTable::new(), Vec::new()),
+        |(mut st, mut insts), positional_token| {
+            let offset = positional_token.position;
+            let token = positional_token.unwrap();
+            match token {
+                Token::Instruction(i) => {
+                    insts.push(i);
+                    (st, insts)
+                }
+                Token::Label(l) => {
+                    st.labels.insert(l, offset as u16);
+                    (st, insts)
+                }
+                Token::Symbol((id, bv)) => {
+                    let sv = match bv {
+                        ByteValue::One(v) => v,
+                        e @ _ => panic!(format!("Backend only supports u8: passed {:?}", e)),
+                    };
+
+                    st.symbols.insert(id, sv);
+                    (st, insts)
+                }
+            }
+        },
+    );
+    Ok((symbol_table, tokens))
+}
+
 #[derive(Default)]
 pub struct MOS6502Assembler {}
 
@@ -55,65 +135,18 @@ impl MOS6502Assembler {
     pub fn new() -> Self {
         Self::default()
     }
-
-    fn parse_string_instructions_to_token(
-        &self,
-        source: UnparsedTokenStream,
-    ) -> Result<ParsedTokenStream, String> {
-        source
-            .into_iter()
-            .map(|tok| match tok {
-                Token::Label(v) => Ok(Token::Label(v)),
-                Token::Symbol(v) => Ok(Token::Symbol(v)),
-                Token::Instruction(inst) => {
-                    let input = inst.chars().collect::<Vec<char>>();
-                    let res = match parser::instruction().parse(&input) {
-                        Ok(MatchStatus::Match((_, inst))) => Ok(Token::Instruction(inst)),
-                        Ok(MatchStatus::NoMatch(remainder)) => Err(format!(
-                            "no match found while parsing: {}",
-                            remainder.into_iter().collect::<String>()
-                        )),
-                        Err(e) => Err(e),
-                    };
-                    res
-                }
-            })
-            .collect()
-    }
 }
 
 impl Assembler<UnparsedTokenStream> for MOS6502Assembler {
     fn assemble(&self, source: UnparsedTokenStream) -> AssemblerResult {
-        let (_, symbol_table, insts) = self
-            .parse_string_instructions_to_token(source)?
-            .into_iter()
-            .fold(
-                (0, SymbolTable::new(), Vec::new()),
-                |(offset, mut st, mut insts), tok| match tok {
-                    Token::Instruction(i) => {
-                        let size_of = i.size_of();
-                        insts.push(addressing::Positional::with_position(offset, i));
-                        (offset + size_of, st, insts)
-                    }
-                    Token::Label(l) => {
-                        st.labels.insert(l, offset as u16);
-                        (offset, st, insts)
-                    }
-                    Token::Symbol((id, bv)) => {
-                        let sv = match bv {
-                            ByteValue::One(v) => v,
-                            e @ _ => panic!(format!("Backend only supports u8: passed {:?}", e)),
-                        };
+        let token_instructions = parse_string_instructions_to_token_instructions(source)?;
+        let positional_tokens =
+            convert_token_instructions_to_positional_tokens(token_instructions)?;
+        let (symbol_table, instructions) =
+            generate_symbol_table_from_instructions(positional_tokens)?;
 
-                        st.symbols.insert(id, sv);
-                        (offset, st, insts)
-                    }
-                },
-            );
-
-        let opcodes = insts
+        let opcodes = instructions
             .into_iter()
-            .map(|pi| pi.unwrap())
             .map(|i| {
                 let mnemonic = i.mnemonic;
                 let amor = i.amor;
