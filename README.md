@@ -29,9 +29,9 @@ labeldef        = alphabetic* ":" ;
 
 symboldef       = bytedef | worddef | doubleworddef ;
 
-bytedef         = ".1byte" whitespace+ alphabetic* whitespace+ byte ;
-worddef         = ".2byte" whitespace+ alphabetic* whitespace+ byte byte ;
-doublworddef    = ".4byte" whitespace+ alphabetic* whitespace+ byte byte byte byte ;
+bytedef         = ".define byte" whitespace+ alphabetic* whitespace+ byte ;
+worddef         = ".define word" whitespace+ alphabetic* whitespace+ byte byte ;
+doublworddef    = ".define doubleword" whitespace+ alphabetic* whitespace+ byte byte byte byte ;
 
 origin          = ".origin" whitespace+ byte byte byte byte ;
 
