@@ -1,4 +1,5 @@
 extern crate parcel;
+use crate::addressing::SizeOf;
 use crate::{Emitter, Origin};
 use parcel::parsers::character::*;
 use parcel::prelude::v1::*;
@@ -20,17 +21,27 @@ pub type SymbolId = String;
 /// 4 byte value.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ByteValue {
-    One(u8),
-    Two(u16),
-    Four(u32),
+    Byte(u8),
+    Word(u16),
+    DoubleWord(u32),
 }
 
 impl Emitter<Vec<u8>> for ByteValue {
     fn emit(&self) -> Vec<u8> {
         match self {
-            ByteValue::One(v) => v.to_ne_bytes().to_vec(),
-            ByteValue::Two(v) => v.to_ne_bytes().to_vec(),
-            ByteValue::Four(v) => v.to_ne_bytes().to_vec(),
+            ByteValue::Byte(v) => v.to_ne_bytes().to_vec(),
+            ByteValue::Word(v) => v.to_ne_bytes().to_vec(),
+            ByteValue::DoubleWord(v) => v.to_ne_bytes().to_vec(),
+        }
+    }
+}
+
+impl SizeOf for ByteValue {
+    fn size_of(&self) -> usize {
+        match self {
+            ByteValue::Byte(_) => 1,
+            ByteValue::Word(_) => 2,
+            ByteValue::DoubleWord(_) => 4,
         }
     }
 }
@@ -42,6 +53,7 @@ pub enum Token<T> {
     Instruction(T),
     Label(Label),
     Symbol((SymbolId, ByteValue)),
+    Constant(ByteValue),
 }
 
 #[derive(Default)]
@@ -99,6 +111,7 @@ fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Option<Token<String>>>
             labeldef()
                 .map(|tok| Some(tok))
                 .or(|| symboldef().map(|tok| Some(tok)))
+                .or(|| constant().map(|tok| Some(tok)))
                 .or(|| instruction().map(|tok| Some(tok)))
                 .or(|| comment().map(|_| None)),
             right(join(
@@ -170,7 +183,7 @@ fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
             unsigned8(),
         ),
     ))
-    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::One(v))))
+    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Byte(v))))
 }
 
 fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
@@ -184,7 +197,7 @@ fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
             unsigned16(),
         ),
     ))
-    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Two(v))))
+    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Word(v))))
 }
 
 fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
@@ -198,7 +211,7 @@ fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
             unsigned32(),
         ),
     ))
-    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Four(v))))
+    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::DoubleWord(v))))
 }
 
 fn origin<'a>() -> impl parcel::Parser<'a, &'a [char], u32> {
@@ -206,4 +219,38 @@ fn origin<'a>() -> impl parcel::Parser<'a, &'a [char], u32> {
         join(expect_str(".origin"), one_or_more(non_newline_whitespace())),
         unsigned32(),
     ))
+}
+
+fn constant<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
+    const_byte()
+        .or(|| const_word())
+        .or(|| const_doubleword())
+        .map(|bv| Token::Constant(bv))
+}
+
+fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
+    right(join(
+        join(expect_str(".byte"), one_or_more(non_newline_whitespace())),
+        unsigned8(),
+    ))
+    .map(|v| ByteValue::Byte(v))
+}
+
+fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
+    right(join(
+        join(expect_str(".word"), one_or_more(non_newline_whitespace())),
+        unsigned16(),
+    ))
+    .map(|v| ByteValue::Word(v))
+}
+
+fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
+    right(join(
+        join(
+            expect_str(".doubleword"),
+            one_or_more(non_newline_whitespace()),
+        ),
+        unsigned32(),
+    ))
+    .map(|v| ByteValue::DoubleWord(v))
 }

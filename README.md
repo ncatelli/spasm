@@ -15,42 +15,48 @@ This feature-set is small to begin with but functions to standardize and consoli
 ### Grammar
 
 ```
-program        = ( whitespace | newline )* ( origin | statement )+ ;
+program         = ( whitespace | newline )* ( origin | statement )+ ;
 
-statements     = statement+ ;
+statements      = statement+ ;
 
-statement      = ( whitespace | newline )* ( labeldef | symboldef | instruction | comment ) comment?  ( newline | EOF );
+statement       = ( whitespace | newline )* ( labeldef | symboldef | constant | instruction | comment ) comment?  ( newline | EOF );
 
-instruction    = alphabetic ( alphabetic | digit | special | ";"! )+ ;
+instruction     = alphabetic ( alphabetic | digit | special | ";"! )+ ;
 
-comment        = ";" ( whitespace | character )* ;
+comment         = ";" ( whitespace | character )* ;
 
-symboldef      = bytedef | twobytedef | fourbytedef ;
+labeldef        = alphabetic* ":" ;
 
-bytedef        = ".1byte" whitespace+ alphabetic* whitespace+ byte ;
-twobytedef     = ".2byte" whitespace+ alphabetic* whitespace+ byte byte ;
-fourbytedef    = ".4byte" whitespace+ alphabetic* whitespace+ byte byte byte byte ;
+symboldef       = bytedef | worddef | doubleworddef ;
 
-origin         = ".origin" whitespace+ byte byte byte byte ;
+bytedef         = ".1byte" whitespace+ alphabetic* whitespace+ byte ;
+worddef         = ".2byte" whitespace+ alphabetic* whitespace+ byte byte ;
+doublworddef    = ".4byte" whitespace+ alphabetic* whitespace+ byte byte byte byte ;
 
-labeldef       = alphabetic* ":" ;
+origin          = ".origin" whitespace+ byte byte byte byte ;
 
-character      = lower|upper|digit|special ;
-whitespace     = " " | "\t" ;
-newline        = "\n" ;
-alphabetic     = (lower|upper) ;
-lower          = "a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"
-               |"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z" ;
-upper          = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"
-               |"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z" ;
-byte           = ( "0x" hex hex ) | digit+ | ( "0b" binarybyte ) ;
-hex            = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"a"|"b"|"c"
-               |"d"|"e"|"f"|"A"|"B"|"C"|"D"|"E"|"F" ;
-binarybyte     = binary binary binary binary binary binary binary binary ;
-binary         = "0" | "1" ;
-digit          = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9" ;
-special        = "-"|"_"|"\""|"#"|"&"|"’"|"("|")"|"*"|"+"|","|"."|"/"
-               |":"|";"|"<"|"="|">" ;
+constant        = constbyte | constword constdoubleword ;
+
+constbyte       = ".byte" whitespace+ byte ;
+constword       = ".word" whitespace+ byte byte ;
+constdoubleword = ".doubleword" whitespace+ byte byte byte byte ;
+
+character       = lower|upper|digit|special ;
+whitespace      = " " | "\t" ;
+newline         = "\n" ;
+alphabetic      = (lower|upper) ;
+lower           = "a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"
+                |"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z" ;
+upper           = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"
+                |"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z" ;
+byte            = ( "0x" hex hex ) | digit+ | ( "0b" binarybyte ) ;
+hex             = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"a"|"b"|"c"
+                |"d"|"e"|"f"|"A"|"B"|"C"|"D"|"E"|"F" ;
+binarybyte      = binary binary binary binary binary binary binary binary ;
+binary          = "0" | "1" ;
+digit           = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9" ;
+special         = "-"|"_"|"\""|"#"|"&"|"’"|"("|")"|"*"|"+"|","|"."|"/"
+                |":"|";"|"<"|"="|">" ;
 ```
 
 ## Backends
