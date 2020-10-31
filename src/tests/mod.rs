@@ -139,7 +139,7 @@ init: ; test
 }
 
 #[test]
-fn should_pad_assembled_output() {
+fn should_pad_space_between_origins_in_assembled_output() {
     let input = "
 nop
 .origin 0x00000003
