@@ -214,7 +214,6 @@ fn dec_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
     }
 }
 
-#[allow(dead_code)]
 pub fn decimal<'a>() -> impl Parser<'a, &'a [char], char> {
     move |input: &'a [char]| match input.get(0) {
         Some(&next) if next.is_digit(10) => Ok(MatchStatus::Match((&input[1..], next))),

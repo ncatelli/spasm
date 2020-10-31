@@ -48,7 +48,6 @@ pub enum Token<T> {
 pub struct PreParser {}
 
 impl PreParser {
-    #[allow(dead_code)]
     pub fn new() -> Self {
         Self::default()
     }
@@ -68,8 +67,7 @@ impl<'a> Parser<'a, &'a [char], OriginStream> for PreParser {
     }
 }
 
-#[allow(dead_code)]
-pub fn origin_statements<'a>() -> impl parcel::Parser<'a, &'a [char], Origin<PreparseTokenStream>> {
+fn origin_statements<'a>() -> impl parcel::Parser<'a, &'a [char], Origin<PreparseTokenStream>> {
     right(join(
         zero_or_more(non_newline_whitespace().or(|| newline())),
         join(
@@ -85,8 +83,7 @@ pub fn origin_statements<'a>() -> impl parcel::Parser<'a, &'a [char], Origin<Pre
     .map(|(offset, statements)| Origin::with_offset(offset as usize, statements))
 }
 
-#[allow(dead_code)]
-pub fn statements<'a>() -> impl parcel::Parser<'a, &'a [char], PreparseTokenStream> {
+fn statements<'a>() -> impl parcel::Parser<'a, &'a [char], PreparseTokenStream> {
     one_or_more(statement()).map(|ioc| {
         ioc.into_iter()
             .filter(|oi| oi.is_some())
@@ -95,8 +92,7 @@ pub fn statements<'a>() -> impl parcel::Parser<'a, &'a [char], PreparseTokenStre
     })
 }
 
-#[allow(dead_code)]
-pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Option<Token<String>>> {
+fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Option<Token<String>>> {
     right(join(
         zero_or_more(non_newline_whitespace().or(|| newline())),
         left(join(
@@ -113,7 +109,6 @@ pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Option<Token<Strin
     ))
 }
 
-#[allow(dead_code)]
 fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     join(
         alphabetic(),

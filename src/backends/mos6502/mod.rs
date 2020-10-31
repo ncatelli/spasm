@@ -33,11 +33,6 @@ impl SymbolTable {
     fn new(labels: LabelMap, symbols: SymbolMap) -> Self {
         Self { labels, symbols }
     }
-
-    #[allow(dead_code)]
-    fn into_tuple(self) -> (LabelMap, SymbolMap) {
-        (self.labels, self.symbols)
-    }
 }
 
 impl From<Vec<SymbolTable>> for SymbolTable {
