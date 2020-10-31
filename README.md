@@ -1,9 +1,10 @@
 # spasm
-An experimental 6502 assembler.
+An experimental multi-target assembler assembler.
 
 ## Preparser
 The preparser functions to provide many quality-of-life features that were previously introduced in a single backend. These include:
 
+- Origin and byte offsetting
 - Constants
     - Sized
 - Labels
@@ -14,9 +15,13 @@ This feature-set is small to begin with but functions to standardize and consoli
 ### Grammar
 
 ```
-statement      = ( whitespace | newline )* ( labeldef | symboldef | orientation | instruction | comment )+ comment? ( newline | EOF ) ;
+program        = ( whitespace | newline )* ( origin | statement )+ ;
 
-instruction    = ( alphabetic | digit | special | ";"! )+ ;
+statements     = statement+ ;
+
+statement      = ( whitespace | newline )* ( labeldef | symboldef | instruction | comment ) comment?  ( newline | EOF );
+
+instruction    = alphabetic ( alphabetic | digit | special | ";"! )+ ;
 
 comment        = ";" ( whitespace | character )* ;
 
@@ -26,9 +31,7 @@ bytedef        = ".1byte" whitespace+ alphabetic* whitespace+ byte ;
 twobytedef     = ".2byte" whitespace+ alphabetic* whitespace+ byte byte ;
 fourbytedef    = ".4byte" whitespace+ alphabetic* whitespace+ byte byte byte byte ;
 
-orientation    = offset ;
-offset         = ".offset" whitespace+ byte byte byte byte ;
-
+origin         = ".origin" whitespace+ byte byte byte byte ;
 
 labeldef       = alphabetic* ":" ;
 
@@ -52,7 +55,7 @@ special        = "-"|"_"|"\""|"#"|"&"|"’"|"("|")"|"*"|"+"|","|"."|"/"
 
 ## Backends
 
-- [MOS6502](./backends/mos6502/README.md)
+- [MOS6502](./src/backends/mos6502/README.md)
 
 ## Warnings
 Please nobody use this. This is entirely an experiment to support insane restrictions I've imposed on myself to build a computer from first principles.

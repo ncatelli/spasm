@@ -1,5 +1,5 @@
 extern crate parcel;
-use crate::Emitter;
+use crate::{Emitter, Origin};
 use parcel::parsers::character::*;
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_of, one_or_more, optional, right, zero_or_more};
@@ -42,43 +42,49 @@ pub enum Token<T> {
     Instruction(T),
     Label(Label),
     Symbol((SymbolId, ByteValue)),
-    Offset(u32),
 }
 
 #[derive(Default)]
 pub struct PreParser {}
 
 impl PreParser {
-    #[allow(dead_code)]
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl<'a> Parser<'a, &'a [char], Vec<Token<String>>> for PreParser {
-    fn parse(&self, input: &'a [char]) -> ParseResult<'a, &'a [char], Vec<Token<String>>> {
-        statement().parse(input)
+type PreparseTokenStream = Vec<Token<String>>;
+type OriginStream = Vec<Origin<PreparseTokenStream>>;
+
+impl<'a> Parser<'a, &'a [char], OriginStream> for PreParser {
+    fn parse(&self, input: &'a [char]) -> ParseResult<'a, &'a [char], OriginStream> {
+        join(
+            origin_statements().or(|| statements().map(|tokens| Origin::new(tokens))),
+            zero_or_more(origin_statements()),
+        )
+        .map(|(head, tail)| vec![head].into_iter().chain(tail.into_iter()).collect())
+        .parse(input)
     }
 }
 
-#[allow(dead_code)]
-pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token<String>>> {
-    one_or_more(right(join(
+fn origin_statements<'a>() -> impl parcel::Parser<'a, &'a [char], Origin<PreparseTokenStream>> {
+    right(join(
         zero_or_more(non_newline_whitespace().or(|| newline())),
-        left(join(
-            labeldef()
-                .map(|tok| Some(tok))
-                .or(|| symboldef().map(|tok| Some(tok)))
-                .or(|| orientation().map(|tok| Some(tok)))
-                .or(|| instruction().map(|tok| Some(tok)))
-                .or(|| comment().map(|_| None)),
-            right(join(
-                join(zero_or_more(non_newline_whitespace()), optional(comment())),
-                newline().or(|| eof()),
-            )),
-        )),
-    )))
-    .map(|ioc| {
+        join(
+            origin(),
+            zero_or_more(statement()).map(|ioc| {
+                ioc.into_iter()
+                    .filter(|oi| oi.is_some())
+                    .map(|oi| oi.unwrap())
+                    .collect()
+            }),
+        ),
+    ))
+    .map(|(offset, statements)| Origin::with_offset(offset as usize, statements))
+}
+
+fn statements<'a>() -> impl parcel::Parser<'a, &'a [char], PreparseTokenStream> {
+    one_or_more(statement()).map(|ioc| {
         ioc.into_iter()
             .filter(|oi| oi.is_some())
             .map(|oi| oi.unwrap())
@@ -86,33 +92,54 @@ pub fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Vec<Token<String>>
     })
 }
 
-#[allow(dead_code)]
+fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Option<Token<String>>> {
+    right(join(
+        zero_or_more(non_newline_whitespace().or(|| newline())),
+        left(join(
+            labeldef()
+                .map(|tok| Some(tok))
+                .or(|| symboldef().map(|tok| Some(tok)))
+                .or(|| instruction().map(|tok| Some(tok)))
+                .or(|| comment().map(|_| None)),
+            right(join(
+                join(zero_or_more(non_newline_whitespace()), optional(comment())),
+                newline().or(|| eof()),
+            )),
+        )),
+    ))
+}
+
 fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
-    one_or_more(alphabetic().or(|| {
-        non_newline_whitespace().or(|| digit(10)).or(|| {
-            one_of(vec![
-                expect_character('-'),
-                expect_character('_'),
-                expect_character('\\'),
-                expect_character('#'),
-                expect_character('&'),
-                expect_character('\''),
-                expect_character('|'),
-                expect_character('('),
-                expect_character(')'),
-                expect_character('*'),
-                expect_character('+'),
-                expect_character(','),
-                expect_character('.'),
-                expect_character('/'),
-                expect_character(':'),
-                expect_character('<'),
-                expect_character('='),
-                expect_character('>'),
-            ])
-        })
-    }))
-    .map(|v| Token::Instruction(v.into_iter().collect()))
+    join(
+        alphabetic(),
+        one_or_more(alphabetic().or(|| {
+            non_newline_whitespace().or(|| digit(10)).or(|| {
+                one_of(vec![
+                    expect_character('-'),
+                    expect_character('_'),
+                    expect_character('\\'),
+                    expect_character('#'),
+                    expect_character('&'),
+                    expect_character('\''),
+                    expect_character('|'),
+                    expect_character('('),
+                    expect_character(')'),
+                    expect_character('*'),
+                    expect_character('+'),
+                    expect_character(','),
+                    expect_character('.'),
+                    expect_character('/'),
+                    expect_character(':'),
+                    expect_character('<'),
+                    expect_character('='),
+                    expect_character('>'),
+                ])
+            })
+        })),
+    )
+    .map(|(head, tail)| {
+        Token::Instruction(vec![head].into_iter().chain(tail.into_iter()).collect())
+    })
 }
 
 fn comment<'a>() -> impl parcel::Parser<'a, &'a [char], ()> {
@@ -174,14 +201,9 @@ fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     .map(|(s, v)| Token::Symbol((s.into_iter().collect(), ByteValue::Four(v))))
 }
 
-fn orientation<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
-    offset()
-}
-
-fn offset<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
+fn origin<'a>() -> impl parcel::Parser<'a, &'a [char], u32> {
     right(join(
-        join(expect_str(".offset"), one_or_more(non_newline_whitespace())),
+        join(expect_str(".origin"), one_or_more(non_newline_whitespace())),
         unsigned32(),
     ))
-    .map(|o| Token::Offset(o))
 }
