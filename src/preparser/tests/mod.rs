@@ -125,3 +125,24 @@ fn should_parse_constants() {
         PreParser::new().parse(&input)
     );
 }
+
+#[test]
+fn should_parse_constants_as_origin_statement() {
+    let input = chars!(
+        "
+.origin 0x00000003
+  .byte       0x1a
+"
+    );
+
+    assert_eq!(
+        Ok(MatchStatus::Match((
+            &input[input.len()..],
+            vec![crate::Origin::with_offset(
+                0x03,
+                vec![Token::Constant(ByteValue::Byte(0x1a)),]
+            ),]
+        ))),
+        PreParser::new().parse(&input)
+    );
+}
