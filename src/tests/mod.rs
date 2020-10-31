@@ -143,13 +143,30 @@ fn should_pad_space_between_origins_in_assembled_output() {
     let input = "
 nop
 .origin 0x00000003
-nop
+  nop
 .origin 0x00000006
-nop
+  nop
 ";
 
     assert_eq!(
         Ok(vec![0xea, 0x00, 0x00, 0xea, 0x00, 0x00, 0xea]),
+        assemble(Backend::MOS6502, input).map(|res| res.emit())
+    );
+}
+
+#[test]
+fn constants_should_emit_with_instructions() {
+    let input = "
+nop
+.origin 0x00000003
+  nop
+  .word 0x1a2b
+.origin 0x00000006
+  nop
+";
+
+    assert_eq!(
+        Ok(vec![0xea, 0x00, 0x00, 0xea, 0x2b, 0x1a, 0xea]),
         assemble(Backend::MOS6502, input).map(|res| res.emit())
     );
 }
