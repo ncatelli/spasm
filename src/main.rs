@@ -10,6 +10,16 @@ use std::io::prelude::*;
 
 const EXIT_SUCCESS: i32 = 0;
 
+const ROOT_HELP_STRING: &str = "Usage: spasm [OPTIONS]
+An experimental multi-target assembler.
+
+Flags:
+    --help, -h          print help string
+    --version, -v       
+
+Subcommands:
+    assemble            assemble a source file into it's corresponding binary format";
+
 type RuntimeResult<T> = Result<T, RuntimeError>;
 
 enum RuntimeError {
@@ -39,7 +49,7 @@ fn main() {
 
     let res = Cmd::new()
         .name("spasm")
-        .description("An experimental 6502 assembler.")
+        .description("An experimental multi-target assembler.")
         .author("Nate Catelli <ncatelli@packetfire.org>")
         .version("0.1.0")
         .flag(
@@ -49,10 +59,8 @@ fn main() {
                 .action(Action::StoreTrue)
                 .value_type(ValueType::Bool),
         )
-        .handler(Box::new(|c| {
-            if Some(&Value::Bool(true)) == c.get("version") {
-                println!("0.1.0")
-            }
+        .handler(Box::new(|_| {
+            println!("{}", ROOT_HELP_STRING);
             Ok(0)
         }))
         .subcommand(
