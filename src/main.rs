@@ -42,8 +42,17 @@ fn main() {
         .description("An experimental 6502 assembler.")
         .author("Nate Catelli <ncatelli@packetfire.org>")
         .version("0.1.0")
+        .flag(
+            Flag::new()
+                .name("version")
+                .short_code("v")
+                .action(Action::StoreTrue)
+                .value_type(ValueType::Bool),
+        )
         .handler(Box::new(|c| {
-            println!("root dispatched with config: {:?}", c);
+            if Some(&Value::Bool(true)) == c.get("version") {
+                println!("0.1.0")
+            }
             Ok(0)
         }))
         .subcommand(
