@@ -12,8 +12,8 @@ source = "git+https://github.com/ncatelli/parcel?tag=v1.8.0#adcd04bec5b8bd7f09ef
 
 [[package]]
 name = "scrap"
-version = "0.1.0"
-source = "git+https://github.com/ncatelli/scrap?tag=v0.1.1#f47f11c636af40fb4c602df97c024ba594eb5d46"
+version = "0.1.1"
+source = "git+https://github.com/ncatelli/scrap?tag=v0.1.1#9315f7a0eef0270c9f8c159f6af57553333ef855"
 dependencies = [
  "parcel 1.5.0",
 ]
