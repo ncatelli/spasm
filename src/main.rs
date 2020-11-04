@@ -66,7 +66,7 @@ fn main() {
         .subcommand(
             Cmd::new()
                 .name("assemble")
-                .description("assemble a source file into it's corresponding binary format")
+                .description("assemble a source file into its corresponding binary format")
                 .flag(
                     Flag::new()
                         .name("in-file")
