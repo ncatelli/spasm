@@ -61,7 +61,7 @@ special         = "-"|"_"|"\""|"#"|"&"|"’"|"("|")"|"*"|"+"|","|"."|"/"
 
 ## Backends
 
-- [MOS6502](./src/backends/mos6502/README.md)
+- [MOS6502](./src/backends/README.md)
 
 ## Warnings
 Please nobody use this. This is entirely an experiment to support insane restrictions I've imposed on myself to build a computer from first principles.
