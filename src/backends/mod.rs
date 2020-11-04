@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 #[macro_use]
 pub mod mos6502;
 
@@ -14,5 +16,16 @@ impl std::fmt::Display for Backend {
         };
 
         write!(f, "{}", output)
+    }
+}
+
+impl TryFrom<&str> for Backend {
+    type Error = String;
+
+    fn try_from(src: &str) -> Result<Self, Self::Error> {
+        match src {
+            "mos6502" => Ok(Backend::MOS6502),
+            _ => Err(format!("unknown backend: {}", &src)),
+        }
     }
 }
