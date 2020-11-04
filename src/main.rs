@@ -3,6 +3,7 @@ use scrap::prelude::v1::*;
 use spasm::assemble;
 use spasm::Backend;
 use spasm::Emitter;
+use std::convert::TryFrom;
 use std::env;
 use std::fmt;
 use std::fs::{File, OpenOptions};
@@ -66,7 +67,7 @@ fn main() {
         .subcommand(
             Cmd::new()
                 .name("assemble")
-                .description("assemble a source file into it's corresponding binary format")
+                .description("assemble a source file into its corresponding binary format")
                 .flag(
                     Flag::new()
                         .name("in-file")
@@ -78,19 +79,31 @@ fn main() {
                     Flag::new()
                         .name("out-file")
                         .short_code("o")
-                        .help_string("an output path for a the corresponding binary file")
+                        .help_string("an output path for the corresponding binary file")
                         .value_type(ValueType::Str)
                         .default_value(Value::Str("a.out".to_string())),
                 )
+                .flag(
+                    Flag::new()
+                        .name("backend")
+                        .short_code("b")
+                        .help_string("specify the target backend to assemble")
+                        .value_type(ValueType::Str)
+                        .default_value(Value::Str("mos6502".to_string())),
+                )
                 .handler(Box::new(|c| {
                     {
-                        match (c.get("in-file"), c.get("out-file")) {
-                            (Some(Value::Str(in_f)), Some(Value::Str(out_f))) => Ok((in_f, out_f)),
+                        match (c.get("in-file"), c.get("out-file"), c.get("backend")) {
+                            (
+                                Some(Value::Str(in_f)),
+                                Some(Value::Str(out_f)),
+                                Some(Value::Str(b_f)),
+                            ) => Ok((in_f, out_f, b_f)),
                             _ => Err(RuntimeError::InvalidArguments),
                         }
-                        .map(|(in_f, out_f)| {
+                        .map(|(in_f, out_f, backend_f)| {
                             read_src_file(&in_f)
-                                .map(|input| assemble_object(&input))?
+                                .map(|input| assemble_object(backend_f, &input))?
                                 .map(|bin_data| {
                                     write_dest_file(&out_f, &bin_data).map(|_| EXIT_SUCCESS)
                                 })?
@@ -137,8 +150,11 @@ fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
     }
 }
 
-fn assemble_object(asm_src: &str) -> RuntimeResult<Vec<u8>> {
-    let obj = assemble(Backend::MOS6502, asm_src)
+fn assemble_object(backend_str: &str, asm_src: &str) -> RuntimeResult<Vec<u8>> {
+    let backend: Backend =
+        Backend::try_from(backend_str).map_err(|_| RuntimeError::InvalidArguments)?;
+
+    let obj = assemble(backend, asm_src)
         .map_err(RuntimeError::Undefined)
         .map(|bin| bin)?;
 

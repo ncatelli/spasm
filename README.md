@@ -59,7 +59,7 @@ special         = "-"|"_"|"\""|"#"|"&"|"’"|"("|")"|"*"|"+"|","|"."|"/"
                 |":"|";"|"<"|"="|">" ;
 ```
 
-## Backends
+## Supported Backends
 
 - [MOS6502](./src/backends/mos6502/README.md)
 
