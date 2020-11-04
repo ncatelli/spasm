@@ -3,4 +3,4 @@ Backends allow implementing and targeting of different instruction sets.
 
 ## Supported Backends
 
-- [MOS6502](./src/backends/mos6502/README.md)
+- [MOS6502](./mos6502/README.md)
