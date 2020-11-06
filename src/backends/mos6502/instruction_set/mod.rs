@@ -41,6 +41,19 @@ impl From<StaticInstruction> for Instruction {
     }
 }
 
+/// UnknownInstructionErr represents an Instruction that is unrepresentable or unknown.
+#[derive(Debug, Copy, Clone)]
+pub struct UnknownOpCodeErr {
+    mnemonic: Mnemonic,
+    operand: AddressMode,
+}
+
+impl UnknownOpCodeErr {
+    pub fn new(mnemonic: Mnemonic, operand: AddressMode) -> Self {
+        Self { mnemonic, operand }
+    }
+}
+
 /// StaticInstruction represents a single 6502 instruction containing a mnemonic,
 /// and static address mode, mapping directly to an address or byte value.
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -64,9 +77,9 @@ impl addressing::SizeOf for StaticInstruction {
     }
 }
 
-impl Emitter<OpCode> for StaticInstruction {
-    fn emit(&self) -> OpCode {
-        match (self.mnemonic, self.address_mode) {
+impl Emitter<Result<OpCode, UnknownOpCodeErr>> for StaticInstruction {
+    fn emit(&self) -> Result<OpCode, UnknownOpCodeErr> {
+        let mc = match (self.mnemonic, self.address_mode) {
             (Mnemonic::BRK, AddressMode::Implied) => 0x00,
             (Mnemonic::ORA, AddressMode::IndexedIndirect(_)) => 0x01,
             (Mnemonic::ORA, AddressMode::ZeroPage(_)) => 0x05,
@@ -218,17 +231,23 @@ impl Emitter<OpCode> for StaticInstruction {
             (Mnemonic::SBC, AddressMode::AbsoluteIndexedWithY(_)) => 0xf9,
             (Mnemonic::SBC, AddressMode::AbsoluteIndexedWithX(_)) => 0xfd,
             (Mnemonic::INC, AddressMode::AbsoluteIndexedWithX(_)) => 0xfe,
-            _ => 0xea, // Defaults to NOP
+            _ => 0xff, // 0xff represents an unknown opcode
+        };
+
+        if mc == 0xff {
+            Err(UnknownOpCodeErr::new(self.mnemonic, self.address_mode))
+        } else {
+            Ok(mc)
         }
     }
 }
 
-impl Emitter<Vec<u8>> for StaticInstruction {
-    fn emit(&self) -> Vec<u8> {
-        vec![self.emit()]
-            .into_iter()
-            .chain(self.address_mode.emit())
-            .collect()
+impl Emitter<Result<Vec<u8>, UnknownOpCodeErr>> for StaticInstruction {
+    fn emit(&self) -> Result<Vec<u8>, UnknownOpCodeErr> {
+        let opcode_res: Result<u8, UnknownOpCodeErr> = self.emit();
+        let opcode = opcode_res?;
+        let operand = self.address_mode.emit();
+        Ok(vec![opcode].into_iter().chain(operand).collect())
     }
 }
 

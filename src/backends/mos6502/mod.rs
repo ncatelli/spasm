@@ -234,14 +234,17 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
                     .into_iter()
                     .map(|ioc| match ioc {
                         InstructionOrConstant::Instruction(si) => {
-                            let mc: Vec<u8> = si.emit();
+                            let mc: Result<Vec<u8>, _> = si.emit();
                             mc
                         }
                         InstructionOrConstant::Constant(v) => {
                             let mc: Vec<u8> = v.emit();
-                            mc
+                            Ok(mc)
                         }
                     })
+                    .collect::<Result<Vec<Vec<u8>>, _>>()
+                    .map_err(|e| format!("{:?}", e))?
+                    .into_iter()
                     .flatten()
                     .collect::<Vec<u8>>();
 
