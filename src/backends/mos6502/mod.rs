@@ -18,6 +18,7 @@ use crate::{Emitter, Origin};
 type UnparsedTokenStream = Vec<Token<String>>;
 type Token6502InstStream = Vec<Token<Instruction>>;
 type PositionalToken6502Stream = Vec<Positional<Token<Instruction>>>;
+type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction>>;
 type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 
 type LabelMap = HashMap<String, u16>;
@@ -75,7 +76,7 @@ fn parse_string_instructions_origin_to_token_instructions_origin(
                     Ok(MatchStatus::Match((_, inst))) => Ok(Token::Instruction(inst)),
                     Ok(MatchStatus::NoMatch(remainder)) => Err(format!(
                         "no match found while parsing: {}",
-                        remainder.into_iter().collect::<String>()
+                        remainder.iter().collect::<String>()
                     )),
                     Err(e) => Err(e),
                 };
@@ -105,7 +106,7 @@ fn convert_token_instructions_origins_to_positional_tokens_origin(
                     ));
                     (offset + size_of, tokens)
                 }
-                t @ _ => {
+                t => {
                     tokens.push(addressing::Positional::with_position(offset, t));
                     (offset, tokens)
                 }
@@ -118,7 +119,7 @@ fn convert_token_instructions_origins_to_positional_tokens_origin(
 
 fn generate_symbol_table_from_instructions_origin(
     source: Origin<PositionalToken6502Stream>,
-) -> Result<(SymbolTable, Origin<Vec<InstructionOrConstant<Instruction>>>), String> {
+) -> Result<(SymbolTable, Origin<MemoryAligned6502Stream>), String> {
     let (origin_offset, instructions) = source.into();
     let (symbol_table, tokens) = instructions.into_iter().fold(
         (SymbolTable::default(), Vec::new()),
@@ -141,7 +142,7 @@ fn generate_symbol_table_from_instructions_origin(
                 Token::Symbol((id, bv)) => {
                     let sv = match bv {
                         ByteValue::Byte(v) => v,
-                        e @ _ => panic!(format!("Backend only supports u8: passed {:?}", e)),
+                        e => panic!(format!("Backend only supports u8: passed {:?}", e)),
                     };
 
                     st.symbols.insert(id, sv);
@@ -171,22 +172,22 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
     ) -> AssemblerResult<AssembledOrigins> {
         let token_instructions: Vec<Origin<Token6502InstStream>> = source
             .into_iter()
-            .map(|origin| parse_string_instructions_origin_to_token_instructions_origin(origin))
+            .map(parse_string_instructions_origin_to_token_instructions_origin)
             .collect::<Result<Vec<Origin<Token6502InstStream>>, String>>()?;
         let positional_tokens: Vec<Origin<PositionalToken6502Stream>> = token_instructions
             .into_iter()
-            .map(|origin| convert_token_instructions_origins_to_positional_tokens_origin(origin))
+            .map(convert_token_instructions_origins_to_positional_tokens_origin)
             .collect::<Result<Vec<Origin<PositionalToken6502Stream>>, String>>()?;
 
         // Collect the symbols and instructions into a vector with each item
         // representing an origins contents
         let (symbol_tables, instructions): (
             Vec<SymbolTable>,
-            Vec<Origin<Vec<InstructionOrConstant<Instruction>>>>,
+            Vec<Origin<MemoryAligned6502Stream>>,
         ) = positional_tokens
             .into_iter()
-            .map(|origin| generate_symbol_table_from_instructions_origin(origin))
-            .collect::<Result<Vec<(SymbolTable, Origin<Vec<InstructionOrConstant<Instruction>>>)>, String>>()?
+            .map(generate_symbol_table_from_instructions_origin)
+            .collect::<Result<Vec<(SymbolTable, Origin<MemoryAligned6502Stream>)>, String>>()?
             .into_iter()
             .unzip();
 

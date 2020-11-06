@@ -37,8 +37,8 @@ enum Sign {
 impl PartialEq<char> for Sign {
     fn eq(&self, other: &char) -> bool {
         match self {
-            &Self::Positive if *other == '+' => true,
-            &Self::Negative if *other == '-' => true,
+            Self::Positive if *other == '+' => true,
+            Self::Negative if *other == '-' => true,
             _ => false,
         }
     }
@@ -51,22 +51,27 @@ pub fn non_whitespace_character<'a>() -> impl Parser<'a, &'a [char], char> {
     }
 }
 
+#[allow(clippy::redundant_closure)]
 pub fn unsigned32<'a>() -> impl Parser<'a, &'a [char], u32> {
     hex_u32().or(|| binary_u32()).or(|| dec_u32())
 }
 
+#[allow(clippy::redundant_closure)]
 pub fn unsigned16<'a>() -> impl Parser<'a, &'a [char], u16> {
     hex_u16().or(|| binary_u16()).or(|| dec_u16())
 }
 
+#[allow(clippy::redundant_closure)]
 pub fn unsigned8<'a>() -> impl Parser<'a, &'a [char], u8> {
     hex_u8().or(|| binary_u8()).or(|| dec_u8())
 }
 
+#[allow(clippy::redundant_closure)]
 pub fn signed8<'a>() -> impl Parser<'a, &'a [char], i8> {
     hex_i8().or(|| binary_i8()).or(|| dec_i8())
 }
 
+#[allow(clippy::redundant_closure)]
 fn sign<'a>() -> impl Parser<'a, &'a [char], Sign> {
     expect_character('+')
         .or(|| expect_character('-'))

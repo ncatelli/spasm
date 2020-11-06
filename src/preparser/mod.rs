@@ -71,7 +71,7 @@ type OriginStream = Vec<Origin<PreparseTokenStream>>;
 impl<'a> Parser<'a, &'a [char], OriginStream> for PreParser {
     fn parse(&self, input: &'a [char]) -> ParseResult<'a, &'a [char], OriginStream> {
         join(
-            origin_statements().or(|| statements().map(|tokens| Origin::new(tokens))),
+            origin_statements().or(|| statements().map(Origin::new)),
             zero_or_more(origin_statements()),
         )
         .map(|(head, tail)| vec![head].into_iter().chain(tail.into_iter()).collect())
@@ -79,6 +79,7 @@ impl<'a> Parser<'a, &'a [char], OriginStream> for PreParser {
     }
 }
 
+#[allow(clippy::redundant_closure)]
 fn origin_statements<'a>() -> impl parcel::Parser<'a, &'a [char], Origin<PreparseTokenStream>> {
     right(join(
         zero_or_more(non_newline_whitespace().or(|| newline())),
@@ -104,15 +105,16 @@ fn statements<'a>() -> impl parcel::Parser<'a, &'a [char], PreparseTokenStream> 
     })
 }
 
+#[allow(clippy::redundant_closure)]
 fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Option<Token<String>>> {
     right(join(
         zero_or_more(non_newline_whitespace().or(|| newline())),
         left(join(
             labeldef()
-                .map(|tok| Some(tok))
-                .or(|| symboldef().map(|tok| Some(tok)))
-                .or(|| constant().map(|tok| Some(tok)))
-                .or(|| instruction().map(|tok| Some(tok)))
+                .map(Some)
+                .or(|| symboldef().map(Some))
+                .or(|| constant().map(Some))
+                .or(|| instruction().map(Some))
                 .or(|| comment().map(|_| None)),
             right(join(
                 join(zero_or_more(non_newline_whitespace()), optional(comment())),
@@ -155,6 +157,7 @@ fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     })
 }
 
+#[allow(clippy::redundant_closure)]
 fn comment<'a>() -> impl parcel::Parser<'a, &'a [char], ()> {
     right(join(
         expect_character(';'),
@@ -168,6 +171,7 @@ fn labeldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
         .map(|cv| Token::Label(cv.into_iter().collect()))
 }
 
+#[allow(clippy::redundant_closure)]
 fn symboldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     byte_def().or(|| two_byte_def()).or(|| four_byte_def())
 }
@@ -230,11 +234,12 @@ fn origin<'a>() -> impl parcel::Parser<'a, &'a [char], u32> {
     ))
 }
 
+#[allow(clippy::redundant_closure)]
 fn constant<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     const_byte()
         .or(|| const_word())
         .or(|| const_doubleword())
-        .map(|bv| Token::Constant(bv))
+        .map(Token::Constant)
 }
 
 fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
@@ -242,7 +247,7 @@ fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
         join(expect_str(".byte"), one_or_more(non_newline_whitespace())),
         unsigned8(),
     ))
-    .map(|v| ByteValue::Byte(v))
+    .map(ByteValue::Byte)
 }
 
 fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
@@ -250,7 +255,7 @@ fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
         join(expect_str(".word"), one_or_more(non_newline_whitespace())),
         unsigned16(),
     ))
-    .map(|v| ByteValue::Word(v))
+    .map(ByteValue::Word)
 }
 
 fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
@@ -261,5 +266,5 @@ fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
         ),
         unsigned32(),
     ))
-    .map(|v| ByteValue::DoubleWord(v))
+    .map(ByteValue::DoubleWord)
 }
