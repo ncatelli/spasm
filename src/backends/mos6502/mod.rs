@@ -243,7 +243,7 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
                         }
                     })
                     .collect::<Result<Vec<Vec<u8>>, _>>()
-                    .map_err(|e| format!("{:?}", e))?
+                    .map_err(|e| format!("{}", e))?
                     .into_iter()
                     .flatten()
                     .collect::<Vec<u8>>();

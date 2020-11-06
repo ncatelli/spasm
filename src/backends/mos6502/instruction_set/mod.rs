@@ -5,6 +5,7 @@ pub mod mnemonics;
 use crate::addressing;
 use crate::Emitter;
 pub use mnemonics::Mnemonic;
+use std::fmt;
 
 #[cfg(test)]
 mod tests;
@@ -51,6 +52,16 @@ pub struct UnknownInstructionErr {
 impl UnknownInstructionErr {
     pub fn new(mnemonic: Mnemonic, operand: AddressMode) -> Self {
         Self { mnemonic, operand }
+    }
+}
+
+impl fmt::Display for UnknownInstructionErr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "unknown instruction: {:?} {:?}",
+            &self.mnemonic, &self.operand
+        )
     }
 }
 
