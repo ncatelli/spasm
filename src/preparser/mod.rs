@@ -234,7 +234,7 @@ fn constant<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     const_byte()
         .or(|| const_word())
         .or(|| const_doubleword())
-        .map(|bv| Token::Constant(bv))
+        .map(Token::Constant)
 }
 
 fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
@@ -242,7 +242,7 @@ fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
         join(expect_str(".byte"), one_or_more(non_newline_whitespace())),
         unsigned8(),
     ))
-    .map(|v| ByteValue::Byte(v))
+    .map(ByteValue::Byte)
 }
 
 fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
@@ -250,7 +250,7 @@ fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
         join(expect_str(".word"), one_or_more(non_newline_whitespace())),
         unsigned16(),
     ))
-    .map(|v| ByteValue::Word(v))
+    .map(ByteValue::Word)
 }
 
 fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
@@ -261,5 +261,5 @@ fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
         ),
         unsigned32(),
     ))
-    .map(|v| ByteValue::DoubleWord(v))
+    .map(ByteValue::DoubleWord)
 }
