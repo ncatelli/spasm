@@ -167,6 +167,7 @@ fn relative<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference>
         .map(|i| AddressModeOrReference::AddressMode(AddressMode::Relative(i)))
 }
 
+#[allow(clippy::clippy::redundant_closure)]
 fn zeropage<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
     left(join(unsigned8(), non_newline_whitespace().or(|| eof())))
         .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPage(u)))
