@@ -81,7 +81,7 @@ impl Emitter<Vec<u8>> for Vec<Origin<Vec<u8>>> {
 
         let padding = offset_start[1..]
             .into_iter()
-            .map(|offset| *offset)
+            .map(|&offset| offset)
             .zip(
                 offset_end[..offset_end.len() - 1]
                     .into_iter()
