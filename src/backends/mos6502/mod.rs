@@ -175,7 +175,7 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
             .collect::<Result<Vec<Origin<Token6502InstStream>>, String>>()?;
         let positional_tokens: Vec<Origin<PositionalToken6502Stream>> = token_instructions
             .into_iter()
-            .map(|origin| convert_token_instructions_origins_to_positional_tokens_origin(origin))
+            .map(convert_token_instructions_origins_to_positional_tokens_origin)
             .collect::<Result<Vec<Origin<PositionalToken6502Stream>>, String>>()?;
 
         // Collect the symbols and instructions into a vector with each item
