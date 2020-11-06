@@ -18,6 +18,7 @@ use crate::{Emitter, Origin};
 type UnparsedTokenStream = Vec<Token<String>>;
 type Token6502InstStream = Vec<Token<Instruction>>;
 type PositionalToken6502Stream = Vec<Positional<Token<Instruction>>>;
+type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction>>;
 type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 
 type LabelMap = HashMap<String, u16>;
@@ -118,7 +119,7 @@ fn convert_token_instructions_origins_to_positional_tokens_origin(
 
 fn generate_symbol_table_from_instructions_origin(
     source: Origin<PositionalToken6502Stream>,
-) -> Result<(SymbolTable, Origin<Vec<InstructionOrConstant<Instruction>>>), String> {
+) -> Result<(SymbolTable, Origin<MemoryAligned6502Stream>), String> {
     let (origin_offset, instructions) = source.into();
     let (symbol_table, tokens) = instructions.into_iter().fold(
         (SymbolTable::default(), Vec::new()),
@@ -182,11 +183,11 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
         // representing an origins contents
         let (symbol_tables, instructions): (
             Vec<SymbolTable>,
-            Vec<Origin<Vec<InstructionOrConstant<Instruction>>>>,
+            Vec<Origin<MemoryAligned6502Stream>>,
         ) = positional_tokens
             .into_iter()
             .map(generate_symbol_table_from_instructions_origin)
-            .collect::<Result<Vec<(SymbolTable, Origin<Vec<InstructionOrConstant<Instruction>>>)>, String>>()?
+            .collect::<Result<Vec<(SymbolTable, Origin<MemoryAligned6502Stream>)>, String>>()?
             .into_iter()
             .unzip();
 
