@@ -154,9 +154,7 @@ fn assemble_object(backend_str: &str, asm_src: &str) -> RuntimeResult<Vec<u8>> {
     let backend: Backend =
         Backend::try_from(backend_str).map_err(|_| RuntimeError::InvalidArguments)?;
 
-    let obj = assemble(backend, asm_src)
-        .map_err(RuntimeError::Undefined)
-        .map(|bin| bin)?;
+    let obj = assemble(backend, asm_src).map_err(RuntimeError::Undefined)?;
 
     let bin: Vec<u8> = obj.emit();
 
