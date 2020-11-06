@@ -43,12 +43,12 @@ impl From<StaticInstruction> for Instruction {
 
 /// UnknownInstructionErr represents an Instruction that is unrepresentable or unknown.
 #[derive(Debug, Copy, Clone)]
-pub struct UnknownOpCodeErr {
+pub struct UnknownInstructionErr {
     mnemonic: Mnemonic,
     operand: AddressMode,
 }
 
-impl UnknownOpCodeErr {
+impl UnknownInstructionErr {
     pub fn new(mnemonic: Mnemonic, operand: AddressMode) -> Self {
         Self { mnemonic, operand }
     }
@@ -77,8 +77,8 @@ impl addressing::SizeOf for StaticInstruction {
     }
 }
 
-impl Emitter<Result<OpCode, UnknownOpCodeErr>> for StaticInstruction {
-    fn emit(&self) -> Result<OpCode, UnknownOpCodeErr> {
+impl Emitter<Result<OpCode, UnknownInstructionErr>> for StaticInstruction {
+    fn emit(&self) -> Result<OpCode, UnknownInstructionErr> {
         let mc = match (self.mnemonic, self.address_mode) {
             (Mnemonic::BRK, AddressMode::Implied) => 0x00,
             (Mnemonic::ORA, AddressMode::IndexedIndirect(_)) => 0x01,
@@ -235,16 +235,16 @@ impl Emitter<Result<OpCode, UnknownOpCodeErr>> for StaticInstruction {
         };
 
         if mc == 0xff {
-            Err(UnknownOpCodeErr::new(self.mnemonic, self.address_mode))
+            Err(UnknownInstructionErr::new(self.mnemonic, self.address_mode))
         } else {
             Ok(mc)
         }
     }
 }
 
-impl Emitter<Result<Vec<u8>, UnknownOpCodeErr>> for StaticInstruction {
-    fn emit(&self) -> Result<Vec<u8>, UnknownOpCodeErr> {
-        let opcode_res: Result<u8, UnknownOpCodeErr> = self.emit();
+impl Emitter<Result<Vec<u8>, UnknownInstructionErr>> for StaticInstruction {
+    fn emit(&self) -> Result<Vec<u8>, UnknownInstructionErr> {
+        let opcode_res: Result<u8, UnknownInstructionErr> = self.emit();
         let opcode = opcode_res?;
         let operand = self.address_mode.emit();
         Ok(vec![opcode].into_iter().chain(operand).collect())

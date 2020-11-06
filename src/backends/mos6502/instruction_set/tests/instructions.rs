@@ -29,3 +29,11 @@ fn instruction_with_two_byte_operand_should_order_operands_after_opcode_in_littl
 
     assert_eq!(op, vec![0xcc, 0x34, 0x12])
 }
+
+#[test]
+fn unknown_instruction_should_thrown_an_error() {
+    let inst = StaticInstruction::new(Mnemonic::JMP, AddressMode::Accumulator);
+    let op_res: Result<Vec<u8>, _> = inst.emit();
+
+    assert!(op_res.is_err())
+}
