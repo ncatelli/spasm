@@ -11,14 +11,14 @@ use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference,
 };
 use crate::backends::mos6502::instruction_set::{Instruction, StaticInstruction};
-use crate::preparser::{ByteValue, Token};
+use crate::preparser::{ByteValue, ByteValueOrReference, Token};
 use crate::{Assembler, AssemblerResult};
 use crate::{Emitter, Origin};
 
 type UnparsedTokenStream = Vec<Token<String>>;
 type Token6502InstStream = Vec<Token<Instruction>>;
 type PositionalToken6502Stream = Vec<Positional<Token<Instruction>>>;
-type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction>>;
+type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction, ByteValueOrReference>>;
 type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 
 type LabelMap = HashMap<String, u16>;
@@ -53,10 +53,11 @@ impl From<Vec<SymbolTable>> for SymbolTable {
     }
 }
 
-/// Stores either an instruction or a constant value for assembling into a byte value
-enum InstructionOrConstant<T> {
+/// Stores either an instruction or a constant with either value being
+/// generalized as these values are commonly transformed through the pipeline.
+enum InstructionOrConstant<T, U> {
     Instruction(T),
-    Constant(ByteValue),
+    Constant(U),
 }
 
 fn parse_string_instructions_origin_to_token_instructions_origin(
@@ -131,8 +132,8 @@ fn generate_symbol_table_from_instructions_origin(
                     insts.push(InstructionOrConstant::Instruction(i));
                     (st, insts)
                 }
-                Token::Constant(v) => {
-                    insts.push(InstructionOrConstant::Constant(v));
+                Token::Constant(bvol) => {
+                    insts.push(InstructionOrConstant::Constant(bvol));
                     (st, insts)
                 }
                 Token::Label(l) => {
@@ -200,54 +201,69 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
                 let origin_offset = origin.offset;
                 let instructions = origin.instructions;
 
-                let assembled_instructions = instructions
-                    .into_iter()
-                    .map(|ioc| match ioc {
-                        InstructionOrConstant::Instruction(i) => {
-                            let mnemonic = i.mnemonic;
-                            let amor = i.amor;
-                            match amor {
-                                AddressModeOrReference::Label(l) => symbol_table
-                                    .labels
-                                    .get(&l)
-                                    .map_or(Err(format!("label {} undefined", &l)), |offset| {
-                                        Ok((mnemonic, AddressMode::Absolute(*offset)))
-                                    }),
-                                AddressModeOrReference::Symbol(s) => {
-                                    symbol_table.symbols.get(&s.symbol).map_or(
-                                        Err(format!("symbol {} undefined", &s.symbol)),
-                                        |byte_value| {
-                                            Ok((mnemonic, AddressMode::Immediate(*byte_value)))
-                                        },
-                                    )
+                let assembled_instructions =
+                    instructions
+                        .into_iter()
+                        .map(|ioc| match ioc {
+                            InstructionOrConstant::Instruction(i) => {
+                                let mnemonic = i.mnemonic;
+                                let amor = i.amor;
+                                match amor {
+                                    AddressModeOrReference::Label(l) => {
+                                        symbol_table.labels.get(&l).map_or(
+                                            Err(format!("label {} undefined", &l)),
+                                            |offset| Ok((mnemonic, AddressMode::Absolute(*offset))),
+                                        )
+                                    }
+                                    AddressModeOrReference::Symbol(s) => {
+                                        symbol_table.symbols.get(&s.symbol).map_or(
+                                            Err(format!("symbol {} undefined", &s.symbol)),
+                                            |byte_value| {
+                                                Ok((mnemonic, AddressMode::Immediate(*byte_value)))
+                                            },
+                                        )
+                                    }
+                                    AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
                                 }
-                                AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
+                                .map(|(m, am)| {
+                                    InstructionOrConstant::Instruction(StaticInstruction::new(
+                                        m, am,
+                                    ))
+                                })
                             }
-                            .map(|(m, am)| {
-                                InstructionOrConstant::Instruction(StaticInstruction::new(m, am))
-                            })
-                        }
-                        InstructionOrConstant::Constant(v) => {
-                            Ok(InstructionOrConstant::Constant(v))
-                        }
-                    })
-                    .collect::<Result<Vec<InstructionOrConstant<StaticInstruction>>, String>>()?
-                    .into_iter()
-                    .map(|ioc| match ioc {
-                        InstructionOrConstant::Instruction(si) => {
-                            let mc: Result<Vec<u8>, _> = si.emit();
-                            mc
-                        }
-                        InstructionOrConstant::Constant(v) => {
-                            let mc: Vec<u8> = v.emit();
-                            Ok(mc)
-                        }
-                    })
-                    .collect::<Result<Vec<Vec<u8>>, _>>()
-                    .map_err(|e| format!("{}", e))?
-                    .into_iter()
-                    .flatten()
-                    .collect::<Vec<u8>>();
+                            InstructionOrConstant::Constant(bvol) => match bvol {
+                                ByteValueOrReference::ByteValue(bv) => Ok(bv),
+                                ByteValueOrReference::Reference(id) => symbol_table
+                                    .labels
+                                    .get(&id).map(|&v| ByteValue::Word(v)).or_else(|| symbol_table
+                                    .symbols
+                                    .get(&id).map(|&v| ByteValue::Byte(v)))
+                                    .ok_or(format!("reference {} undefined", &id))
+                            }
+                            .map(|bv| {
+                                InstructionOrConstant::Constant(bv)
+                            }),
+                        })
+                        .collect::<Result<
+                            Vec<InstructionOrConstant<StaticInstruction, ByteValue>>,
+                            String,
+                        >>()?
+                        .into_iter()
+                        .map(|ioc| match ioc {
+                            InstructionOrConstant::Instruction(si) => {
+                                let mc: Result<Vec<u8>, _> = si.emit();
+                                mc
+                            }
+                            InstructionOrConstant::Constant(v) =>  {
+                                    let mc: Vec<u8> = v.emit();
+                                    Ok(mc)
+                            },
+                        })
+                        .collect::<Result<Vec<Vec<u8>>, _>>()
+                        .map_err(|e| format!("{}", e))?
+                        .into_iter()
+                        .flatten()
+                        .collect::<Vec<u8>>();
 
                 Ok(Origin::with_offset(origin_offset, assembled_instructions))
             })
