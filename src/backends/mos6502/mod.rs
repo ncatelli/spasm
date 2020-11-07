@@ -227,9 +227,16 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
                                 InstructionOrConstant::Instruction(StaticInstruction::new(m, am))
                             })
                         }
-                        InstructionOrConstant::Constant(v) => {
-                            Ok(InstructionOrConstant::Constant(v))
+                        InstructionOrConstant::Constant(bvol) => match bvol {
+                            ByteValueOrLabel::ByteValue(bv) => Ok(bv),
+                            ByteValueOrLabel::Label(l) => symbol_table
+                                .labels
+                                .get(&l)
+                                .map_or(Err(format!("label {} undefined", &l)), |&offset| {
+                                    Ok(ByteValue::Word(offset))
+                                }),
                         }
+                        .map(|bv| InstructionOrConstant::Constant(ByteValueOrLabel::ByteValue(bv))),
                     })
                     .collect::<Result<Vec<InstructionOrConstant<StaticInstruction>>, String>>()?
                     .into_iter()
@@ -243,7 +250,9 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
                                 let mc: Vec<u8> = bv.emit();
                                 Ok(mc)
                             }
-                            _ => panic!("unimplemented label paring"),
+                            ByteValueOrLabel::Label(_) => {
+                                panic!("Label should have been parsed away.")
+                            }
                         },
                     })
                     .collect::<Result<Vec<Vec<u8>>, _>>()

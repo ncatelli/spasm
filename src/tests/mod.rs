@@ -170,3 +170,18 @@ nop
         assemble(Backend::MOS6502, input).map(|res| res.emit())
     );
 }
+
+#[test]
+fn constants_should_correctly_dereference_labels() {
+    let input = "
+nop
+init:
+  nop
+  .word init
+";
+
+    assert_eq!(
+        Ok(vec![0xea, 0xea, 0x01, 0x00]),
+        assemble(Backend::MOS6502, input).map(|res| res.emit())
+    );
+}
