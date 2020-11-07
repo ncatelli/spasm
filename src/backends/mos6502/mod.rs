@@ -235,7 +235,7 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
                                 ByteValueOrReference::ByteValue(bv) => Ok(bv),
                                 ByteValueOrReference::Reference(id) => symbol_table
                                     .labels
-                                    .get(&id).map(|&v| ByteValue::Word(v)).or(symbol_table
+                                    .get(&id).map(|&v| ByteValue::Word(v)).or_else(|| symbol_table
                                     .symbols
                                     .get(&id).map(|&v| ByteValue::Byte(v)))
                                     .ok_or(format!("reference {} undefined", &id))
