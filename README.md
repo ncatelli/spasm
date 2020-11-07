@@ -25,21 +25,23 @@ instruction     = alphabetic ( alphabetic | digit | special | ";"! )+ ;
 
 comment         = ";" ( whitespace | character )* ;
 
-labeldef        = alphabetic* ":" ;
+referenceid     = alphabetic* ;
+
+labeldef        = referenceid ":" ;
 
 symboldef       = bytedef | worddef | doubleworddef ;
 
-bytedef         = ".define byte" whitespace+ alphabetic* whitespace+ byte ;
-worddef         = ".define word" whitespace+ alphabetic* whitespace+ byte byte ;
-doublworddef    = ".define doubleword" whitespace+ alphabetic* whitespace+ byte byte byte byte ;
+bytedef         = ".define byte" whitespace+ referenceid whitespace+ byte ;
+worddef         = ".define word" whitespace+ referenceid whitespace+ byte byte ;
+doublworddef    = ".define doubleword" whitespace+ referenceid whitespace+ byte byte byte byte ;
 
 origin          = ".origin" whitespace+ byte byte byte byte ;
 
 constant        = constbyte | constword | constdoubleword ;
 
-constbyte       = ".byte" whitespace+ ( byte | label ) ;
-constword       = ".word" whitespace+ ( byte byte | label ) ;
-constdoubleword = ".doubleword" whitespace+ ( byte byte byte byte | label ) ;
+constbyte       = ".byte" whitespace+ ( byte | referenceid ) ;
+constword       = ".word" whitespace+ ( byte byte | referenceid ) ;
+constdoubleword = ".doubleword" whitespace+ ( byte byte byte byte | referenceid ) ;
 
 character       = lower|upper|digit|special ;
 whitespace      = " " | "\t" ;
