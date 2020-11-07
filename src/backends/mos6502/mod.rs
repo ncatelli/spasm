@@ -53,10 +53,17 @@ impl From<Vec<SymbolTable>> for SymbolTable {
     }
 }
 
+/// ByteValueOrLabel represents a case where a value can be represented as
+/// either a static value or a reference.
+enum ByteValueOrLabel {
+    ByteValue(ByteValue),
+    Label(String),
+}
+
 /// Stores either an instruction or a constant value for assembling into a byte value
 enum InstructionOrConstant<T> {
     Instruction(T),
-    Constant(ByteValue),
+    Constant(ByteValueOrLabel),
 }
 
 fn parse_string_instructions_origin_to_token_instructions_origin(
@@ -132,7 +139,9 @@ fn generate_symbol_table_from_instructions_origin(
                     (st, insts)
                 }
                 Token::Constant(v) => {
-                    insts.push(InstructionOrConstant::Constant(v));
+                    insts.push(InstructionOrConstant::Constant(
+                        ByteValueOrLabel::ByteValue(v),
+                    ));
                     (st, insts)
                 }
                 Token::Label(l) => {
@@ -238,10 +247,13 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
                             let mc: Result<Vec<u8>, _> = si.emit();
                             mc
                         }
-                        InstructionOrConstant::Constant(v) => {
-                            let mc: Vec<u8> = v.emit();
-                            Ok(mc)
-                        }
+                        InstructionOrConstant::Constant(v) => match v {
+                            ByteValueOrLabel::ByteValue(bv) => {
+                                let mc: Vec<u8> = bv.emit();
+                                Ok(mc)
+                            }
+                            _ => panic!("unimplemented label paring"),
+                        },
                     })
                     .collect::<Result<Vec<Vec<u8>>, _>>()
                     .map_err(|e| format!("{}", e))?
