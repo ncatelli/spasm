@@ -48,6 +48,7 @@ impl SizeOf for ByteValue {
 
 /// ByteValueOrLabel represents a case where a value can be represented as
 /// either a static value or a reference.
+#[derive(Debug, Clone, PartialEq)]
 pub enum ByteValueOrLabel {
     ByteValue(ByteValue),
     Label(String),
@@ -60,7 +61,7 @@ pub enum Token<T> {
     Instruction(T),
     Label(Label),
     Symbol((SymbolId, ByteValue)),
-    Constant(ByteValue),
+    Constant(ByteValueOrLabel),
 }
 
 #[derive(Default)]
@@ -249,29 +250,41 @@ fn constant<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
         .map(Token::Constant)
 }
 
-fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
+fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrLabel> {
     right(join(
         join(expect_str(".byte"), one_or_more(non_newline_whitespace())),
-        unsigned8(),
+        unsigned8()
+            .map(|b| ByteValueOrLabel::ByteValue(ByteValue::Byte(b)))
+            .or(|| {
+                one_or_more(alphabetic())
+                    .map(|vc| ByteValueOrLabel::Label(vc.into_iter().collect()))
+            }),
     ))
-    .map(ByteValue::Byte)
 }
 
-fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
+fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrLabel> {
     right(join(
         join(expect_str(".word"), one_or_more(non_newline_whitespace())),
-        unsigned16(),
+        unsigned16()
+            .map(|w| ByteValueOrLabel::ByteValue(ByteValue::Word(w)))
+            .or(|| {
+                one_or_more(alphabetic())
+                    .map(|vc| ByteValueOrLabel::Label(vc.into_iter().collect()))
+            }),
     ))
-    .map(ByteValue::Word)
 }
 
-fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValue> {
+fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrLabel> {
     right(join(
         join(
             expect_str(".doubleword"),
             one_or_more(non_newline_whitespace()),
         ),
-        unsigned32(),
+        unsigned32()
+            .map(|dw| ByteValueOrLabel::ByteValue(ByteValue::DoubleWord(dw)))
+            .or(|| {
+                one_or_more(alphabetic())
+                    .map(|vc| ByteValueOrLabel::Label(vc.into_iter().collect()))
+            }),
     ))
-    .map(ByteValue::DoubleWord)
 }

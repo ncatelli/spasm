@@ -131,10 +131,8 @@ fn generate_symbol_table_from_instructions_origin(
                     insts.push(InstructionOrConstant::Instruction(i));
                     (st, insts)
                 }
-                Token::Constant(v) => {
-                    insts.push(InstructionOrConstant::Constant(
-                        ByteValueOrLabel::ByteValue(v),
-                    ));
+                Token::Constant(bvol) => {
+                    insts.push(InstructionOrConstant::Constant(bvol));
                     (st, insts)
                 }
                 Token::Label(l) => {

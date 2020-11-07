@@ -1,4 +1,4 @@
-use crate::preparser::{ByteValue, PreParser, Token};
+use crate::preparser::{ByteValue, ByteValueOrLabel, PreParser, Token};
 use parcel::prelude::v1::*;
 
 macro_rules! chars {
@@ -117,9 +117,11 @@ fn should_parse_constants() {
         Ok(MatchStatus::Match((
             &input[input.len()..],
             vec![crate::Origin::new(vec![
-                Token::Constant(ByteValue::Byte(0x1a)),
-                Token::Constant(ByteValue::Word(0x1a2b)),
-                Token::Constant(ByteValue::DoubleWord(0x1a2b3c4d))
+                Token::Constant(ByteValueOrLabel::ByteValue(ByteValue::Byte(0x1a))),
+                Token::Constant(ByteValueOrLabel::ByteValue(ByteValue::Word(0x1a2b))),
+                Token::Constant(ByteValueOrLabel::ByteValue(ByteValue::DoubleWord(
+                    0x1a2b3c4d
+                )))
             ]),]
         ))),
         PreParser::new().parse(&input)
@@ -140,7 +142,9 @@ fn should_parse_constants_as_origin_statement() {
             &input[input.len()..],
             vec![crate::Origin::with_offset(
                 0x03,
-                vec![Token::Constant(ByteValue::Byte(0x1a)),]
+                vec![Token::Constant(ByteValueOrLabel::ByteValue(
+                    ByteValue::Byte(0x1a)
+                )),]
             ),]
         ))),
         PreParser::new().parse(&input)
