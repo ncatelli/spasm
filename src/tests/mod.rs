@@ -172,16 +172,18 @@ nop
 }
 
 #[test]
-fn constants_should_correctly_dereference_labels() {
+fn constants_should_correctly_dereference_references() {
     let input = "
+.define byte test 0xff
 nop
 init:
   nop
   .word init
+  .byte test
 ";
 
     assert_eq!(
-        Ok(vec![0xea, 0xea, 0x01, 0x00]),
+        Ok(vec![0xea, 0xea, 0x01, 0x00, 0xff]),
         assemble(Backend::MOS6502, input).map(|res| res.emit())
     );
 }

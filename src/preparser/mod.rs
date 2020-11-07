@@ -46,12 +46,12 @@ impl SizeOf for ByteValue {
     }
 }
 
-/// ByteValueOrLabel represents a case where a value can be represented as
+/// ByteValueOrReference represents a case where a value can be represented as
 /// either a static value or a reference.
 #[derive(Debug, Clone, PartialEq)]
-pub enum ByteValueOrLabel {
+pub enum ByteValueOrReference {
     ByteValue(ByteValue),
-    Label(String),
+    Reference(String),
 }
 
 /// Token wraps the token variants that can be derived from the
@@ -61,7 +61,7 @@ pub enum Token<T> {
     Instruction(T),
     Label(Label),
     Symbol((SymbolId, ByteValue)),
-    Constant(ByteValueOrLabel),
+    Constant(ByteValueOrReference),
 }
 
 #[derive(Default)]
@@ -250,41 +250,41 @@ fn constant<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
         .map(Token::Constant)
 }
 
-fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrLabel> {
+fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrReference> {
     right(join(
         join(expect_str(".byte"), one_or_more(non_newline_whitespace())),
         unsigned8()
-            .map(|b| ByteValueOrLabel::ByteValue(ByteValue::Byte(b)))
+            .map(|b| ByteValueOrReference::ByteValue(ByteValue::Byte(b)))
             .or(|| {
                 one_or_more(alphabetic())
-                    .map(|vc| ByteValueOrLabel::Label(vc.into_iter().collect()))
+                    .map(|vc| ByteValueOrReference::Reference(vc.into_iter().collect()))
             }),
     ))
 }
 
-fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrLabel> {
+fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrReference> {
     right(join(
         join(expect_str(".word"), one_or_more(non_newline_whitespace())),
         unsigned16()
-            .map(|w| ByteValueOrLabel::ByteValue(ByteValue::Word(w)))
+            .map(|w| ByteValueOrReference::ByteValue(ByteValue::Word(w)))
             .or(|| {
                 one_or_more(alphabetic())
-                    .map(|vc| ByteValueOrLabel::Label(vc.into_iter().collect()))
+                    .map(|vc| ByteValueOrReference::Reference(vc.into_iter().collect()))
             }),
     ))
 }
 
-fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrLabel> {
+fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrReference> {
     right(join(
         join(
             expect_str(".doubleword"),
             one_or_more(non_newline_whitespace()),
         ),
         unsigned32()
-            .map(|dw| ByteValueOrLabel::ByteValue(ByteValue::DoubleWord(dw)))
+            .map(|dw| ByteValueOrReference::ByteValue(ByteValue::DoubleWord(dw)))
             .or(|| {
                 one_or_more(alphabetic())
-                    .map(|vc| ByteValueOrLabel::Label(vc.into_iter().collect()))
+                    .map(|vc| ByteValueOrReference::Reference(vc.into_iter().collect()))
             }),
     ))
 }

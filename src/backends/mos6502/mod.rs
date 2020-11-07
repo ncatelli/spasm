@@ -11,14 +11,14 @@ use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference,
 };
 use crate::backends::mos6502::instruction_set::{Instruction, StaticInstruction};
-use crate::preparser::{ByteValue, ByteValueOrLabel, Token};
+use crate::preparser::{ByteValue, ByteValueOrReference, Token};
 use crate::{Assembler, AssemblerResult};
 use crate::{Emitter, Origin};
 
 type UnparsedTokenStream = Vec<Token<String>>;
 type Token6502InstStream = Vec<Token<Instruction>>;
 type PositionalToken6502Stream = Vec<Positional<Token<Instruction>>>;
-type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction, ByteValueOrLabel>>;
+type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction, ByteValueOrReference>>;
 type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 
 type LabelMap = HashMap<String, u16>;
@@ -232,13 +232,13 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
                                 })
                             }
                             InstructionOrConstant::Constant(bvol) => match bvol {
-                                ByteValueOrLabel::ByteValue(bv) => Ok(bv),
-                                ByteValueOrLabel::Label(l) => symbol_table
+                                ByteValueOrReference::ByteValue(bv) => Ok(bv),
+                                ByteValueOrReference::Reference(id) => symbol_table
                                     .labels
-                                    .get(&l)
-                                    .map_or(Err(format!("label {} undefined", &l)), |&offset| {
-                                        Ok(ByteValue::Word(offset))
-                                    }),
+                                    .get(&id).map(|&v| ByteValue::Word(v)).or(symbol_table
+                                    .symbols
+                                    .get(&id).map(|&v| ByteValue::Byte(v)))
+                                    .ok_or(format!("reference {} undefined", &id))
                             }
                             .map(|bv| {
                                 InstructionOrConstant::Constant(bv)
