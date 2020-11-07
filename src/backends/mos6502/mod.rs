@@ -18,7 +18,7 @@ use crate::{Emitter, Origin};
 type UnparsedTokenStream = Vec<Token<String>>;
 type Token6502InstStream = Vec<Token<Instruction>>;
 type PositionalToken6502Stream = Vec<Positional<Token<Instruction>>>;
-type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction>>;
+type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction, ByteValueOrLabel>>;
 type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 
 type LabelMap = HashMap<String, u16>;
@@ -53,10 +53,11 @@ impl From<Vec<SymbolTable>> for SymbolTable {
     }
 }
 
-/// Stores either an instruction or a constant value for assembling into a byte value
-enum InstructionOrConstant<T> {
+/// Stores either an instruction or a constant with either value being
+/// generalized as these values are commonly transformed through the pipeline.
+enum InstructionOrConstant<T, U> {
     Instruction(T),
-    Constant(ByteValueOrLabel),
+    Constant(U),
 }
 
 fn parse_string_instructions_origin_to_token_instructions_origin(
@@ -200,66 +201,69 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
                 let origin_offset = origin.offset;
                 let instructions = origin.instructions;
 
-                let assembled_instructions = instructions
-                    .into_iter()
-                    .map(|ioc| match ioc {
-                        InstructionOrConstant::Instruction(i) => {
-                            let mnemonic = i.mnemonic;
-                            let amor = i.amor;
-                            match amor {
-                                AddressModeOrReference::Label(l) => symbol_table
+                let assembled_instructions =
+                    instructions
+                        .into_iter()
+                        .map(|ioc| match ioc {
+                            InstructionOrConstant::Instruction(i) => {
+                                let mnemonic = i.mnemonic;
+                                let amor = i.amor;
+                                match amor {
+                                    AddressModeOrReference::Label(l) => {
+                                        symbol_table.labels.get(&l).map_or(
+                                            Err(format!("label {} undefined", &l)),
+                                            |offset| Ok((mnemonic, AddressMode::Absolute(*offset))),
+                                        )
+                                    }
+                                    AddressModeOrReference::Symbol(s) => {
+                                        symbol_table.symbols.get(&s.symbol).map_or(
+                                            Err(format!("symbol {} undefined", &s.symbol)),
+                                            |byte_value| {
+                                                Ok((mnemonic, AddressMode::Immediate(*byte_value)))
+                                            },
+                                        )
+                                    }
+                                    AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
+                                }
+                                .map(|(m, am)| {
+                                    InstructionOrConstant::Instruction(StaticInstruction::new(
+                                        m, am,
+                                    ))
+                                })
+                            }
+                            InstructionOrConstant::Constant(bvol) => match bvol {
+                                ByteValueOrLabel::ByteValue(bv) => Ok(bv),
+                                ByteValueOrLabel::Label(l) => symbol_table
                                     .labels
                                     .get(&l)
-                                    .map_or(Err(format!("label {} undefined", &l)), |offset| {
-                                        Ok((mnemonic, AddressMode::Absolute(*offset)))
+                                    .map_or(Err(format!("label {} undefined", &l)), |&offset| {
+                                        Ok(ByteValue::Word(offset))
                                     }),
-                                AddressModeOrReference::Symbol(s) => {
-                                    symbol_table.symbols.get(&s.symbol).map_or(
-                                        Err(format!("symbol {} undefined", &s.symbol)),
-                                        |byte_value| {
-                                            Ok((mnemonic, AddressMode::Immediate(*byte_value)))
-                                        },
-                                    )
-                                }
-                                AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
                             }
-                            .map(|(m, am)| {
-                                InstructionOrConstant::Instruction(StaticInstruction::new(m, am))
-                            })
-                        }
-                        InstructionOrConstant::Constant(bvol) => match bvol {
-                            ByteValueOrLabel::ByteValue(bv) => Ok(bv),
-                            ByteValueOrLabel::Label(l) => symbol_table
-                                .labels
-                                .get(&l)
-                                .map_or(Err(format!("label {} undefined", &l)), |&offset| {
-                                    Ok(ByteValue::Word(offset))
-                                }),
-                        }
-                        .map(|bv| InstructionOrConstant::Constant(ByteValueOrLabel::ByteValue(bv))),
-                    })
-                    .collect::<Result<Vec<InstructionOrConstant<StaticInstruction>>, String>>()?
-                    .into_iter()
-                    .map(|ioc| match ioc {
-                        InstructionOrConstant::Instruction(si) => {
-                            let mc: Result<Vec<u8>, _> = si.emit();
-                            mc
-                        }
-                        InstructionOrConstant::Constant(v) => match v {
-                            ByteValueOrLabel::ByteValue(bv) => {
-                                let mc: Vec<u8> = bv.emit();
-                                Ok(mc)
+                            .map(|bv| {
+                                InstructionOrConstant::Constant(bv)
+                            }),
+                        })
+                        .collect::<Result<
+                            Vec<InstructionOrConstant<StaticInstruction, ByteValue>>,
+                            String,
+                        >>()?
+                        .into_iter()
+                        .map(|ioc| match ioc {
+                            InstructionOrConstant::Instruction(si) => {
+                                let mc: Result<Vec<u8>, _> = si.emit();
+                                mc
                             }
-                            ByteValueOrLabel::Label(_) => {
-                                panic!("Label should have been parsed away.")
-                            }
-                        },
-                    })
-                    .collect::<Result<Vec<Vec<u8>>, _>>()
-                    .map_err(|e| format!("{}", e))?
-                    .into_iter()
-                    .flatten()
-                    .collect::<Vec<u8>>();
+                            InstructionOrConstant::Constant(v) =>  {
+                                    let mc: Vec<u8> = v.emit();
+                                    Ok(mc)
+                            },
+                        })
+                        .collect::<Result<Vec<Vec<u8>>, _>>()
+                        .map_err(|e| format!("{}", e))?
+                        .into_iter()
+                        .flatten()
+                        .collect::<Vec<u8>>();
 
                 Ok(Origin::with_offset(origin_offset, assembled_instructions))
             })
