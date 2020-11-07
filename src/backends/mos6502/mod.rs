@@ -11,7 +11,7 @@ use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference,
 };
 use crate::backends::mos6502::instruction_set::{Instruction, StaticInstruction};
-use crate::preparser::{ByteValue, Token};
+use crate::preparser::{ByteValue, ByteValueOrLabel, Token};
 use crate::{Assembler, AssemblerResult};
 use crate::{Emitter, Origin};
 
@@ -51,13 +51,6 @@ impl From<Vec<SymbolTable>> for SymbolTable {
 
         Self::new(labels, symbols)
     }
-}
-
-/// ByteValueOrLabel represents a case where a value can be represented as
-/// either a static value or a reference.
-enum ByteValueOrLabel {
-    ByteValue(ByteValue),
-    Label(String),
 }
 
 /// Stores either an instruction or a constant value for assembling into a byte value

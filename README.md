@@ -35,11 +35,11 @@ doublworddef    = ".define doubleword" whitespace+ alphabetic* whitespace+ byte 
 
 origin          = ".origin" whitespace+ byte byte byte byte ;
 
-constant        = constbyte | constword constdoubleword ;
+constant        = constbyte | constword | constdoubleword ;
 
-constbyte       = ".byte" whitespace+ byte ;
-constword       = ".word" whitespace+ byte byte ;
-constdoubleword = ".doubleword" whitespace+ byte byte byte byte ;
+constbyte       = ".byte" whitespace+ ( byte | label ) ;
+constword       = ".word" whitespace+ ( byte byte | label ) ;
+constdoubleword = ".doubleword" whitespace+ ( byte byte byte byte | label ) ;
 
 character       = lower|upper|digit|special ;
 whitespace      = " " | "\t" ;

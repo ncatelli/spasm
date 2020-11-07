@@ -46,6 +46,13 @@ impl SizeOf for ByteValue {
     }
 }
 
+/// ByteValueOrLabel represents a case where a value can be represented as
+/// either a static value or a reference.
+pub enum ByteValueOrLabel {
+    ByteValue(ByteValue),
+    Label(String),
+}
+
 /// Token wraps the token variants that can be derived from the
 /// parser.
 #[derive(Debug, Clone, PartialEq)]
