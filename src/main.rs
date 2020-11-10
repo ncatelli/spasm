@@ -21,10 +21,19 @@ Flags:
 Subcommands:
     assemble            assemble a source file into it's corresponding binary format";
 
+const ASSEMBLE_HELP_STRING: &str = "Usage: assemble [OPTIONS]
+assemble a source file into its corresponding binary format
+
+Flags:
+    --help, -h          print help string
+    --in-file, -i       an asm source filepath to assemble
+    --out-file, -o      an output path for the corresponding binary file
+    --backend, -b       specify the target backend to assemble";
+
 type RuntimeResult<T> = Result<T, RuntimeError>;
 
 enum RuntimeError {
-    InvalidArguments,
+    InvalidArguments(String),
     FileUnreadable,
     Undefined(String),
 }
@@ -32,7 +41,7 @@ enum RuntimeError {
 impl fmt::Debug for RuntimeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidArguments => write!(f, "invalid number of arguments"),
+            Self::InvalidArguments(hs) => write!(f, "{}", hs),
             Self::FileUnreadable => write!(f, "source file unreadable"),
             Self::Undefined(s) => write!(f, "{}", s),
         }
@@ -93,13 +102,18 @@ fn main() {
                 )
                 .handler(Box::new(|c| {
                     {
-                        match (c.get("in-file"), c.get("out-file"), c.get("backend")) {
+                        let inf = c.get("in-file");
+                        let ouf = c.get("out-file");
+                        let backend = c.get("backend");
+                        match (inf, ouf, backend) {
                             (
                                 Some(Value::Str(in_f)),
                                 Some(Value::Str(out_f)),
                                 Some(Value::Str(b_f)),
                             ) => Ok((in_f, out_f, b_f)),
-                            _ => Err(RuntimeError::InvalidArguments),
+                            _ => Err(RuntimeError::InvalidArguments(
+                                ASSEMBLE_HELP_STRING.to_string(),
+                            )),
                         }
                         .map(|(in_f, out_f, backend_f)| {
                             read_src_file(&in_f)
@@ -151,8 +165,9 @@ fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
 }
 
 fn assemble_object(backend_str: &str, asm_src: &str) -> RuntimeResult<Vec<u8>> {
-    let backend: Backend =
-        Backend::try_from(backend_str).map_err(|_| RuntimeError::InvalidArguments)?;
+    let backend: Backend = Backend::try_from(backend_str).map_err(|_| {
+        RuntimeError::InvalidArguments(format!("unknown backend: {}", &backend_str))
+    })?;
 
     let obj = assemble(backend, asm_src).map_err(RuntimeError::Undefined)?;
 
