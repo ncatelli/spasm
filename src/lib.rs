@@ -123,4 +123,5 @@ pub fn assemble(backend: Backend, source: &str) -> AssemblerResult<AssembledOrig
     match backend {
         Backend::MOS6502 => backends::mos6502::MOS6502Assembler::new().assemble(origin_tokens),
     }
+    .map_err(|e| e.to_string())
 }

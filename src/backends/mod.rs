@@ -4,14 +4,21 @@ use std::convert::TryFrom;
 pub mod mos6502;
 
 /// Error type returned from backends.
+#[allow(dead_code)]
 pub enum BackendErr {
-    ParseError(String),
+    Parse(String),
+    UndefinedReference(String),
+    UndefinedInstruction(String),
+    Unspecified(String),
 }
 
 impl std::fmt::Display for BackendErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output = match self {
-            BackendErr::ParseError(input) => format!("unable to parse: {}", input),
+            Self::Parse(input) => input.clone(),
+            Self::UndefinedReference(input) => format!("reference undefined: {}", input),
+            Self::UndefinedInstruction(input) => input.clone(),
+            Self::Unspecified(input) => input.clone(),
         };
 
         write!(f, "{}", output)

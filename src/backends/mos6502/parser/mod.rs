@@ -15,6 +15,7 @@ use crate::parser::*;
 mod tests;
 
 /// Error type returned from backends.
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum ParseErr {
     Unmatched(String),
