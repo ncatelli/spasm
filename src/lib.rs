@@ -110,7 +110,7 @@ pub type AssemblerResult<U, E> = Result<U, E>;
 /// The Assembler trait takes in an arbitrary length str, assembling it against
 // a target and returning a result containing either the assembled bytecode or
 // an error.
-pub trait Assembler<T, U, E> {
+pub trait Assembler<T, U, E: std::fmt::Display> {
     fn assemble(&self, source: T) -> AssemblerResult<U, E>;
 }
 

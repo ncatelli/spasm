@@ -11,6 +11,7 @@ use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference,
 };
 use crate::backends::mos6502::instruction_set::{Instruction, StaticInstruction};
+use crate::backends::BackendErr;
 use crate::preparser::{ByteValue, ByteValueOrReference, Token};
 use crate::{Assembler, AssemblerResult};
 use crate::{Emitter, Origin};
@@ -62,7 +63,7 @@ enum InstructionOrConstant<T, U> {
 
 fn parse_string_instructions_origin_to_token_instructions_origin(
     source: Origin<UnparsedTokenStream>,
-) -> Result<Origin<Token6502InstStream>, String> {
+) -> Result<Origin<Token6502InstStream>, parser::ParseErr> {
     let origin_offset = source.offset;
     let tokens = source
         .instructions
@@ -75,16 +76,15 @@ fn parse_string_instructions_origin_to_token_instructions_origin(
                 let input = inst.chars().collect::<Vec<char>>();
                 let res = match parser::instruction().parse(&input) {
                     Ok(MatchStatus::Match((_, inst))) => Ok(Token::Instruction(inst)),
-                    Ok(MatchStatus::NoMatch(remainder)) => Err(format!(
-                        "no match found while parsing: {}",
-                        remainder.iter().collect::<String>()
+                    Ok(MatchStatus::NoMatch(remainder)) => Err(parser::ParseErr::Unspecified(
+                        remainder.iter().collect::<String>(),
                     )),
-                    Err(e) => Err(e),
+                    Err(e) => Err(parser::ParseErr::Unspecified(e)),
                 };
                 res
             }
         })
-        .collect::<Result<Token6502InstStream, String>>()?;
+        .collect::<Result<Token6502InstStream, parser::ParseErr>>()?;
 
     Ok(Origin::with_offset(origin_offset, tokens))
 }
@@ -210,7 +210,8 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, String> for M
         let token_instructions: Vec<Origin<Token6502InstStream>> = source
             .into_iter()
             .map(parse_string_instructions_origin_to_token_instructions_origin)
-            .collect::<Result<Vec<Origin<Token6502InstStream>>, String>>()?;
+            .collect::<Result<Vec<Origin<Token6502InstStream>>, parser::ParseErr>>()
+            .map_err(|e| e.to_string())?;
         let positional_tokens: Vec<Origin<PositionalToken6502Stream>> = token_instructions
             .into_iter()
             .map(convert_token_instructions_origins_to_positional_tokens_origin)

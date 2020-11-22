@@ -3,6 +3,21 @@ use std::convert::TryFrom;
 #[macro_use]
 pub mod mos6502;
 
+/// Error type returned from backends.
+pub enum BackendErr {
+    ParseError(String),
+}
+
+impl std::fmt::Display for BackendErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let output = match self {
+            BackendErr::ParseError(input) => format!("unable to parse: {}", input),
+        };
+
+        write!(f, "{}", output)
+    }
+}
+
 /// Backend represents the backend targets currently supported by spasm.
 #[derive(Debug)]
 pub enum Backend {
