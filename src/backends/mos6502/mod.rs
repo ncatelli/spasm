@@ -11,6 +11,7 @@ use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference,
 };
 use crate::backends::mos6502::instruction_set::{Instruction, StaticInstruction};
+use crate::backends::BackendErr;
 use crate::preparser::{ByteValue, ByteValueOrReference, Token};
 use crate::{Assembler, AssemblerResult};
 use crate::{Emitter, Origin};
@@ -62,7 +63,7 @@ enum InstructionOrConstant<T, U> {
 
 fn parse_string_instructions_origin_to_token_instructions_origin(
     source: Origin<UnparsedTokenStream>,
-) -> Result<Origin<Token6502InstStream>, String> {
+) -> Result<Origin<Token6502InstStream>, parser::ParseErr> {
     let origin_offset = source.offset;
     let tokens = source
         .instructions
@@ -75,23 +76,22 @@ fn parse_string_instructions_origin_to_token_instructions_origin(
                 let input = inst.chars().collect::<Vec<char>>();
                 let res = match parser::instruction().parse(&input) {
                     Ok(MatchStatus::Match((_, inst))) => Ok(Token::Instruction(inst)),
-                    Ok(MatchStatus::NoMatch(remainder)) => Err(format!(
-                        "no match found while parsing: {}",
-                        remainder.iter().collect::<String>()
+                    Ok(MatchStatus::NoMatch(remainder)) => Err(parser::ParseErr::Unspecified(
+                        remainder.iter().collect::<String>(),
                     )),
-                    Err(e) => Err(e),
+                    Err(e) => Err(parser::ParseErr::Unspecified(e)),
                 };
                 res
             }
         })
-        .collect::<Result<Token6502InstStream, String>>()?;
+        .collect::<Result<Token6502InstStream, parser::ParseErr>>()?;
 
     Ok(Origin::with_offset(origin_offset, tokens))
 }
 
 fn convert_token_instructions_origins_to_positional_tokens_origin(
     source: Origin<Token6502InstStream>,
-) -> Result<Origin<PositionalToken6502Stream>, String> {
+) -> Result<Origin<PositionalToken6502Stream>, BackendErr> {
     let origin_offset = source.offset;
     let tokens = source.instructions;
     let positional_instructions = tokens
@@ -120,7 +120,7 @@ fn convert_token_instructions_origins_to_positional_tokens_origin(
 
 fn generate_symbol_table_from_instructions_origin(
     source: Origin<PositionalToken6502Stream>,
-) -> Result<(SymbolTable, Origin<MemoryAligned6502Stream>), String> {
+) -> Result<(SymbolTable, Origin<MemoryAligned6502Stream>), BackendErr> {
     let (origin_offset, instructions) = source.into();
     let (symbol_table, tokens) = instructions.into_iter().fold(
         (SymbolTable::default(), Vec::new()),
@@ -158,7 +158,7 @@ fn generate_symbol_table_from_instructions_origin(
 fn dereference_instructions_to_static_instructions(
     symbol_table: &SymbolTable,
     src_ioc: InstructionOrConstant<Instruction, ByteValueOrReference>,
-) -> Result<InstructionOrConstant<StaticInstruction, ByteValue>, String> {
+) -> Result<InstructionOrConstant<StaticInstruction, ByteValue>, BackendErr> {
     match src_ioc {
         InstructionOrConstant::Instruction(i) => {
             let mnemonic = i.mnemonic;
@@ -167,11 +167,11 @@ fn dereference_instructions_to_static_instructions(
                 AddressModeOrReference::Label(l) => symbol_table
                     .labels
                     .get(&l)
-                    .map_or(Err(format!("label {} undefined", &l)), |offset| {
+                    .map_or(Err(BackendErr::UndefinedReference(l.clone())), |offset| {
                         Ok((mnemonic, AddressMode::Absolute(*offset)))
                     }),
                 AddressModeOrReference::Symbol(s) => symbol_table.symbols.get(&s.symbol).map_or(
-                    Err(format!("symbol {} undefined", &s.symbol)),
+                    Err(BackendErr::UndefinedReference(s.symbol.clone())),
                     |byte_value| Ok((mnemonic, AddressMode::Immediate(*byte_value))),
                 ),
                 AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
@@ -185,7 +185,7 @@ fn dereference_instructions_to_static_instructions(
                 .get(&id)
                 .map(|&v| ByteValue::Word(v))
                 .or_else(|| symbol_table.symbols.get(&id).map(|&v| ByteValue::Byte(v)))
-                .ok_or(format!("reference {} undefined", &id)),
+                .ok_or_else(|| BackendErr::UndefinedReference(id.clone())),
         }
         .map(InstructionOrConstant::Constant),
     }
@@ -202,19 +202,22 @@ impl MOS6502Assembler {
     }
 }
 
-impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502Assembler {
+impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
+    for MOS6502Assembler
+{
     fn assemble(
         &self,
         source: Vec<Origin<UnparsedTokenStream>>,
-    ) -> AssemblerResult<AssembledOrigins> {
+    ) -> AssemblerResult<AssembledOrigins, BackendErr> {
         let token_instructions: Vec<Origin<Token6502InstStream>> = source
             .into_iter()
             .map(parse_string_instructions_origin_to_token_instructions_origin)
-            .collect::<Result<Vec<Origin<Token6502InstStream>>, String>>()?;
+            .collect::<Result<Vec<Origin<Token6502InstStream>>, parser::ParseErr>>()
+            .map_err(|e| BackendErr::Parse(e.to_string()))?;
         let positional_tokens: Vec<Origin<PositionalToken6502Stream>> = token_instructions
             .into_iter()
             .map(convert_token_instructions_origins_to_positional_tokens_origin)
-            .collect::<Result<Vec<Origin<PositionalToken6502Stream>>, String>>()?;
+            .collect::<Result<Vec<Origin<PositionalToken6502Stream>>, BackendErr>>()?;
 
         // Collect the symbols and instructions into a vector with each item
         // representing an origins contents
@@ -224,7 +227,7 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
         ) = positional_tokens
             .into_iter()
             .map(generate_symbol_table_from_instructions_origin)
-            .collect::<Result<Vec<(SymbolTable, Origin<MemoryAligned6502Stream>)>, String>>()?
+            .collect::<Result<Vec<(SymbolTable, Origin<MemoryAligned6502Stream>)>, BackendErr>>()?
             .into_iter()
             .unzip();
 
@@ -238,36 +241,34 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502As
                 let instructions = origin.instructions;
 
                 let assembled_instructions =
-                        instructions
-                            .into_iter()
-                            .map(|ioc| (&symbol_table, ioc))
-                            .map(|(st, ioc)| {
-                                dereference_instructions_to_static_instructions(st, ioc)
-                            })
-                            .collect::<Result<
-                                Vec<InstructionOrConstant<StaticInstruction, ByteValue>>,
-                                String,
-                            >>()?
-                            .into_iter()
-                            .map(|ioc| match ioc {
-                                InstructionOrConstant::Instruction(si) => {
-                                    let mc: Result<Vec<u8>, _> = si.emit();
-                                    mc
-                                }
-                                InstructionOrConstant::Constant(v) => {
-                                    let mc: Vec<u8> = v.emit();
-                                    Ok(mc)
-                                }
-                            })
-                            .collect::<Result<Vec<Vec<u8>>, _>>()
-                            .map_err(|e| format!("{}", e))?
-                            .into_iter()
-                            .flatten()
-                            .collect::<Vec<u8>>();
+                    instructions
+                        .into_iter()
+                        .map(|ioc| (&symbol_table, ioc))
+                        .map(|(st, ioc)| dereference_instructions_to_static_instructions(st, ioc))
+                        .collect::<Result<
+                            Vec<InstructionOrConstant<StaticInstruction, ByteValue>>,
+                            BackendErr,
+                        >>()?
+                        .into_iter()
+                        .map(|ioc| match ioc {
+                            InstructionOrConstant::Instruction(si) => {
+                                let mc: Result<Vec<u8>, _> = si.emit();
+                                mc
+                            }
+                            InstructionOrConstant::Constant(v) => {
+                                let mc: Vec<u8> = v.emit();
+                                Ok(mc)
+                            }
+                        })
+                        .collect::<Result<Vec<Vec<u8>>, _>>()
+                        .map_err(|e| BackendErr::UndefinedInstruction(e.to_string()))?
+                        .into_iter()
+                        .flatten()
+                        .collect::<Vec<u8>>();
 
                 Ok(Origin::with_offset(origin_offset, assembled_instructions))
             })
-            .collect::<Result<Vec<Origin<Vec<u8>>>, String>>()?;
+            .collect::<Result<Vec<Origin<Vec<u8>>>, BackendErr>>()?;
 
         Ok(opcode_origins)
     }

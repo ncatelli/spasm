@@ -55,7 +55,7 @@ impl fmt::Display for RuntimeError {
 }
 
 fn main() {
-    let args: Vec<String> = env::args().into_iter().collect();
+    let args: Vec<String> = env::args().collect();
 
     let res = Cmd::new()
         .name("spasm")

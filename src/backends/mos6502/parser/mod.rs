@@ -14,6 +14,25 @@ use crate::parser::*;
 #[cfg(test)]
 mod tests;
 
+/// Error type returned from backends.
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub enum ParseErr {
+    Unmatched(String),
+    Unspecified(String),
+}
+
+impl std::fmt::Display for ParseErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let output = match self {
+            ParseErr::Unmatched(input) => format!("unable to parse expected tokens: {}", input),
+            ParseErr::Unspecified(input) => format!("unspecified parse error: {}", input),
+        };
+
+        write!(f, "{}", output)
+    }
+}
+
 pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Instruction> {
     join(
         right(join(zero_or_more(non_newline_whitespace()), mnemonic())),

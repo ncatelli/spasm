@@ -3,6 +3,28 @@ use std::convert::TryFrom;
 #[macro_use]
 pub mod mos6502;
 
+/// Error type returned from backends.
+#[allow(dead_code)]
+pub enum BackendErr {
+    Parse(String),
+    UndefinedReference(String),
+    UndefinedInstruction(String),
+    Unspecified(String),
+}
+
+impl std::fmt::Display for BackendErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let output = match self {
+            Self::Parse(input) => input.clone(),
+            Self::UndefinedReference(input) => format!("reference undefined: {}", input),
+            Self::UndefinedInstruction(input) => input.clone(),
+            Self::Unspecified(input) => input.clone(),
+        };
+
+        write!(f, "{}", output)
+    }
+}
+
 /// Backend represents the backend targets currently supported by spasm.
 #[derive(Debug)]
 pub enum Backend {
