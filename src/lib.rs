@@ -105,18 +105,18 @@ type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 
 /// A type storing the results of an assemble representing an array of bytes
 /// or a String Error.
-pub type AssemblerResult<U> = Result<U, String>;
+pub type AssemblerResult<U, E> = Result<U, E>;
 
 /// The Assembler trait takes in an arbitrary length str, assembling it against
 // a target and returning a result containing either the assembled bytecode or
 // an error.
-pub trait Assembler<T, U> {
-    fn assemble(&self, source: T) -> AssemblerResult<U>;
+pub trait Assembler<T, U, E> {
+    fn assemble(&self, source: T) -> AssemblerResult<U, E>;
 }
 
 // Converts a source string to it's corresponding array of little endinan binary
 // opcodes.
-pub fn assemble(backend: Backend, source: &str) -> AssemblerResult<AssembledOrigins> {
+pub fn assemble(backend: Backend, source: &str) -> AssemblerResult<AssembledOrigins, String> {
     let input: Vec<char> = source.chars().collect();
     let origin_tokens = preparser::PreParser::new().parse(&input).unwrap().unwrap();
 

@@ -202,11 +202,11 @@ impl MOS6502Assembler {
     }
 }
 
-impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins> for MOS6502Assembler {
+impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, String> for MOS6502Assembler {
     fn assemble(
         &self,
         source: Vec<Origin<UnparsedTokenStream>>,
-    ) -> AssemblerResult<AssembledOrigins> {
+    ) -> AssemblerResult<AssembledOrigins, String> {
         let token_instructions: Vec<Origin<Token6502InstStream>> = source
             .into_iter()
             .map(parse_string_instructions_origin_to_token_instructions_origin)
