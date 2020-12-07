@@ -142,9 +142,9 @@ init: ; test
 fn should_pad_space_between_origins_in_assembled_output() {
     let input = "
 nop
-.origin 0x00000003
+.origin 0x03
   nop
-.origin 0x00000006
+.origin 0x06
   nop
 ";
 
@@ -158,10 +158,10 @@ nop
 fn constants_should_emit_with_instructions() {
     let input = "
 nop
-.origin 0x00000003
+.origin 0x03
   nop
   .word 0x1a2b
-.origin 0x00000006
+.origin 0x06
   nop
 ";
 

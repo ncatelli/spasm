@@ -132,7 +132,7 @@ fn should_parse_constants() {
 fn should_parse_constants_as_origin_statement() {
     let input = chars!(
         "
-.origin 0x00000003
+.origin 0x03
   .byte       0x1a
 "
     );
@@ -157,7 +157,7 @@ fn should_parse_labels_as_constant_arguments() {
         "
 .define byte test 0xff
 init:
-.origin 0x00000003
+.origin 0x03
   .word       init
   .byte       test
 "
