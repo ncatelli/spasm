@@ -35,7 +35,7 @@ bytedef         = ".define byte" whitespace+ referenceid whitespace+ byte ;
 worddef         = ".define word" whitespace+ referenceid whitespace+ byte byte ;
 doublworddef    = ".define doubleword" whitespace+ referenceid whitespace+ byte byte byte byte ;
 
-origin          = ".origin" whitespace+ byte byte byte byte ;
+origin          = ".origin" whitespace+ byte (byte (byte byte?)?)? ;
 
 constant        = constbyte | constword | constdoubleword ;
 
