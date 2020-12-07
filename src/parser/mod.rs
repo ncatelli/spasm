@@ -2,7 +2,10 @@ extern crate parcel;
 use parcel::parsers::character::{expect_character, expect_str};
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
-use parcel::{join, one_or_more, optional, right, take_n};
+use parcel::{join, one_or_more, optional, right, take_n, take_until_n};
+
+#[cfg(test)]
+mod tests;
 
 macro_rules! char_vec_to_u32_from_radix {
     ($chars:expr, $radix:expr) => {
@@ -98,7 +101,7 @@ fn hex_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
 }
 
 pub fn hex_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a [char], Vec<char>> {
-    take_n(hex_digit(), bytes * 2)
+    take_until_n(hex_digit(), bytes * 2)
 }
 
 pub fn hex_digit<'a>() -> impl Parser<'a, &'a [char], char> {
