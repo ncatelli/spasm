@@ -1,5 +1,5 @@
 extern crate parcel;
-use parcel::parsers::character::{expect_character, expect_str};
+use parcel::parsers::character::{eof, expect_character, expect_str, whitespace};
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;
 use parcel::{join, one_or_more, optional, right, take_n, take_until_n};
@@ -84,20 +84,40 @@ fn sign<'a>() -> impl Parser<'a, &'a [char], Sign> {
         })
 }
 
+#[allow(clippy::clippy::redundant_closure)]
 fn hex_u32<'a>() -> impl Parser<'a, &'a [char], u32> {
-    right(join(expect_str("0x"), hex_bytes(4))).map(|hex| char_vec_to_u32_from_radix!(hex, 16))
+    right(join(
+        expect_str("0x"),
+        hex_bytes(4).peek_next(special_character().or(|| whitespace().or(|| eof()))),
+    ))
+    .map(|hex| char_vec_to_u32_from_radix!(hex, 16))
 }
 
+#[allow(clippy::clippy::redundant_closure)]
 fn hex_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
-    right(join(expect_str("0x"), hex_bytes(2))).map(|hex| char_vec_to_u16_from_radix!(hex, 16))
+    right(join(
+        expect_str("0x"),
+        hex_bytes(2).peek_next(special_character().or(|| whitespace().or(|| eof()))),
+    ))
+    .map(|hex| char_vec_to_u16_from_radix!(hex, 16))
 }
 
+#[allow(clippy::clippy::redundant_closure)]
 fn hex_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
-    right(join(expect_str("0x"), hex_bytes(1))).map(|hex| char_vec_to_u8_from_radix!(hex, 16))
+    right(join(
+        expect_str("0x"),
+        hex_bytes(1).peek_next(special_character().or(|| whitespace().or(|| eof()))),
+    ))
+    .map(|hex| char_vec_to_u8_from_radix!(hex, 16))
 }
 
+#[allow(clippy::clippy::redundant_closure)]
 fn hex_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
-    right(join(expect_str("0x"), hex_bytes(1))).map(|hex| char_vec_to_i8_from_radix!(hex, 16))
+    right(join(
+        expect_str("0x"),
+        hex_bytes(1).peek_next(special_character().or(|| whitespace().or(|| eof()))),
+    ))
+    .map(|hex| char_vec_to_i8_from_radix!(hex, 16))
 }
 
 pub fn hex_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a [char], Vec<char>> {
@@ -225,6 +245,17 @@ fn dec_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
 pub fn decimal<'a>() -> impl Parser<'a, &'a [char], char> {
     move |input: &'a [char]| match input.get(0) {
         Some(&next) if next.is_digit(10) => Ok(MatchStatus::Match((&input[1..], next))),
+        _ => Ok(MatchStatus::NoMatch(input)),
+    }
+}
+
+pub fn special_character<'a>() -> impl Parser<'a, &'a [char], char> {
+    let special = vec![
+        '-', '_', '\\', '|', '#', '&', '’', '(', ')', '*', '+', ',', '.', '/', ':', ';', '<', '=',
+        '>',
+    ];
+    move |input: &'a [char]| match input.get(0) {
+        Some(&next) if special.contains(&next) => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
