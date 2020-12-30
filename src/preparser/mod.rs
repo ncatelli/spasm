@@ -135,30 +135,32 @@ fn statement<'a>() -> impl parcel::Parser<'a, &'a [char], Option<Token<String>>>
 fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     join(
         alphabetic(),
-        one_or_more(alphabetic().or(|| {
-            non_newline_whitespace().or(|| digit(10)).or(|| {
-                one_of(vec![
-                    expect_character('-'),
-                    expect_character('_'),
-                    expect_character('\\'),
-                    expect_character('#'),
-                    expect_character('&'),
-                    expect_character('\''),
-                    expect_character('|'),
-                    expect_character('('),
-                    expect_character(')'),
-                    expect_character('*'),
-                    expect_character('+'),
-                    expect_character(','),
-                    expect_character('.'),
-                    expect_character('/'),
-                    expect_character(':'),
-                    expect_character('<'),
-                    expect_character('='),
-                    expect_character('>'),
-                ])
-            })
-        })),
+        left(join(
+            one_or_more(alphabetic().or(|| {
+                non_newline_whitespace().or(|| digit(10)).or(|| {
+                    one_of(vec![
+                        expect_character('-'),
+                        expect_character('_'),
+                        expect_character('\\'),
+                        expect_character('#'),
+                        expect_character('&'),
+                        expect_character('\''),
+                        expect_character('|'),
+                        expect_character('('),
+                        expect_character(')'),
+                        expect_character('*'),
+                        expect_character('+'),
+                        expect_character(','),
+                        expect_character('/'),
+                        expect_character(':'),
+                        expect_character('<'),
+                        expect_character('='),
+                        expect_character('>'),
+                    ])
+                })
+            })),
+            optional(dereference()),
+        )),
     )
     .map(|(head, tail)| {
         Token::Instruction(vec![head].into_iter().chain(tail.into_iter()).collect())
@@ -172,6 +174,17 @@ fn comment<'a>() -> impl parcel::Parser<'a, &'a [char], ()> {
         zero_or_more(non_whitespace_character().or(|| non_newline_whitespace())),
     ))
     .map(|_| ())
+}
+
+fn dereference<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrReference> {
+    right(join(
+        join(expect_str(".ref"), one_or_more(non_newline_whitespace())),
+        referenceid().map(|r| ByteValueOrReference::Reference(r)),
+    ))
+}
+
+fn referenceid<'a>() -> impl parcel::Parser<'a, &'a [char], SymbolId> {
+    one_or_more(alphabetic()).map(|cv| cv.into_iter().collect())
 }
 
 fn labeldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
