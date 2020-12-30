@@ -19,11 +19,13 @@ program         = ( whitespace | newline )* ( origin | statement )+ ;
 
 statements      = statement+ ;
 
-statement       = ( whitespace | newline )* ( labeldef | symboldef | constant | instruction | comment ) comment?  ( newline | EOF );
+statement       = ( whitespace | newline )* ( labeldef | symboldef | constant | instruction | comment ) dereference? comment?  ( newline | EOF );
 
-instruction     = alphabetic ( alphabetic | digit | special | ";"! )+ ;
+instruction     = ( alphabetic ( alphabetic | digit | special | ";"! )+ ) | ;
 
 comment         = ";" ( whitespace | character )* ;
+
+dereference     = "[" referenceid "]" ;
 
 referenceid     = alphabetic* ;
 
