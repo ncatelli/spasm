@@ -1,4 +1,3 @@
-extern crate parcel;
 use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference, AddressModeType, Symbol,
 };

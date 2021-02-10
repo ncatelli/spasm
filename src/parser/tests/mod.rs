@@ -1,4 +1,3 @@
-extern crate parcel;
 use crate::parser::{hex_u16, hex_u32, hex_u8};
 use parcel::prelude::v1::*;
 
