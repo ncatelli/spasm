@@ -1,4 +1,3 @@
-extern crate parcel;
 use parcel::parsers::character::{eof, expect_character, expect_str, whitespace};
 use parcel::prelude::v1::*;
 use parcel::MatchStatus;

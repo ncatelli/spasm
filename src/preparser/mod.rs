@@ -1,4 +1,3 @@
-extern crate parcel;
 use crate::addressing::SizeOf;
 use crate::{Emitter, Origin};
 use parcel::parsers::character::*;

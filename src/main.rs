@@ -1,4 +1,3 @@
-extern crate scrap;
 use scrap::prelude::v1::*;
 use spasm::assemble;
 use spasm::Backend;
