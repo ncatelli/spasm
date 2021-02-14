@@ -1,8 +1,8 @@
 use crate::backends::mos6502::instruction_set::address_mode::{
     AddressMode, AddressModeOrReference, AddressModeType, Symbol,
 };
-use crate::backends::mos6502::instruction_set::mnemonics::Mnemonic;
 use crate::backends::mos6502::instruction_set::Instruction;
+use isa_mos6502::mnemonic::Mnemonic;
 use parcel::parsers::character::*;
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};

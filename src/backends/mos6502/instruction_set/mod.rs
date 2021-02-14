@@ -1,10 +1,10 @@
 pub mod address_mode;
-pub use address_mode::AddressMode;
-use address_mode::AddressModeOrReference;
-pub mod mnemonics;
 use crate::addressing;
 use crate::Emitter;
-pub use mnemonics::Mnemonic;
+pub use address_mode::AddressMode;
+use address_mode::AddressModeOrReference;
+//pub use mnemonics::Mnemonic;
+pub use isa_mos6502::mnemonic::Mnemonic;
 use std::fmt;
 
 #[cfg(test)]
@@ -13,6 +13,12 @@ mod tests;
 /// OpCode represents an unsigned 8bit value.
 pub type OpCode = u8;
 
+impl addressing::SizeOf for Mnemonic {
+    fn size_of(&self) -> usize {
+        use isa_mos6502::ByteSized;
+        self.byte_size()
+    }
+}
 /// Instruction represents a single 6502 instruction containing a mnemonic,
 /// and either a static address_mode or a label.
 #[derive(Clone, PartialEq, Debug)]

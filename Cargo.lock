@@ -3,15 +3,15 @@
 [[package]]
 name = "isa-mos6502"
 version = "0.1.0"
-source = "git+https://github.com/ncatelli/isa-mos6502?branch=main#aff029929fba6d1236384ecd93649f4dc1056d43"
+source = "git+https://github.com/ncatelli/isa-mos6502?branch=main#8ebd529fb8f4da902b33cd7a20cbbbf9cfe56db2"
 dependencies = [
  "parcel 1.9.1",
 ]
 
 [[package]]
 name = "parcel"
-version = "1.5.0"
-source = "git+https://github.com/ncatelli/parcel?tag=v1.6.0#6c01cf75438cbf2fd55c88a3a9065b54a0a43310"
+version = "1.6.0"
+source = "git+https://github.com/ncatelli/parcel?tag=v1.6.0#f88a83b88b2b6cfd0c03bbebb0dd020957d62255"
 
 [[package]]
 name = "parcel"
@@ -23,7 +23,7 @@ name = "scrap"
 version = "0.1.1"
 source = "git+https://github.com/ncatelli/scrap?tag=v0.1.1#9315f7a0eef0270c9f8c159f6af57553333ef855"
 dependencies = [
- "parcel 1.5.0",
+ "parcel 1.6.0",
 ]
 
 [[package]]
