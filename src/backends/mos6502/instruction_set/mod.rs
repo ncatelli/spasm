@@ -3,7 +3,6 @@ use crate::addressing;
 use crate::Emitter;
 pub use address_mode::AddressMode;
 use address_mode::AddressModeOrReference;
-//pub use mnemonics::Mnemonic;
 pub use isa_mos6502::mnemonic::Mnemonic;
 use std::fmt;
 
