@@ -1,8 +1,8 @@
-use crate::backends::mos6502::instruction_set::address_mode::{
-    AddressMode, AddressModeOrReference, AddressModeType, Symbol,
+use crate::backends::mos6502::instruction_set::addressing_mode::{
+    AddressingModeOrReference, AddressingModeType, Symbol,
 };
 use crate::backends::mos6502::instruction_set::Instruction;
-use isa_mos6502::mnemonic::Mnemonic;
+use isa_mos6502::{addressing_mode::AddressingMode, mnemonic::Mnemonic};
 use parcel::parsers::character::*;
 use parcel::prelude::v1::*;
 use parcel::{join, left, one_or_more, optional, right, take_n, zero_or_more};
@@ -45,7 +45,10 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Instruction> {
     )
     .map(|(m, a)| match a {
         Some(amor) => Instruction::new(m, amor),
-        None => Instruction::new(m, AddressModeOrReference::AddressMode(AddressMode::Implied)),
+        None => Instruction::new(
+            m,
+            AddressingModeOrReference::AddressingMode(AddressingMode::Implied),
+        ),
     })
 }
 
@@ -55,7 +58,7 @@ fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a [char], Mnemonic> {
 }
 
 #[allow(clippy::redundant_closure)]
-fn address_mode<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn address_mode<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     accumulator()
         .or(|| zeropage())
         .or(|| zeropage_x_indexed())
@@ -69,7 +72,7 @@ fn address_mode<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrRefere
         .or(|| indirect())
         .or(|| relative())
         .map(|amor| amor)
-        .or(|| label().map(|l| AddressModeOrReference::Label(l)))
+        .or(|| label().map(|l| AddressingModeOrReference::Label(l)))
 }
 
 fn label<'a>() -> impl parcel::Parser<'a, &'a [char], String> {
@@ -80,49 +83,50 @@ fn symbol<'a>() -> impl parcel::Parser<'a, &'a [char], String> {
     one_or_more(alphabetic()).map(|l| l.into_iter().collect())
 }
 
-fn accumulator<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    expect_character('A').map(|_| AddressModeOrReference::AddressMode(AddressMode::Accumulator))
+fn accumulator<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
+    expect_character('A')
+        .map(|_| AddressingModeOrReference::AddressingMode(AddressingMode::Accumulator))
 }
 
-fn absolute<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
-    unsigned16().map(|h| AddressModeOrReference::AddressMode(AddressMode::Absolute(h)))
+fn absolute<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
+    unsigned16().map(|h| AddressingModeOrReference::AddressingMode(AddressingMode::Absolute(h)))
 }
 
-fn absolute_x_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn absolute_x_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     left(join(
         unsigned16(),
         join(expect_character(','), expect_character('X')),
     ))
-    .map(|h| AddressModeOrReference::AddressMode(AddressMode::AbsoluteIndexedWithX(h)))
+    .map(|h| AddressingModeOrReference::AddressingMode(AddressingMode::AbsoluteIndexedWithX(h)))
 }
 
-fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn absolute_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     left(join(
         unsigned16(),
         join(expect_character(','), expect_character('Y')),
     ))
-    .map(|h| AddressModeOrReference::AddressMode(AddressMode::AbsoluteIndexedWithY(h)))
+    .map(|h| AddressingModeOrReference::AddressingMode(AddressingMode::AbsoluteIndexedWithY(h)))
 }
 
-fn immediate<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn immediate<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     right(join(expect_character('#'), unsigned8()))
-        .map(|u| AddressModeOrReference::AddressMode(AddressMode::Immediate(u)))
+        .map(|u| AddressingModeOrReference::AddressingMode(AddressingMode::Immediate(u)))
         .or(|| {
             right(join(expect_character('#'), symbol())).map(|sym| {
-                AddressModeOrReference::Symbol(Symbol::new(AddressModeType::Immediate, sym))
+                AddressingModeOrReference::Symbol(Symbol::new(AddressingModeType::Immediate, sym))
             })
         })
 }
 
-fn indirect<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn indirect<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     right(join(
         expect_character('('),
         left(join(unsigned16(), expect_character(')'))),
     ))
-    .map(|bytes| AddressModeOrReference::AddressMode(AddressMode::Indirect(bytes)))
+    .map(|bytes| AddressingModeOrReference::AddressingMode(AddressingMode::Indirect(bytes)))
 }
 
-fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     right(join(
         expect_character('('),
         left(join(
@@ -133,7 +137,7 @@ fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOr
             ),
         )),
     ))
-    .map(|u| AddressModeOrReference::AddressMode(AddressMode::IndexedIndirect(u)))
+    .map(|u| AddressingModeOrReference::AddressingMode(AddressingMode::XIndexedIndirect(u)))
     .or(|| {
         right(join(
             expect_character('('),
@@ -146,12 +150,15 @@ fn x_indexed_indirect<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOr
             )),
         ))
         .map(|sym| {
-            AddressModeOrReference::Symbol(Symbol::new(AddressModeType::IndexedIndirect, sym))
+            AddressingModeOrReference::Symbol(Symbol::new(
+                AddressingModeType::XIndexedIndirect,
+                sym,
+            ))
         })
     })
 }
 
-fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     right(join(
         expect_character('('),
         left(join(
@@ -162,7 +169,7 @@ fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOr
             ),
         )),
     ))
-    .map(|u| AddressModeOrReference::AddressMode(AddressMode::IndirectIndexed(u)))
+    .map(|u| AddressingModeOrReference::AddressingMode(AddressingMode::IndirectYIndexed(u)))
     .or(|| {
         right(join(
             expect_character('('),
@@ -175,34 +182,37 @@ fn indirect_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOr
             )),
         ))
         .map(|sym| {
-            AddressModeOrReference::Symbol(Symbol::new(AddressModeType::IndirectIndexed, sym))
+            AddressingModeOrReference::Symbol(Symbol::new(
+                AddressingModeType::IndirectYIndexed,
+                sym,
+            ))
         })
     })
 }
 
-fn relative<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn relative<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     right(join(expect_character('*'), signed8()))
-        .map(|i| AddressModeOrReference::AddressMode(AddressMode::Relative(i)))
+        .map(|i| AddressingModeOrReference::AddressingMode(AddressingMode::Relative(i)))
 }
 
 #[allow(clippy::clippy::redundant_closure)]
-fn zeropage<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn zeropage<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     left(join(unsigned8(), non_newline_whitespace().or(|| eof())))
-        .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPage(u)))
+        .map(|u| AddressingModeOrReference::AddressingMode(AddressingMode::ZeroPage(u)))
 }
 
-fn zeropage_x_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn zeropage_x_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     left(join(
         unsigned8(),
         join(expect_character(','), expect_character('X')),
     ))
-    .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPageIndexedWithX(u)))
+    .map(|u| AddressingModeOrReference::AddressingMode(AddressingMode::ZeroPageIndexedWithX(u)))
 }
 
-fn zeropage_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressModeOrReference> {
+fn zeropage_y_indexed<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     left(join(
         unsigned8(),
         join(expect_character(','), expect_character('Y')),
     ))
-    .map(|u| AddressModeOrReference::AddressMode(AddressMode::ZeroPageIndexedWithY(u)))
+    .map(|u| AddressingModeOrReference::AddressingMode(AddressingMode::ZeroPageIndexedWithY(u)))
 }

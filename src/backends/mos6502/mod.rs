@@ -7,14 +7,13 @@ use std::collections::HashMap;
 
 use crate::addressing;
 use crate::addressing::{Positional, SizeOf};
-use crate::backends::mos6502::instruction_set::address_mode::{
-    AddressMode, AddressModeOrReference,
-};
+use crate::backends::mos6502::instruction_set::addressing_mode::AddressingModeOrReference;
 use crate::backends::mos6502::instruction_set::{Instruction, StaticInstruction};
 use crate::backends::BackendErr;
 use crate::preparser::{ByteValue, ByteValueOrReference, Token};
 use crate::{Assembler, AssemblerResult};
 use crate::{Emitter, Origin};
+use isa_mos6502::addressing_mode::AddressingMode;
 
 type UnparsedTokenStream = Vec<Token<String>>;
 type Token6502InstStream = Vec<Token<Instruction>>;
@@ -164,17 +163,17 @@ fn dereference_instructions_to_static_instructions(
             let mnemonic = i.mnemonic;
             let amor = i.amor;
             match amor {
-                AddressModeOrReference::Label(l) => symbol_table
+                AddressingModeOrReference::Label(l) => symbol_table
                     .labels
                     .get(&l)
                     .map_or(Err(BackendErr::UndefinedReference(l.clone())), |offset| {
-                        Ok((mnemonic, AddressMode::Absolute(*offset)))
+                        Ok((mnemonic, AddressingMode::Absolute(*offset)))
                     }),
-                AddressModeOrReference::Symbol(s) => symbol_table.symbols.get(&s.symbol).map_or(
+                AddressingModeOrReference::Symbol(s) => symbol_table.symbols.get(&s.symbol).map_or(
                     Err(BackendErr::UndefinedReference(s.symbol.clone())),
-                    |byte_value| Ok((mnemonic, AddressMode::Immediate(*byte_value))),
+                    |byte_value| Ok((mnemonic, AddressingMode::Immediate(*byte_value))),
                 ),
-                AddressModeOrReference::AddressMode(am) => Ok((mnemonic, am)),
+                AddressingModeOrReference::AddressingMode(am) => Ok((mnemonic, am)),
             }
             .map(|(m, am)| InstructionOrConstant::Instruction(StaticInstruction::new(m, am)))
         }

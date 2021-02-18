@@ -3,7 +3,7 @@
 [[package]]
 name = "isa-mos6502"
 version = "0.1.0"
-source = "git+https://github.com/ncatelli/isa-mos6502?branch=main#8ebd529fb8f4da902b33cd7a20cbbbf9cfe56db2"
+source = "git+https://github.com/ncatelli/isa-mos6502?branch=main#7c5238fa05b0288dc8b5e0cf333046a8c0af2628"
 dependencies = [
  "parcel 1.9.1",
 ]
