@@ -46,6 +46,27 @@ impl From<StaticInstruction> for Instruction {
     }
 }
 
+impl From<StaticInstruction> for (Mnemonic, AddressingMode) {
+    fn from(si: StaticInstruction) -> Self {
+        (si.mnemonic, si.address_mode)
+    }
+}
+
+impl std::convert::TryFrom<StaticInstruction> for isa_mos6502::InstructionVariant {
+    type Error = UnknownInstructionErr;
+
+    fn try_from(src: StaticInstruction) -> Result<Self, Self::Error> {
+        use std::convert::TryFrom;
+        let tup_src: (Mnemonic, AddressingMode) = src.into();
+        TryFrom::try_from(tup_src).map_err(|e: isa_mos6502::InstructionErr| match e {
+            isa_mos6502::InstructionErr::InvalidInstruction(m, _a) => {
+                UnknownInstructionErr::new(m, AddressingMode::Implied)
+            }
+            _ => panic!("conversion from StaticInstruction to InstructionVariant should only expect InvalidInstruction errors.")
+        })
+    }
+}
+
 /// UnknownInstructionErr represents an Instruction that is unrepresentable or unknown.
 #[derive(Debug, Copy, Clone)]
 pub struct UnknownInstructionErr {
