@@ -1,5 +1,4 @@
-use crate::addressing::SizeOf;
-use isa_mos6502::addressing_mode::AddressingMode;
+use isa_mos6502::{addressing_mode::AddressingMode, ByteSized};
 
 #[test]
 fn address_mode_with_operand_should_be_comparable_to_address_mode() {
@@ -20,7 +19,7 @@ fn validate_address_mode_with_operands_into_bytes_returns_correct_endian_bytes()
         AddressingMode::XIndexedIndirect(0x80),
         AddressingMode::Indirect(0x8008),
         AddressingMode::IndirectYIndexed(0x80),
-        //AddressingMode::Relative(0x80),
+        AddressingMode::Relative(0x40),
         AddressingMode::ZeroPage(0x80),
         AddressingMode::ZeroPageIndexedWithX(0x80),
         AddressingMode::ZeroPageIndexedWithY(0x80),
@@ -35,7 +34,7 @@ fn validate_address_mode_with_operands_into_bytes_returns_correct_endian_bytes()
         vec![0x80],
         vec![0x08, 0x80],
         vec![0x80],
-        vec![0x80],
+        vec![0x40],
         vec![0x80],
         vec![0x80],
         vec![0x80],
@@ -65,7 +64,7 @@ fn validate_address_mode_maps_to_the_correct_size_of() {
         AddressingMode::ZeroPageIndexedWithY(0x80),
     ]
     .into_iter()
-    .map(|am| am.size_of())
+    .map(|am| am.byte_size())
     .collect();
 
     assert_eq!(vec![2, 2, 2, 0, 1, 0, 1, 2, 1, 1, 1, 1], address_sizing)

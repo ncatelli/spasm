@@ -1,5 +1,4 @@
 use crate::addressing;
-use crate::Emitter;
 use isa_mos6502::{
     addressing_mode::{AddressingMode, AddressingModeType},
     ByteSized,
@@ -47,21 +46,9 @@ pub enum AddressingModeOrReference {
 impl addressing::SizeOf for AddressingModeOrReference {
     fn size_of(&self) -> usize {
         match self {
-            Self::AddressingMode(am) => am.size_of(),
+            Self::AddressingMode(am) => am.byte_size(),
             Self::Label(_) => 2,
             Self::Symbol(_) => 1,
         }
-    }
-}
-
-impl Emitter<Vec<u8>> for AddressingMode {
-    fn emit(&self) -> Vec<u8> {
-        Into::<Vec<u8>>::into(*self)
-    }
-}
-
-impl addressing::SizeOf for AddressingMode {
-    fn size_of(&self) -> usize {
-        self.byte_size()
     }
 }
