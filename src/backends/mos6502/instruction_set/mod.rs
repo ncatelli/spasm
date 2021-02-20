@@ -37,35 +37,12 @@ impl addressing::SizeOf for Instruction {
     }
 }
 
-impl From<StaticInstruction> for Instruction {
-    fn from(si: StaticInstruction) -> Self {
+impl From<(Mnemonic, AddressingMode)> for Instruction {
+    fn from((m, am): (Mnemonic, AddressingMode)) -> Self {
         Self {
-            mnemonic: si.mnemonic,
-            amor: AddressingModeOrReference::AddressingMode(si.address_mode),
+            mnemonic: m,
+            amor: AddressingModeOrReference::AddressingMode(am),
         }
-    }
-}
-
-impl From<StaticInstruction> for (Mnemonic, AddressingMode) {
-    fn from(si: StaticInstruction) -> Self {
-        (si.mnemonic, si.address_mode)
-    }
-}
-
-impl std::convert::TryFrom<StaticInstruction> for isa_mos6502::InstructionVariant {
-    type Error = UnknownInstructionErr;
-
-    fn try_from(src: StaticInstruction) -> Result<Self, Self::Error> {
-        use std::convert::TryFrom;
-
-        let tup_src: (Mnemonic, AddressingMode) = src.into();
-
-        TryFrom::try_from(tup_src).map_err(|e: isa_mos6502::InstructionErr| match e {
-            isa_mos6502::InstructionErr::InvalidInstruction(m, am) => {
-                UnknownInstructionErr::new(m, am)
-            }
-            _ => panic!("conversion from StaticInstruction to InstructionVariant should only expect InvalidInstruction errors.")
-        })
     }
 }
 
@@ -95,41 +72,6 @@ impl fmt::Display for UnknownInstructionErr {
             "unknown instruction: {:?} {:?}",
             &self.mnemonic, &self.addressing_mode
         )
-    }
-}
-
-/// StaticInstruction represents a single 6502 instruction containing a mnemonic,
-/// and static address mode, mapping directly to an address or byte value.
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub struct StaticInstruction {
-    pub mnemonic: Mnemonic,
-    pub address_mode: AddressingMode,
-}
-
-impl StaticInstruction {
-    pub fn new(mnemonic: Mnemonic, address_mode: AddressingMode) -> Self {
-        Self {
-            mnemonic,
-            address_mode,
-        }
-    }
-}
-
-impl addressing::SizeOf for StaticInstruction {
-    fn size_of(&self) -> usize {
-        use isa_mos6502::ByteSized;
-
-        self.mnemonic.byte_size() + self.address_mode.byte_size()
-    }
-}
-
-impl Emitter<Result<Vec<OpCode>, UnknownInstructionErr>> for StaticInstruction {
-    fn emit(&self) -> Result<Vec<OpCode>, UnknownInstructionErr> {
-        use std::convert::TryFrom;
-
-        let inst_variant = isa_mos6502::InstructionVariant::try_from(*self)?;
-        let bytecode = Vec::<OpCode>::from(inst_variant);
-        Ok(bytecode)
     }
 }
 

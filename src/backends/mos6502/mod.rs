@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use crate::addressing;
 use crate::addressing::{Positional, SizeOf};
 use crate::backends::mos6502::instruction_set::addressing_mode::AddressingModeOrReference;
-use crate::backends::mos6502::instruction_set::{Instruction, StaticInstruction};
+use crate::backends::mos6502::instruction_set::Instruction;
 use crate::backends::BackendErr;
 use crate::preparser::{ByteValue, ByteValueOrReference, Token};
 use crate::{Assembler, AssemblerResult};
@@ -157,7 +157,7 @@ fn generate_symbol_table_from_instructions_origin(
 fn dereference_instructions_to_static_instructions(
     symbol_table: &SymbolTable,
     src_ioc: InstructionOrConstant<Instruction, ByteValueOrReference>,
-) -> Result<InstructionOrConstant<StaticInstruction, ByteValue>, BackendErr> {
+) -> Result<InstructionOrConstant<isa_mos6502::InstructionVariant, ByteValue>, BackendErr> {
     match src_ioc {
         InstructionOrConstant::Instruction(i) => {
             let mnemonic = i.mnemonic;
@@ -175,7 +175,11 @@ fn dereference_instructions_to_static_instructions(
                 ),
                 AddressingModeOrReference::AddressingMode(am) => Ok((mnemonic, am)),
             }
-            .map(|(m, am)| InstructionOrConstant::Instruction(StaticInstruction::new(m, am)))
+            .map(|(m, am)| {
+                InstructionOrConstant::Instruction(
+                    isa_mos6502::InstructionVariant::new(m, am).unwrap(),
+                )
+            })
         }
         InstructionOrConstant::Constant(bvol) => match bvol {
             ByteValueOrReference::ByteValue(bv) => Ok(bv),
@@ -239,31 +243,30 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
                 let origin_offset = origin.offset;
                 let instructions = origin.instructions;
 
-                let assembled_instructions =
-                    instructions
-                        .into_iter()
-                        .map(|ioc| (&symbol_table, ioc))
-                        .map(|(st, ioc)| dereference_instructions_to_static_instructions(st, ioc))
-                        .collect::<Result<
-                            Vec<InstructionOrConstant<StaticInstruction, ByteValue>>,
-                            BackendErr,
-                        >>()?
-                        .into_iter()
-                        .map(|ioc| match ioc {
-                            InstructionOrConstant::Instruction(si) => {
-                                let mc: Result<Vec<u8>, _> = si.emit();
-                                mc
-                            }
-                            InstructionOrConstant::Constant(v) => {
-                                let mc: Vec<u8> = v.emit();
-                                Ok(mc)
-                            }
-                        })
-                        .collect::<Result<Vec<Vec<u8>>, _>>()
-                        .map_err(|e| BackendErr::UndefinedInstruction(e.to_string()))?
-                        .into_iter()
-                        .flatten()
-                        .collect::<Vec<u8>>();
+                let assembled_instructions = instructions
+                    .into_iter()
+                    .map(|ioc| (&symbol_table, ioc))
+                    .map(|(st, ioc)| dereference_instructions_to_static_instructions(st, ioc))
+                    .collect::<Result<
+                        Vec<InstructionOrConstant<isa_mos6502::InstructionVariant, ByteValue>>,
+                        BackendErr,
+                    >>()?
+                    .into_iter()
+                    .map(|ioc| match ioc {
+                        InstructionOrConstant::Instruction(si) => {
+                            let mc: Result<Vec<u8>, _> = si.emit();
+                            mc
+                        }
+                        InstructionOrConstant::Constant(v) => {
+                            let mc: Vec<u8> = v.emit();
+                            Ok(mc)
+                        }
+                    })
+                    .collect::<Result<Vec<Vec<u8>>, _>>()
+                    .map_err(|e| BackendErr::UndefinedInstruction(e.to_string()))?
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<u8>>();
 
                 Ok(Origin::with_offset(origin_offset, assembled_instructions))
             })
