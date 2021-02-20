@@ -178,7 +178,7 @@ fn dereference_instructions_to_static_instructions(
             .map(|(m, am)| {
                 isa_mos6502::InstructionVariant::new(m, am)
                     .map_err(|e| BackendErr::UndefinedInstruction(e.to_string()))
-                    .map(|iv| InstructionOrConstant::Instruction(iv))
+                    .map(InstructionOrConstant::Instruction)
             })?
         }
         InstructionOrConstant::Constant(bvol) => match bvol {
