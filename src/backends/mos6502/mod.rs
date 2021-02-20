@@ -176,10 +176,10 @@ fn dereference_instructions_to_static_instructions(
                 AddressingModeOrReference::AddressingMode(am) => Ok((mnemonic, am)),
             }
             .map(|(m, am)| {
-                InstructionOrConstant::Instruction(
-                    isa_mos6502::InstructionVariant::new(m, am).unwrap(),
-                )
-            })
+                isa_mos6502::InstructionVariant::new(m, am)
+                    .map_err(|e| BackendErr::UndefinedInstruction(e.to_string()))
+                    .map(|iv| InstructionOrConstant::Instruction(iv))
+            })?
         }
         InstructionOrConstant::Constant(bvol) => match bvol {
             ByteValueOrReference::ByteValue(bv) => Ok(bv),
