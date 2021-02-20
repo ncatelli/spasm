@@ -1,2 +1,2 @@
-mod address_mode;
+mod addressing_mode;
 mod instructions;
