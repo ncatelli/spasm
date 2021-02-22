@@ -99,7 +99,7 @@ impl std::convert::TryFrom<PrimitiveVariant> for Primitive<u16> {
 
     fn try_from(src: PrimitiveVariant) -> Result<Self, Self::Error> {
         match src {
-            PrimitiveVariant::Uint8(p) => Ok(Primitive::new(u16::from(p.unwrap()))),
+            PrimitiveVariant::Uint8(p) => Err(TypeError::IllegalType(p.to_string())),
             PrimitiveVariant::Uint16(p) => Ok(p),
             PrimitiveVariant::Uint32(p) => Err(TypeError::IllegalType(p.to_string())),
         }
@@ -111,8 +111,8 @@ impl std::convert::TryFrom<PrimitiveVariant> for Primitive<u32> {
 
     fn try_from(src: PrimitiveVariant) -> Result<Self, Self::Error> {
         match src {
-            PrimitiveVariant::Uint8(p) => Ok(Primitive::new(u32::from(p.unwrap()))),
-            PrimitiveVariant::Uint16(p) => Ok(Primitive::new(u32::from(p.unwrap()))),
+            PrimitiveVariant::Uint8(p) => Err(TypeError::IllegalType(p.to_string())),
+            PrimitiveVariant::Uint16(p) => Err(TypeError::IllegalType(p.to_string())),
             PrimitiveVariant::Uint32(p) => Ok(p),
         }
     }
