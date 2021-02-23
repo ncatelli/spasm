@@ -38,6 +38,7 @@ impl From<&PrimitiveVariant> for PrimitiveType {
 
 /// A concrete type representing all valid type variants for the preparser.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[allow(dead_code)]
 pub enum PrimitiveVariant {
     Uint8(Primitive<u8>),
     Uint16(Primitive<u16>),

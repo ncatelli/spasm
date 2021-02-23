@@ -1,63 +1,35 @@
 use crate::preparser::{ast, types};
 pub enum InterpreterError {
     UnknownErr,
+    TypeError(types::TypeError),
 }
 
 impl std::fmt::Debug for InterpreterError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             Self::UnknownErr => write!(f, "unknown interpreter error"),
+            Self::TypeError(e) => write!(f, "{:?}", e),
         }
     }
 }
 
-pub trait WalkNode<A, B> {
+pub trait WalkNode<Output> {
     type Error;
 
-    fn walk_node(&self, input: A) -> Result<B, Self::Error>;
+    fn walk_node(self) -> Result<Output, Self::Error>;
 }
 
-pub struct StatefulInterpreter;
-
-impl StatefulInterpreter {
-    pub fn new() -> StatefulInterpreter {
-        StatefulInterpreter
-    }
-}
-
-impl Default for StatefulInterpreter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Interpreter<Expr, object::Object> begins implemententing the required state
-/// for interpreting Expressions in a stateful way.
-impl WalkNode<ast::Expr, types::PrimitiveVariant> for StatefulInterpreter {
+impl<Input, Output> WalkNode<Output> for Input
+where
+    Input: std::convert::TryInto<Output> + std::fmt::Display + Copy,
+{
     type Error = InterpreterError;
 
-    fn walk_node(&self, expr: ast::Expr) -> Result<types::PrimitiveVariant, Self::Error> {
-        match expr {
-            ast::Expr::Literal(pv) => self.interpret_literal(pv),
-        }
-    }
-}
-
-/// This functions only to unpack an Expr and dispatch to the upstream
-/// Interpreter<Expr, object::Object> implementation.
-impl WalkNode<Box<ast::Expr>, types::PrimitiveVariant> for StatefulInterpreter {
-    type Error = InterpreterError;
-
-    fn walk_node(&self, expr: Box<ast::Expr>) -> Result<types::PrimitiveVariant, Self::Error> {
-        self.walk_node(*expr)
-    }
-}
-
-impl StatefulInterpreter {
-    fn interpret_literal(
-        &self,
-        primitive: types::PrimitiveVariant,
-    ) -> Result<types::PrimitiveVariant, InterpreterError> {
-        Ok(primitive)
+    fn walk_node(self) -> Result<Output, Self::Error> {
+        use std::convert::TryInto;
+        let lhs = self;
+        TryInto::<Output>::try_into(lhs).map_err(|_| {
+            InterpreterError::TypeError(types::TypeError::IllegalType(self.to_string()))
+        })
     }
 }
