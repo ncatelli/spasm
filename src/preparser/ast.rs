@@ -1,31 +1,64 @@
-use crate::preparser::{ast, interpreter, types};
-
-/// Expr represents a runtime expression in the preparser.
-#[derive(Debug, Clone)]
-pub enum Expr<T> {
-    Literal(T),
+use crate::preparser::types;
+/// Type System errors.
+#[derive(Clone, PartialEq)]
+pub enum InterpreterError {
+    Unspecified(String),
+    TypeErr(types::TypeError),
 }
 
-impl<T> std::convert::From<Expr<types::Primitive<T>>> for types::Primitive<T> {
-    fn from(src: Expr<types::Primitive<T>>) -> Self {
-        match src {
-            Expr::Literal(ty) => ty,
+impl std::fmt::Debug for InterpreterError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Unspecified(v) => write!(f, "unspecified: {:?}", v),
+            Self::TypeErr(t) => write!(f, "{:?}", t),
         }
     }
 }
 
-impl<Input, Output> interpreter::WalkNode<ast::Expr<Output>> for ast::Expr<Input>
-where
-    Output: Copy,
-    Input: std::convert::TryInto<Output> + std::fmt::Display + Copy,
-{
-    type Error = interpreter::InterpreterError;
+pub trait Interpreter<O> {
+    type Error;
 
-    fn walk_node(self) -> Result<ast::Expr<Output>, Self::Error> {
+    fn interpret(self) -> Result<O, Self::Error>;
+}
+
+pub enum Node {
+    Expr(Expr),
+}
+
+impl Interpreter<types::Primitive<u8>> for Node {
+    type Error = InterpreterError;
+
+    fn interpret(self) -> Result<types::Primitive<u8>, Self::Error> {
         match self {
-            ast::Expr::Literal(lhs) => {
-                Ok(ast::Expr::Literal(interpreter::WalkNode::walk_node(lhs)?))
-            }
+            Self::Expr(expr) => expr.interpret(),
+        }
+    }
+}
+
+pub enum Expr {
+    Literal(Literal),
+}
+
+impl Interpreter<types::Primitive<u8>> for Expr {
+    type Error = InterpreterError;
+
+    fn interpret(self) -> Result<types::Primitive<u8>, Self::Error> {
+        match self {
+            Self::Literal(l) => l.interpret(),
+        }
+    }
+}
+
+pub enum Literal {
+    U8(types::Primitive<u8>),
+}
+
+impl Interpreter<types::Primitive<u8>> for Literal {
+    type Error = InterpreterError;
+
+    fn interpret(self) -> Result<types::Primitive<u8>, Self::Error> {
+        match self {
+            Self::U8(prim) => Ok(prim),
         }
     }
 }
