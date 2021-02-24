@@ -9,9 +9,10 @@ use crate::parser::*;
 #[cfg(test)]
 mod tests;
 
-pub mod types;
 pub mod ast;
 pub mod compile;
+pub mod typechecker;
+pub mod types;
 
 /// Label represents a the string representation of a label.
 pub type Label = String;

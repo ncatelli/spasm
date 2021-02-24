@@ -48,6 +48,7 @@ pub enum Operator {
 
 pub enum Expr {
     Literal(types::PrimitiveVariant),
+    Binary(Operator, Box<Expr>, Box<Expr>),
 }
 
 impl Interpreter<types::PrimitiveVariant> for Box<Expr> {
@@ -64,9 +65,21 @@ impl Interpreter<types::PrimitiveVariant> for Expr {
     fn interpret(self) -> Result<types::PrimitiveVariant, Self::Error> {
         match self {
             Expr::Literal(prim) => Ok(prim),
+            Expr::Binary(op, lhs, rhs) => interpret_binary(op, *lhs, *rhs),
         }
     }
 }
+
+// Implement helper methdods for Expr -> types::PrimitiveVariant
+fn interpret_binary(
+    op: Operator,
+    lhs: Expr,
+    rhs: Expr,
+) -> Result<types::PrimitiveVariant, InterpreterError> {
+    todo!()
+}
+
+// Primitive types
 
 impl Interpreter<types::Primitive<u8>> for Expr {
     type Error = InterpreterError;
