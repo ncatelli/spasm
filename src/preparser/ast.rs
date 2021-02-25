@@ -42,9 +42,13 @@ impl Interpreter<types::PrimitiveVariant> for Node {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Operator {
     Plus,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct OperatorPlus;
 
 pub enum Expr {
     Literal(types::PrimitiveVariant),

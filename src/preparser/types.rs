@@ -1,3 +1,5 @@
+use super::typechecker;
+
 /// Type System errors.
 #[derive(Clone, PartialEq)]
 pub enum TypeError {
@@ -8,6 +10,30 @@ impl std::fmt::Debug for TypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::IllegalType(v) => write!(f, "illegal type: {:?}", v),
+        }
+    }
+}
+
+/// Represents all variants of accepted types without their associated values.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum PrimitiveType {
+    Uint8,
+    Uint16,
+    Uint32,
+}
+
+impl From<PrimitiveVariant> for PrimitiveType {
+    fn from(src: PrimitiveVariant) -> PrimitiveType {
+        std::convert::From::from(&src)
+    }
+}
+
+impl From<&PrimitiveVariant> for PrimitiveType {
+    fn from(src: &PrimitiveVariant) -> PrimitiveType {
+        match src {
+            PrimitiveVariant::Uint8(_) => Self::Uint8,
+            PrimitiveVariant::Uint16(_) => Self::Uint16,
+            PrimitiveVariant::Uint32(_) => Self::Uint32,
         }
     }
 }
@@ -118,6 +144,13 @@ impl std::convert::TryFrom<PrimitiveVariant> for Primitive<u32> {
     }
 }
 
+impl crate::preparser::typechecker::Kinded for PrimitiveVariant {
+    fn kind(&self) -> typechecker::Kind {
+        let pt: PrimitiveType = self.into();
+        typechecker::Kind::from(pt)
+    }
+}
+
 /// Primitive wraps rust primitive
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Primitive<T> {
@@ -195,5 +228,16 @@ impl std::ops::Add for Primitive<u32> {
         let rhs = rhs.unwrap();
         let sum = lhs.overflowing_add(rhs).0;
         Primitive::new(sum)
+    }
+}
+
+impl<T> crate::preparser::typechecker::Kinded for Primitive<T>
+where
+    T: Copy,
+    Self: Into<PrimitiveVariant>,
+{
+    fn kind(&self) -> typechecker::Kind {
+        let pt: PrimitiveType = Into::<PrimitiveVariant>::into(*self).into();
+        typechecker::Kind::from(pt)
     }
 }
