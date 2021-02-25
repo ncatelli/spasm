@@ -7,7 +7,7 @@ pub trait TypeQuery {
     }
 }
 
-/// TypeMatchQuery represents a type query that asserts rather two types match.
+/// TypeMatchQuery represents a type query that asserts whether two types match.
 #[derive(Debug, Clone, Copy)]
 pub struct TypeMatchQuery<T, U>
 where
