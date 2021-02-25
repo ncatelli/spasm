@@ -23,7 +23,7 @@ where
     T: Kinded,
     U: Kinded,
 {
-    fn new(t: T, u: U) -> Self {
+    pub fn new(t: T, u: U) -> Self {
         Self { t, u }
     }
 }

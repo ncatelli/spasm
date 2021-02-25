@@ -90,6 +90,26 @@ impl crate::addressing::SizeOf for PrimitiveVariant {
     }
 }
 
+impl std::ops::Add for PrimitiveVariant {
+    type Output = Result<PrimitiveVariant, TypeError>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        use typechecker::Kinded;
+        match (self, rhs) {
+            (PrimitiveVariant::Uint8(pl), PrimitiveVariant::Uint8(pr)) => {
+                Ok(PrimitiveVariant::from(pl + pr))
+            }
+            (PrimitiveVariant::Uint16(pl), PrimitiveVariant::Uint16(pr)) => {
+                Ok(PrimitiveVariant::from(pl + pr))
+            }
+            (PrimitiveVariant::Uint32(pl), PrimitiveVariant::Uint32(pr)) => {
+                Ok(PrimitiveVariant::from(pl + pr))
+            }
+            _ => Err(TypeError::IllegalType(format!("{:?}", self.kind()))),
+        }
+    }
+}
+
 impl From<Primitive<u8>> for PrimitiveVariant {
     fn from(src: Primitive<u8>) -> Self {
         PrimitiveVariant::Uint8(src)

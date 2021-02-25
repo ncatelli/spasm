@@ -1,4 +1,5 @@
-use crate::preparser::types;
+use crate::preparser::typechecker::{Kinded, TypeQuery};
+use crate::preparser::{typechecker, types};
 
 /// Type System errors.
 #[derive(Clone, PartialEq)]
@@ -82,5 +83,7 @@ fn interpret_binary(
 ) -> Result<types::PrimitiveVariant, InterpreterError> {
     let l = lhs.interpret()?;
     let r = rhs.interpret()?;
-    todo!()
+    match op {
+        Operator::Plus => (l + r).map_err(InterpreterError::from),
+    }
 }
