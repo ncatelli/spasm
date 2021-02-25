@@ -2,8 +2,8 @@ use crate::preparser::types;
 
 /// a simple trait to define type checking behavior.
 pub trait TypeQuery {
-    fn matches(&self) -> bool {
-        false
+    fn matches(&self) -> Option<Kind> {
+        None
     }
 }
 
@@ -33,8 +33,12 @@ where
     T: Kinded,
     U: Kinded,
 {
-    fn matches(&self) -> bool {
-        self.t.kind() == self.u.kind()
+    fn matches(&self) -> Option<Kind> {
+        if self.t.kind() == self.u.kind() {
+            Some(self.t.kind())
+        } else {
+            None
+        }
     }
 }
 
@@ -71,7 +75,7 @@ mod tests {
         let lhs = Kind::Primitive(PrimitiveType::Uint8);
         let rhs = Kind::Primitive(PrimitiveType::Uint8);
         let no_match_rhs = Kind::Primitive(PrimitiveType::Uint16);
-        assert!(TypeMatchQuery::new(lhs, rhs).matches());
-        assert!(!TypeMatchQuery::new(lhs, no_match_rhs).matches());
+        assert!(TypeMatchQuery::new(lhs, rhs).matches().is_some());
+        assert!(TypeMatchQuery::new(lhs, no_match_rhs).matches().is_none());
     }
 }

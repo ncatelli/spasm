@@ -80,5 +80,7 @@ fn interpret_binary(
     lhs: Expr,
     rhs: Expr,
 ) -> Result<types::PrimitiveVariant, InterpreterError> {
+    let l = lhs.interpret()?;
+    let r = rhs.interpret()?;
     todo!()
 }
