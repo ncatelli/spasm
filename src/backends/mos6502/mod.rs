@@ -10,7 +10,7 @@ use crate::addressing::{Positional, SizeOf};
 use crate::backends::mos6502::instruction_set::addressing_mode::AddressingModeOrReference;
 use crate::backends::mos6502::instruction_set::Instruction;
 use crate::backends::BackendErr;
-use crate::preparser::{ByteValue, ByteValueOrReference, Token};
+use crate::preparser::{types, ByteValue, PrimitiveOrReference, Token};
 use crate::{Assembler, AssemblerResult};
 use crate::{Emitter, Origin};
 use isa_mos6502::addressing_mode::AddressingMode;
@@ -18,7 +18,7 @@ use isa_mos6502::addressing_mode::AddressingMode;
 type UnparsedTokenStream = Vec<Token<String>>;
 type Token6502InstStream = Vec<Token<Instruction>>;
 type PositionalToken6502Stream = Vec<Positional<Token<Instruction>>>;
-type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction, ByteValueOrReference>>;
+type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction, PrimitiveOrReference>>;
 type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 
 type LabelMap = HashMap<String, u16>;
@@ -156,8 +156,11 @@ fn generate_symbol_table_from_instructions_origin(
 
 fn dereference_instructions_to_static_instructions(
     symbol_table: &SymbolTable,
-    src_ioc: InstructionOrConstant<Instruction, ByteValueOrReference>,
-) -> Result<InstructionOrConstant<isa_mos6502::InstructionVariant, ByteValue>, BackendErr> {
+    src_ioc: InstructionOrConstant<Instruction, PrimitiveOrReference>,
+) -> Result<
+    InstructionOrConstant<isa_mos6502::InstructionVariant, types::PrimitiveVariant>,
+    BackendErr,
+> {
     match src_ioc {
         InstructionOrConstant::Instruction(i) => {
             let mnemonic = i.mnemonic;
@@ -182,12 +185,17 @@ fn dereference_instructions_to_static_instructions(
             })?
         }
         InstructionOrConstant::Constant(bvol) => match bvol {
-            ByteValueOrReference::ByteValue(bv) => Ok(bv),
-            ByteValueOrReference::Reference(id) => symbol_table
+            PrimitiveOrReference::Primitive(bv) => Ok(bv),
+            PrimitiveOrReference::Reference(id) => symbol_table
                 .labels
                 .get(&id)
-                .map(|&v| ByteValue::Word(v))
-                .or_else(|| symbol_table.symbols.get(&id).map(|&v| ByteValue::Byte(v)))
+                .map(|&v| types::Primitive::new(v).into())
+                .or_else(|| {
+                    symbol_table
+                        .symbols
+                        .get(&id)
+                        .map(|&v| types::Primitive::new(v).into())
+                })
                 .ok_or_else(|| BackendErr::UndefinedReference(id.clone())),
         }
         .map(InstructionOrConstant::Constant),
@@ -248,7 +256,12 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
                     .map(|ioc| (&symbol_table, ioc))
                     .map(|(st, ioc)| dereference_instructions_to_static_instructions(st, ioc))
                     .collect::<Result<
-                        Vec<InstructionOrConstant<isa_mos6502::InstructionVariant, ByteValue>>,
+                        Vec<
+                            InstructionOrConstant<
+                                isa_mos6502::InstructionVariant,
+                                types::PrimitiveVariant,
+                            >,
+                        >,
                         BackendErr,
                     >>()?
                     .into_iter()

@@ -7,6 +7,8 @@ use parcel::{join, left, one_of, one_or_more, optional, right, zero_or_more};
 // Pull in shared combinators
 use crate::parser::*;
 
+pub mod types;
+
 #[cfg(test)]
 mod tests;
 
@@ -45,11 +47,11 @@ impl SizeOf for ByteValue {
     }
 }
 
-/// ByteValueOrReference represents a case where a value can be represented as
+/// PrimitiveOrReference represents a case where a value can be represented as
 /// either a static value or a reference.
 #[derive(Debug, Clone, PartialEq)]
-pub enum ByteValueOrReference {
-    ByteValue(ByteValue),
+pub enum PrimitiveOrReference {
+    Primitive(types::PrimitiveVariant),
     Reference(String),
 }
 
@@ -60,7 +62,7 @@ pub enum Token<T> {
     Instruction(T),
     Label(Label),
     Symbol((SymbolId, ByteValue)),
-    Constant(ByteValueOrReference),
+    Constant(PrimitiveOrReference),
 }
 
 #[derive(Default)]
@@ -249,41 +251,41 @@ fn constant<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
         .map(Token::Constant)
 }
 
-fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrReference> {
+fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], PrimitiveOrReference> {
     right(join(
         join(expect_str(".byte"), one_or_more(non_newline_whitespace())),
         unsigned8()
-            .map(|b| ByteValueOrReference::ByteValue(ByteValue::Byte(b)))
+            .map(|b| PrimitiveOrReference::Primitive(types::Primitive::new(b).into()))
             .or(|| {
                 one_or_more(alphabetic())
-                    .map(|vc| ByteValueOrReference::Reference(vc.into_iter().collect()))
+                    .map(|vc| PrimitiveOrReference::Reference(vc.into_iter().collect()))
             }),
     ))
 }
 
-fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrReference> {
+fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], PrimitiveOrReference> {
     right(join(
         join(expect_str(".word"), one_or_more(non_newline_whitespace())),
         unsigned16()
-            .map(|w| ByteValueOrReference::ByteValue(ByteValue::Word(w)))
+            .map(|w| PrimitiveOrReference::Primitive(types::Primitive::new(w).into()))
             .or(|| {
                 one_or_more(alphabetic())
-                    .map(|vc| ByteValueOrReference::Reference(vc.into_iter().collect()))
+                    .map(|vc| PrimitiveOrReference::Reference(vc.into_iter().collect()))
             }),
     ))
 }
 
-fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], ByteValueOrReference> {
+fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], PrimitiveOrReference> {
     right(join(
         join(
             expect_str(".doubleword"),
             one_or_more(non_newline_whitespace()),
         ),
         unsigned32()
-            .map(|dw| ByteValueOrReference::ByteValue(ByteValue::DoubleWord(dw)))
+            .map(|dw| PrimitiveOrReference::Primitive(types::Primitive::new(dw).into()))
             .or(|| {
                 one_or_more(alphabetic())
-                    .map(|vc| ByteValueOrReference::Reference(vc.into_iter().collect()))
+                    .map(|vc| PrimitiveOrReference::Reference(vc.into_iter().collect()))
             }),
     ))
 }
