@@ -10,7 +10,7 @@ use crate::addressing::{Positional, SizeOf};
 use crate::backends::mos6502::instruction_set::addressing_mode::AddressingModeOrReference;
 use crate::backends::mos6502::instruction_set::Instruction;
 use crate::backends::BackendErr;
-use crate::preparser::{types, ByteValue, PrimitiveOrReference, Token};
+use crate::preparser::{types, PrimitiveOrReference, Token};
 use crate::{Assembler, AssemblerResult};
 use crate::{Emitter, Origin};
 use isa_mos6502::addressing_mode::AddressingMode;
@@ -141,7 +141,7 @@ fn generate_symbol_table_from_instructions_origin(
                 }
                 Token::Symbol((id, bv)) => {
                     let sv = match bv {
-                        ByteValue::Byte(v) => v,
+                        types::PrimitiveVariant::Uint8(pv) => pv.unwrap(),
                         e => panic!(format!("Backend only supports u8: passed {:?}", e)),
                     };
 
