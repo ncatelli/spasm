@@ -1,4 +1,4 @@
-use crate::preparser::{ByteValue, ByteValueOrReference, PreParser, Token};
+use crate::preparser::{types, PreParser, PrimitiveOrReference, Token};
 use parcel::prelude::v1::*;
 
 macro_rules! chars {
@@ -48,7 +48,7 @@ fn should_parse_single_byte_constant() {
             &input[input.len()..],
             vec![zero_origin!(vec![Token::Symbol((
                 "test".to_string(),
-                ByteValue::Byte(255)
+                types::PrimitiveVariant::from(types::Primitive::new(255u8))
             ))])]
         ))),
         PreParser::new().parse(&input)
@@ -64,7 +64,7 @@ fn should_parse_two_byte_constant() {
             &input[input.len()..],
             vec![zero_origin!(vec![Token::Symbol((
                 "test".to_string(),
-                ByteValue::Word(65535)
+                types::PrimitiveVariant::from(types::Primitive::new(65535u16))
             ))])]
         ))),
         PreParser::new().parse(&input)
@@ -80,7 +80,7 @@ fn should_parse_four_byte_constant() {
             &input[input.len()..],
             vec![zero_origin!(vec![Token::Symbol((
                 "test".to_string(),
-                ByteValue::DoubleWord(4294967295)
+                types::PrimitiveVariant::from(types::Primitive::new(4294967295u32))
             ))])]
         ))),
         PreParser::new().parse(&input)
@@ -117,11 +117,15 @@ fn should_parse_constants() {
         Ok(MatchStatus::Match((
             &input[input.len()..],
             vec![crate::Origin::new(vec![
-                Token::Constant(ByteValueOrReference::ByteValue(ByteValue::Byte(0x1a))),
-                Token::Constant(ByteValueOrReference::ByteValue(ByteValue::Word(0x1a2b))),
-                Token::Constant(ByteValueOrReference::ByteValue(ByteValue::DoubleWord(
-                    0x1a2b3c4d
-                )))
+                Token::Constant(PrimitiveOrReference::Primitive(
+                    types::PrimitiveVariant::from(types::Primitive::new(0x1au8))
+                )),
+                Token::Constant(PrimitiveOrReference::Primitive(
+                    types::PrimitiveVariant::from(types::Primitive::new(0x1a2bu16))
+                )),
+                Token::Constant(PrimitiveOrReference::Primitive(
+                    types::PrimitiveVariant::from(types::Primitive::new(0x1a2b3c4du32))
+                ))
             ]),]
         ))),
         PreParser::new().parse(&input)
@@ -142,8 +146,8 @@ fn should_parse_constants_as_origin_statement() {
             &input[input.len()..],
             vec![crate::Origin::with_offset(
                 0x03,
-                vec![Token::Constant(ByteValueOrReference::ByteValue(
-                    ByteValue::Byte(0x1a)
+                vec![Token::Constant(PrimitiveOrReference::Primitive(
+                    types::PrimitiveVariant::from(types::Primitive::new(0x1au8))
                 )),]
             ),]
         ))),
@@ -168,14 +172,17 @@ init:
             &input[input.len()..],
             vec![
                 crate::Origin::new(vec![
-                    Token::Symbol(("test".to_string(), ByteValue::Byte(0xff))),
+                    Token::Symbol((
+                        "test".to_string(),
+                        types::PrimitiveVariant::from(types::Primitive::new(0xffu8))
+                    )),
                     Token::Label("init".to_string())
                 ]),
                 crate::Origin::with_offset(
                     0x03,
                     vec![
-                        Token::Constant(ByteValueOrReference::Reference("init".to_string())),
-                        Token::Constant(ByteValueOrReference::Reference("test".to_string()))
+                        Token::Constant(PrimitiveOrReference::Reference("init".to_string())),
+                        Token::Constant(PrimitiveOrReference::Reference("test".to_string()))
                     ]
                 ),
             ]
