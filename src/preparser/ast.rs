@@ -1,17 +1,14 @@
-use crate::preparser::typechecker::{Kinded, TypeQuery};
-use crate::preparser::{typechecker, types};
+use crate::preparser::types;
 
 /// Type System errors.
 #[derive(Clone, PartialEq)]
 pub enum InterpreterError {
-    Unspecified(String),
     TypeErr(types::TypeError),
 }
 
 impl std::fmt::Debug for InterpreterError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Unspecified(v) => write!(f, "unspecified: {:?}", v),
             Self::TypeErr(t) => write!(f, "{:?}", t),
         }
     }
