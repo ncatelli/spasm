@@ -38,30 +38,6 @@ impl From<&PrimitiveVariant> for PrimitiveType {
     }
 }
 
-/// Represents all variants of accepted types without their associated values.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum PrimitiveType {
-    Uint8,
-    Uint16,
-    Uint32,
-}
-
-impl From<PrimitiveVariant> for PrimitiveType {
-    fn from(src: PrimitiveVariant) -> PrimitiveType {
-        std::convert::From::from(&src)
-    }
-}
-
-impl From<&PrimitiveVariant> for PrimitiveType {
-    fn from(src: &PrimitiveVariant) -> PrimitiveType {
-        match src {
-            PrimitiveVariant::Uint8(_) => Self::Uint8,
-            PrimitiveVariant::Uint16(_) => Self::Uint16,
-            PrimitiveVariant::Uint32(_) => Self::Uint32,
-        }
-    }
-}
-
 /// A concrete type representing all valid type variants for the preparser.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PrimitiveVariant {
