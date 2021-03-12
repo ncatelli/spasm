@@ -1,5 +1,3 @@
-use super::typechecker;
-
 /// Type System errors.
 #[derive(Clone, PartialEq)]
 pub enum TypeError {
@@ -66,26 +64,6 @@ impl crate::addressing::SizeOf for PrimitiveVariant {
     }
 }
 
-impl std::ops::Add for PrimitiveVariant {
-    type Output = Result<PrimitiveVariant, TypeError>;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        use typechecker::Kinded;
-        match (self, rhs) {
-            (PrimitiveVariant::Uint8(pl), PrimitiveVariant::Uint8(pr)) => {
-                Ok(PrimitiveVariant::from(pl + pr))
-            }
-            (PrimitiveVariant::Uint16(pl), PrimitiveVariant::Uint16(pr)) => {
-                Ok(PrimitiveVariant::from(pl + pr))
-            }
-            (PrimitiveVariant::Uint32(pl), PrimitiveVariant::Uint32(pr)) => {
-                Ok(PrimitiveVariant::from(pl + pr))
-            }
-            _ => Err(TypeError::IllegalType(format!("{:?}", self.kind()))),
-        }
-    }
-}
-
 impl From<Primitive<u8>> for PrimitiveVariant {
     fn from(src: Primitive<u8>) -> Self {
         PrimitiveVariant::Uint8(src)
@@ -137,13 +115,6 @@ impl std::convert::TryFrom<PrimitiveVariant> for Primitive<u32> {
             PrimitiveVariant::Uint16(p) => Ok(Primitive::new(u32::from(p.unwrap()))),
             PrimitiveVariant::Uint32(p) => Ok(p),
         }
-    }
-}
-
-impl crate::preparser::typechecker::Kinded for PrimitiveVariant {
-    fn kind(&self) -> typechecker::Kind {
-        let pt: PrimitiveType = self.into();
-        typechecker::Kind::from(pt)
     }
 }
 
@@ -224,16 +195,5 @@ impl std::ops::Add for Primitive<u32> {
         let rhs = rhs.unwrap();
         let sum = lhs.overflowing_add(rhs).0;
         Primitive::new(sum)
-    }
-}
-
-impl<T> crate::preparser::typechecker::Kinded for Primitive<T>
-where
-    T: Copy,
-    Self: Into<PrimitiveVariant>,
-{
-    fn kind(&self) -> typechecker::Kind {
-        let pt: PrimitiveType = Into::<PrimitiveVariant>::into(*self).into();
-        typechecker::Kind::from(pt)
     }
 }

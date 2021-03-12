@@ -9,7 +9,6 @@ use crate::parser::*;
 #[cfg(test)]
 mod tests;
 
-pub mod typechecker;
 pub mod types;
 
 /// Label represents a the string representation of a label.
