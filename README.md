@@ -19,7 +19,7 @@ program         = ( whitespace | newline )* ( origin | statement )+ ;
 
 statements      = statement+ ;
 
-statement       = ( whitespace | newline )* ( labeldef | symboldef | constant | instruction | comment ) comment?  ( newline | EOF );
+statement       = ( whitespace | newline )* ( labeldef | symboldef | expression | instruction | comment ) comment?  ( newline | EOF );
 
 instruction     = alphabetic ( alphabetic | digit | special | ";"! )+ ;
 
@@ -29,19 +29,13 @@ referenceid     = alphabetic* ;
 
 labeldef        = referenceid ":" ;
 
-symboldef       = bytedef | worddef | doubleworddef ;
+definition      = .define whitespace+ referenceid whitespace+ expression ;
 
-bytedef         = ".define byte" whitespace+ referenceid whitespace+ byte ;
-worddef         = ".define word" whitespace+ referenceid whitespace+ byte byte ;
-doublworddef    = ".define doubleword" whitespace+ referenceid whitespace+ byte byte byte byte ;
+expression      = literal | referenceid;
+
+literal         = byte "u8" | byte byte? "u16" | byte (byte (byte byte?)?)? "u32" ;
 
 origin          = ".origin" whitespace+ byte (byte (byte byte?)?)? ;
-
-constant        = constbyte | constword | constdoubleword ;
-
-constbyte       = ".byte" whitespace+ ( byte | referenceid ) ;
-constword       = ".word" whitespace+ ( byte byte | referenceid ) ;
-constdoubleword = ".doubleword" whitespace+ ( byte byte byte byte | referenceid ) ;
 
 character       = lower|upper|digit|special ;
 whitespace      = " " | "\t" ;
