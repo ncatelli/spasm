@@ -194,7 +194,7 @@ fn dereference_instructions_to_static_instructions(
                     symbol_table
                         .symbols
                         .get(&id)
-                        .map(|&v| types::Primitive::new(v).into())
+                        .map(|&v| types::PrimitiveVariant::from(types::Primitive::new(v)))
                 })
                 .ok_or_else(|| BackendErr::UndefinedReference(id.clone())),
         }

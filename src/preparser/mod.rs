@@ -6,10 +6,10 @@ use parcel::{join, left, one_of, one_or_more, optional, right, zero_or_more};
 // Pull in shared combinators
 use crate::parser::*;
 
-pub mod types;
-
 #[cfg(test)]
 mod tests;
+
+pub mod types;
 
 /// Label represents a the string representation of a label.
 pub type Label = String;

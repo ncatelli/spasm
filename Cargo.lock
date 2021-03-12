@@ -5,13 +5,8 @@ name = "isa-mos6502"
 version = "0.1.0"
 source = "git+https://github.com/ncatelli/isa-mos6502?tag=v0.2.0#84f94eef5b58e428980b7510e8f5b8e113e709bb"
 dependencies = [
- "parcel 1.9.1",
+ "parcel",
 ]
-
-[[package]]
-name = "parcel"
-version = "1.6.0"
-source = "git+https://github.com/ncatelli/parcel?tag=v1.6.0#f88a83b88b2b6cfd0c03bbebb0dd020957d62255"
 
 [[package]]
 name = "parcel"
@@ -20,10 +15,10 @@ source = "git+https://github.com/ncatelli/parcel?tag=v1.9.1#bd387b7bf7503ad760f5
 
 [[package]]
 name = "scrap"
-version = "0.1.1"
-source = "git+https://github.com/ncatelli/scrap?tag=v0.1.1#9315f7a0eef0270c9f8c159f6af57553333ef855"
+version = "0.1.2"
+source = "git+https://github.com/ncatelli/scrap?tag=v0.1.2#3ef7c92490d2878d042a85df4c339e447b3e098a"
 dependencies = [
- "parcel 1.6.0",
+ "parcel",
 ]
 
 [[package]]
@@ -31,6 +26,6 @@ name = "spasm"
 version = "0.2.0"
 dependencies = [
  "isa-mos6502",
- "parcel 1.9.1",
+ "parcel",
  "scrap",
 ]
