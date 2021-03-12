@@ -9,8 +9,6 @@ use crate::parser::*;
 #[cfg(test)]
 mod tests;
 
-pub mod ast;
-pub mod compile;
 pub mod typechecker;
 pub mod types;
 

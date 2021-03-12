@@ -1,8 +1,6 @@
 use crate::preparser::{types, PreParser, PrimitiveOrReference, Token};
 use parcel::prelude::v1::*;
 
-mod interpreter;
-
 macro_rules! chars {
     ($input:expr) => {
         $input.chars().collect::<Vec<char>>()
