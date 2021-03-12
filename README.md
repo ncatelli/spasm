@@ -33,7 +33,7 @@ definition      = .define whitespace+ referenceid whitespace+ expression ;
 
 expression      = literal | referenceid;
 
-literal         = byte "u8" | byte byte? "u16" | byte (byte (byte byte?)?)? "u32" ;
+literal         = byte (byte (byte byte?)?)? ;
 
 origin          = ".origin" whitespace+ byte (byte (byte byte?)?)? ;
 
