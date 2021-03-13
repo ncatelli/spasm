@@ -30,7 +30,7 @@ impl Reify<u8> for crate::preparser::types::LEByteEncodedValue {
 
     fn reify(&self) -> Result<u8, Self::Error> {
         if self.bits() <= 8 {
-            Ok(self.to_vec().last().map(|v| *v).unwrap_or(0))
+            Ok(self.to_vec().last().copied().unwrap_or(0))
         } else {
             Err(Self::Error::IllegalType(format!(
                 "bit-width {}",
