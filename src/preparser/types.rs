@@ -19,13 +19,13 @@ pub trait Reify<T> {
     fn reify(&self) -> Result<T, Self::Error>;
 }
 
-/// BitValue represents an arbitrarily length binary value encoded in little-endian format
+/// LEByteEncodedValue represents an arbitrarily length binary value encoded in little-endian format
 #[derive(Debug, Clone, PartialEq)]
-pub struct BitValue {
+pub struct LEByteEncodedValue {
     inner: Vec<u8>,
 }
 
-impl BitValue {
+impl LEByteEncodedValue {
     fn len(&self) -> usize {
         self.inner.len()
     }
@@ -53,13 +53,13 @@ impl BitValue {
     }
 }
 
-impl crate::addressing::SizeOf for BitValue {
+impl crate::addressing::SizeOf for LEByteEncodedValue {
     fn size_of(&self) -> usize {
         self.len()
     }
 }
 
-impl crate::Emitter<Vec<u8>> for BitValue {
+impl crate::Emitter<Vec<u8>> for LEByteEncodedValue {
     fn emit(&self) -> Vec<u8> {
         self.inner.clone().into_iter().collect()
     }
@@ -68,7 +68,7 @@ impl crate::Emitter<Vec<u8>> for BitValue {
 macro_rules! impl_from_to_le_bytes {
     ($($t:ty,)*) => {
         $(
-            impl From<$t> for BitValue {
+            impl From<$t> for LEByteEncodedValue {
                 fn from(src: $t) -> Self {
                     Self { inner: src.to_le_bytes().to_vec() }
                 }

@@ -21,7 +21,7 @@ pub type SymbolId = String;
 /// either a static value or a reference.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PrimitiveOrReference {
-    Primitive(types::BitValue),
+    Primitive(types::LEByteEncodedValue),
     Reference(String),
 }
 
@@ -31,7 +31,7 @@ pub enum PrimitiveOrReference {
 pub enum Token<T> {
     Instruction(T),
     Label(Label),
-    Symbol((SymbolId, types::BitValue)),
+    Symbol((SymbolId, types::LEByteEncodedValue)),
     Constant(PrimitiveOrReference),
 }
 
@@ -169,7 +169,7 @@ fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
             unsigned8(),
         ),
     ))
-    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), types::BitValue::from(v))))
+    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), types::LEByteEncodedValue::from(v))))
 }
 
 fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
@@ -186,7 +186,7 @@ fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
             unsigned16(),
         ),
     ))
-    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), types::BitValue::from(v))))
+    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), types::LEByteEncodedValue::from(v))))
 }
 
 fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
@@ -203,7 +203,7 @@ fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
             unsigned32(),
         ),
     ))
-    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), types::BitValue::from(v))))
+    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), types::LEByteEncodedValue::from(v))))
 }
 
 fn origin<'a>() -> impl parcel::Parser<'a, &'a [char], u32> {
@@ -225,7 +225,7 @@ fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], PrimitiveOrReference>
     right(join(
         join(expect_str(".byte"), one_or_more(non_newline_whitespace())),
         unsigned8()
-            .map(|b| PrimitiveOrReference::Primitive(types::BitValue::from(b)))
+            .map(|b| PrimitiveOrReference::Primitive(types::LEByteEncodedValue::from(b)))
             .or(|| {
                 one_or_more(alphabetic())
                     .map(|vc| PrimitiveOrReference::Reference(vc.into_iter().collect()))
@@ -237,7 +237,7 @@ fn const_word<'a>() -> impl parcel::Parser<'a, &'a [char], PrimitiveOrReference>
     right(join(
         join(expect_str(".word"), one_or_more(non_newline_whitespace())),
         unsigned16()
-            .map(|w| PrimitiveOrReference::Primitive(types::BitValue::from(w)))
+            .map(|w| PrimitiveOrReference::Primitive(types::LEByteEncodedValue::from(w)))
             .or(|| {
                 one_or_more(alphabetic())
                     .map(|vc| PrimitiveOrReference::Reference(vc.into_iter().collect()))
@@ -252,7 +252,7 @@ fn const_doubleword<'a>() -> impl parcel::Parser<'a, &'a [char], PrimitiveOrRefe
             one_or_more(non_newline_whitespace()),
         ),
         unsigned32()
-            .map(|dw| PrimitiveOrReference::Primitive(types::BitValue::from(dw)))
+            .map(|dw| PrimitiveOrReference::Primitive(types::LEByteEncodedValue::from(dw)))
             .or(|| {
                 one_or_more(alphabetic())
                     .map(|vc| PrimitiveOrReference::Reference(vc.into_iter().collect()))

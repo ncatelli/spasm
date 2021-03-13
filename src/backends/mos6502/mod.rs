@@ -25,7 +25,7 @@ type LabelMap = HashMap<String, u16>;
 type SymbolMap = HashMap<String, u8>;
 
 use crate::preparser::types::Reify;
-impl crate::preparser::types::Reify<u8> for crate::preparser::types::BitValue {
+impl crate::preparser::types::Reify<u8> for crate::preparser::types::LEByteEncodedValue {
     type Error = crate::preparser::types::TypeError;
 
     fn reify(&self) -> Result<u8, Self::Error> {
@@ -173,7 +173,10 @@ fn generate_symbol_table_from_instructions_origin(
 fn dereference_instructions_to_static_instructions(
     symbol_table: &SymbolTable,
     src_ioc: InstructionOrConstant<Instruction, PrimitiveOrReference>,
-) -> Result<InstructionOrConstant<isa_mos6502::InstructionVariant, types::BitValue>, BackendErr> {
+) -> Result<
+    InstructionOrConstant<isa_mos6502::InstructionVariant, types::LEByteEncodedValue>,
+    BackendErr,
+> {
     match src_ioc {
         InstructionOrConstant::Instruction(i) => {
             let mnemonic = i.mnemonic;
@@ -202,12 +205,12 @@ fn dereference_instructions_to_static_instructions(
             PrimitiveOrReference::Reference(id) => symbol_table
                 .labels
                 .get(&id)
-                .map(|&v| types::BitValue::from(v))
+                .map(|&v| types::LEByteEncodedValue::from(v))
                 .or_else(|| {
                     symbol_table
                         .symbols
                         .get(&id)
-                        .map(|&v| types::BitValue::from(v))
+                        .map(|&v| types::LEByteEncodedValue::from(v))
                 })
                 .ok_or_else(|| BackendErr::UndefinedReference(id.clone())),
         }
@@ -270,7 +273,10 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
                     .map(|(st, ioc)| dereference_instructions_to_static_instructions(st, ioc))
                     .collect::<Result<
                         Vec<
-                            InstructionOrConstant<isa_mos6502::InstructionVariant, types::BitValue>,
+                            InstructionOrConstant<
+                                isa_mos6502::InstructionVariant,
+                                types::LEByteEncodedValue,
+                            >,
                         >,
                         BackendErr,
                     >>()?
