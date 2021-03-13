@@ -48,7 +48,7 @@ fn should_parse_single_byte_constant() {
             &input[input.len()..],
             vec![zero_origin!(vec![Token::Symbol((
                 "test".to_string(),
-                types::PrimitiveVariant::from(types::Primitive::new(255u8))
+                types::LEByteEncodedValue::from(255u8)
             ))])]
         ))),
         PreParser::new().parse(&input)
@@ -64,7 +64,7 @@ fn should_parse_two_byte_constant() {
             &input[input.len()..],
             vec![zero_origin!(vec![Token::Symbol((
                 "test".to_string(),
-                types::PrimitiveVariant::from(types::Primitive::new(65535u16))
+                types::LEByteEncodedValue::from(65535u16)
             ))])]
         ))),
         PreParser::new().parse(&input)
@@ -80,7 +80,7 @@ fn should_parse_four_byte_constant() {
             &input[input.len()..],
             vec![zero_origin!(vec![Token::Symbol((
                 "test".to_string(),
-                types::PrimitiveVariant::from(types::Primitive::new(4294967295u32))
+                types::LEByteEncodedValue::from(4294967295u32)
             ))])]
         ))),
         PreParser::new().parse(&input)
@@ -118,13 +118,13 @@ fn should_parse_constants() {
             &input[input.len()..],
             vec![crate::Origin::new(vec![
                 Token::Constant(PrimitiveOrReference::Primitive(
-                    types::PrimitiveVariant::from(types::Primitive::new(0x1au8))
+                    types::LEByteEncodedValue::from(0x1au8)
                 )),
                 Token::Constant(PrimitiveOrReference::Primitive(
-                    types::PrimitiveVariant::from(types::Primitive::new(0x1a2bu16))
+                    types::LEByteEncodedValue::from(0x1a2bu16)
                 )),
                 Token::Constant(PrimitiveOrReference::Primitive(
-                    types::PrimitiveVariant::from(types::Primitive::new(0x1a2b3c4du32))
+                    types::LEByteEncodedValue::from(0x1a2b3c4du32)
                 ))
             ]),]
         ))),
@@ -147,7 +147,7 @@ fn should_parse_constants_as_origin_statement() {
             vec![crate::Origin::with_offset(
                 0x03,
                 vec![Token::Constant(PrimitiveOrReference::Primitive(
-                    types::PrimitiveVariant::from(types::Primitive::new(0x1au8))
+                    types::LEByteEncodedValue::from(0x1au8)
                 )),]
             ),]
         ))),
@@ -172,10 +172,7 @@ init:
             &input[input.len()..],
             vec![
                 crate::Origin::new(vec![
-                    Token::Symbol((
-                        "test".to_string(),
-                        types::PrimitiveVariant::from(types::Primitive::new(0xffu8))
-                    )),
+                    Token::Symbol(("test".to_string(), types::LEByteEncodedValue::from(0xffu8))),
                     Token::Label("init".to_string())
                 ]),
                 crate::Origin::with_offset(
