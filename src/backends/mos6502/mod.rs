@@ -24,6 +24,22 @@ type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 type LabelMap = HashMap<String, u16>;
 type SymbolMap = HashMap<String, u8>;
 
+use crate::preparser::types::Reify;
+impl crate::preparser::types::Reify<u8> for crate::preparser::types::BitValue {
+    type Error = crate::preparser::types::TypeError;
+
+    fn reify(&self) -> Result<u8, Self::Error> {
+        if self.bits() <= 8 {
+            Ok(self.to_vec().last().map(|v| *v).unwrap_or(0))
+        } else {
+            Err(Self::Error::IllegalType(format!(
+                "bit-width {}",
+                self.bits()
+            )))
+        }
+    }
+}
+
 #[derive(Default)]
 struct SymbolTable {
     labels: LabelMap,
@@ -140,8 +156,8 @@ fn generate_symbol_table_from_instructions_origin(
                     (st, insts)
                 }
                 Token::Symbol((id, bv)) => {
-                    let sv = match bv {
-                        types::PrimitiveVariant::Uint8(pv) => pv.unwrap(),
+                    let sv = match bv.bits() {
+                        bits if bits <= 8 => bv.reify().unwrap(),
                         e => panic!(format!("Backend only supports u8: passed {:?}", e)),
                     };
 
@@ -157,10 +173,7 @@ fn generate_symbol_table_from_instructions_origin(
 fn dereference_instructions_to_static_instructions(
     symbol_table: &SymbolTable,
     src_ioc: InstructionOrConstant<Instruction, PrimitiveOrReference>,
-) -> Result<
-    InstructionOrConstant<isa_mos6502::InstructionVariant, types::PrimitiveVariant>,
-    BackendErr,
-> {
+) -> Result<InstructionOrConstant<isa_mos6502::InstructionVariant, types::BitValue>, BackendErr> {
     match src_ioc {
         InstructionOrConstant::Instruction(i) => {
             let mnemonic = i.mnemonic;
@@ -189,12 +202,12 @@ fn dereference_instructions_to_static_instructions(
             PrimitiveOrReference::Reference(id) => symbol_table
                 .labels
                 .get(&id)
-                .map(|&v| types::Primitive::new(v).into())
+                .map(|&v| types::BitValue::from(v))
                 .or_else(|| {
                     symbol_table
                         .symbols
                         .get(&id)
-                        .map(|&v| types::PrimitiveVariant::from(types::Primitive::new(v)))
+                        .map(|&v| types::BitValue::from(v))
                 })
                 .ok_or_else(|| BackendErr::UndefinedReference(id.clone())),
         }
@@ -257,10 +270,7 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
                     .map(|(st, ioc)| dereference_instructions_to_static_instructions(st, ioc))
                     .collect::<Result<
                         Vec<
-                            InstructionOrConstant<
-                                isa_mos6502::InstructionVariant,
-                                types::PrimitiveVariant,
-                            >,
+                            InstructionOrConstant<isa_mos6502::InstructionVariant, types::BitValue>,
                         >,
                         BackendErr,
                     >>()?
