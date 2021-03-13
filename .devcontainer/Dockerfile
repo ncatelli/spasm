@@ -7,4 +7,4 @@ FROM mcr.microsoft.com/vscode/devcontainers/rust:0-1
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
 
 RUN rustup component add llvm-tools-preview \
-    && cargo install cargo-binutils
+    && cargo install cargo-binutils cargo-bloat
