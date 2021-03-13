@@ -11,9 +11,6 @@ mod tests;
 
 pub mod types;
 
-/// Label represents a the string representation of a label.
-pub type Label = String;
-
 /// SymbolId represents a symbol identifier.
 pub type SymbolId = String;
 
@@ -30,8 +27,11 @@ pub enum PrimitiveOrReference {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token<T> {
     Instruction(T),
-    Label(Label),
-    Symbol((SymbolId, types::LEByteEncodedValue)),
+    /// Symbol represents any symbolic value with an optionally defined value.
+    /// A value of None signifies that the value can't be determined in the
+    /// preparser and will be defined by the backend. One such example is labels
+    /// that depend on fixed sized instructions to determine their offset.
+    Symbol(SymbolId, Option<types::LEByteEncodedValue>),
     Constant(PrimitiveOrReference),
 }
 
@@ -147,7 +147,7 @@ fn comment<'a>() -> impl parcel::Parser<'a, &'a [char], ()> {
 
 fn labeldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     left(join(one_or_more(alphabetic()), expect_character(':')))
-        .map(|cv| Token::Label(cv.into_iter().collect()))
+        .map(|cv| Token::Symbol(cv.into_iter().collect(), None))
 }
 
 #[allow(clippy::redundant_closure)]
@@ -169,7 +169,12 @@ fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
             unsigned8(),
         ),
     ))
-    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), types::LEByteEncodedValue::from(v))))
+    .map(|(s, v)| {
+        Token::Symbol(
+            s.into_iter().collect(),
+            Some(types::LEByteEncodedValue::from(v)),
+        )
+    })
 }
 
 fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
@@ -186,7 +191,12 @@ fn two_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
             unsigned16(),
         ),
     ))
-    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), types::LEByteEncodedValue::from(v))))
+    .map(|(s, v)| {
+        Token::Symbol(
+            s.into_iter().collect(),
+            Some(types::LEByteEncodedValue::from(v)),
+        )
+    })
 }
 
 fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
@@ -203,7 +213,12 @@ fn four_byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
             unsigned32(),
         ),
     ))
-    .map(|(s, v)| Token::Symbol((s.into_iter().collect(), types::LEByteEncodedValue::from(v))))
+    .map(|(s, v)| {
+        Token::Symbol(
+            s.into_iter().collect(),
+            Some(types::LEByteEncodedValue::from(v)),
+        )
+    })
 }
 
 fn origin<'a>() -> impl parcel::Parser<'a, &'a [char], u32> {

@@ -33,7 +33,7 @@ fn should_parse_label() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![zero_origin!(vec![Token::Label("test".to_string())])]
+            vec![zero_origin!(vec![Token::Symbol("test".to_string(), None)])]
         ))),
         PreParser::new().parse(&input)
     );
@@ -46,10 +46,10 @@ fn should_parse_single_byte_constant() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![zero_origin!(vec![Token::Symbol((
+            vec![zero_origin!(vec![Token::Symbol(
                 "test".to_string(),
-                types::LEByteEncodedValue::from(255u8)
-            ))])]
+                Some(types::LEByteEncodedValue::from(255u8))
+            )])]
         ))),
         PreParser::new().parse(&input)
     );
@@ -62,10 +62,10 @@ fn should_parse_two_byte_constant() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![zero_origin!(vec![Token::Symbol((
+            vec![zero_origin!(vec![Token::Symbol(
                 "test".to_string(),
-                types::LEByteEncodedValue::from(65535u16)
-            ))])]
+                Some(types::LEByteEncodedValue::from(65535u16))
+            )])]
         ))),
         PreParser::new().parse(&input)
     );
@@ -78,10 +78,10 @@ fn should_parse_four_byte_constant() {
     assert_eq!(
         Ok(MatchStatus::Match((
             &input[input.len()..],
-            vec![zero_origin!(vec![Token::Symbol((
+            vec![zero_origin!(vec![Token::Symbol(
                 "test".to_string(),
-                types::LEByteEncodedValue::from(4294967295u32)
-            ))])]
+                Some(types::LEByteEncodedValue::from(4294967295u32))
+            )])]
         ))),
         PreParser::new().parse(&input)
     );
@@ -172,8 +172,11 @@ init:
             &input[input.len()..],
             vec![
                 crate::Origin::new(vec![
-                    Token::Symbol(("test".to_string(), types::LEByteEncodedValue::from(0xffu8))),
-                    Token::Label("init".to_string())
+                    Token::Symbol(
+                        "test".to_string(),
+                        Some(types::LEByteEncodedValue::from(0xffu8))
+                    ),
+                    Token::Symbol("init".to_string(), None)
                 ]),
                 crate::Origin::with_offset(
                     0x03,
