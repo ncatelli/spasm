@@ -12,6 +12,27 @@ impl std::fmt::Debug for TypeError {
     }
 }
 
+/// BitValue represents a 64-bit maximum value. This value attempts to define
+/// the minimum number of bits that are required to store a given value without
+/// being concerned with what the value is.
+#[derive(Clone)]
+pub struct BitValue {
+    inner: Vec<u8>,
+}
+
+impl BitValue {
+    pub fn leading_zeros(&self) -> usize {
+        self.inner.last().map_or(0, |b| b.leading_zeros() as usize)
+    }
+}
+
+impl From<u64> for BitValue {
+    fn from(src: u64) -> Self {
+        let le_bytes = src.to_le_bytes().to_vec();
+        Self { inner: le_bytes }
+    }
+}
+
 /// Represents all variants of accepted types without their associated values.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PrimitiveType {
