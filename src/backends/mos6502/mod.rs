@@ -25,7 +25,7 @@ type LabelMap = HashMap<String, u16>;
 type SymbolMap = HashMap<String, u8>;
 
 use crate::preparser::types::Reify;
-impl crate::preparser::types::Reify<u8> for crate::preparser::types::LEByteEncodedValue {
+impl Reify<u8> for crate::preparser::types::LEByteEncodedValue {
     type Error = crate::preparser::types::TypeError;
 
     fn reify(&self) -> Result<u8, Self::Error> {
@@ -84,8 +84,7 @@ fn parse_string_instructions_origin_to_token_instructions_origin(
         .instructions
         .into_iter()
         .map(|tok| match tok {
-            Token::Label(v) => Ok(Token::Label(v)),
-            Token::Symbol(v) => Ok(Token::Symbol(v)),
+            Token::Symbol(id, v) => Ok(Token::Symbol(id, v)),
             Token::Constant(v) => Ok(Token::Constant(v)),
             Token::Instruction(inst) => {
                 let input = inst.chars().collect::<Vec<char>>();
@@ -151,11 +150,11 @@ fn generate_symbol_table_from_instructions_origin(
                     insts.push(InstructionOrConstant::Constant(bvol));
                     (st, insts)
                 }
-                Token::Label(l) => {
+                Token::Symbol(l, None) => {
                     st.labels.insert(l, offset as u16);
                     (st, insts)
                 }
-                Token::Symbol((id, bv)) => {
+                Token::Symbol(id, Some(bv)) => {
                     let sv = match bv.bits() {
                         bits if bits <= 8 => bv.reify().unwrap(),
                         e => panic!(format!("Backend only supports u8: passed {:?}", e)),
