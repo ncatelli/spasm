@@ -187,3 +187,16 @@ init:
         assemble(Backend::MOS6502, input).map(|res| res.emit())
     );
 }
+
+#[test]
+fn should_throw_an_error_on_invalid_preparser_construct_doesnt_exist() {
+    let input = "
+nop
+lda 0xff
+    
+origin fffc
+.word 0x0001
+";
+
+    assert!(assemble(Backend::MOS6502, input).is_err())
+}

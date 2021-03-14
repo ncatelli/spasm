@@ -21,51 +21,85 @@ type PositionalToken6502Stream = Vec<Positional<Token<Instruction>>>;
 type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction, PrimitiveOrReference>>;
 type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 
-type LabelMap = HashMap<String, u16>;
-type SymbolMap = HashMap<String, u8>;
-
 use crate::preparser::types::Reify;
 impl Reify<u8> for crate::preparser::types::LEByteEncodedValue {
     type Error = crate::preparser::types::TypeError;
 
     fn reify(&self) -> Result<u8, Self::Error> {
-        if self.bits() <= 8 {
-            Ok(self.to_vec().last().copied().unwrap_or(0))
-        } else {
-            Err(Self::Error::IllegalType(format!(
+        match self.bits() {
+            b if b == 0 => Ok(0),
+            b if b <= 8 => Ok(self.to_vec().first().copied().unwrap_or(0)),
+            _ => Err(Self::Error::IllegalType(format!(
                 "bit-width {}",
                 self.bits()
-            )))
+            ))),
         }
     }
 }
 
+impl Reify<u16> for crate::preparser::types::LEByteEncodedValue {
+    type Error = crate::preparser::types::TypeError;
+
+    fn reify(&self) -> Result<u16, Self::Error> {
+        match self.bits() {
+            b if b == 0 => Ok(0),
+            b if b <= 8 => Reify::<u8>::reify(self).map(u16::from),
+            b if b > 8 && b <= 16 => {
+                let bytes = self.to_vec();
+                Ok(u16::from_le_bytes([bytes[0], bytes[1]]))
+            }
+            _ => Err(Self::Error::IllegalType(format!(
+                "bit-width {}",
+                self.bits()
+            ))),
+        }
+    }
+}
+
+type SymbolMap = HashMap<String, LEByteEncodedValue>;
+
 #[derive(Default)]
 struct SymbolTable {
-    labels: LabelMap,
     symbols: SymbolMap,
 }
 
+use crate::preparser::types::LEByteEncodedValue;
 impl SymbolTable {
-    fn new(labels: LabelMap, symbols: SymbolMap) -> Self {
-        Self { labels, symbols }
+    fn new(symbols: SymbolMap) -> Self {
+        Self { symbols }
+    }
+
+    fn get(&self, k: &str) -> Option<LEByteEncodedValue> {
+        self.symbols.get(k).cloned()
+    }
+
+    fn get_as_u8(&self, k: &str) -> Option<u8> {
+        self.get(k)
+            .map(|lebev| lebev.reify())
+            .and_then(|res| res.ok())
+    }
+
+    fn get_as_u16(&self, k: &str) -> Option<u16> {
+        self.get(k)
+            .map(|lebev| Reify::<u16>::reify(&lebev))
+            .and_then(|res| res.ok())
+    }
+
+    fn insert(&mut self, k: &str, v: LEByteEncodedValue) -> Option<LEByteEncodedValue> {
+        self.symbols.insert(k.to_string(), v)
     }
 }
 
 impl From<Vec<SymbolTable>> for SymbolTable {
     fn from(src: Vec<SymbolTable>) -> Self {
-        let (labels, symbols): (Vec<LabelMap>, Vec<SymbolMap>) =
-            src.into_iter().map(|st| (st.labels, st.symbols)).unzip();
+        let symbols = src
+            .into_iter()
+            .map(|st| st.symbols)
+            .fold(SymbolMap::new(), |acc, sm| {
+                acc.into_iter().chain(sm).collect()
+            });
 
-        let labels = labels.into_iter().fold(LabelMap::new(), |acc, lm| {
-            acc.into_iter().chain(lm).collect()
-        });
-
-        let symbols = symbols.into_iter().fold(SymbolMap::new(), |acc, sm| {
-            acc.into_iter().chain(sm).collect()
-        });
-
-        Self::new(labels, symbols)
+        Self::new(symbols)
     }
 }
 
@@ -105,7 +139,7 @@ fn parse_string_instructions_origin_to_token_instructions_origin(
 
 fn convert_token_instructions_origins_to_positional_tokens_origin(
     source: Origin<Token6502InstStream>,
-) -> Result<Origin<PositionalToken6502Stream>, BackendErr> {
+) -> Origin<PositionalToken6502Stream> {
     let origin_offset = source.offset;
     let tokens = source.instructions;
     let positional_instructions = tokens
@@ -129,12 +163,12 @@ fn convert_token_instructions_origins_to_positional_tokens_origin(
         )
         .1;
 
-    Ok(Origin::with_offset(origin_offset, positional_instructions))
+    Origin::with_offset(origin_offset, positional_instructions)
 }
 
 fn generate_symbol_table_from_instructions_origin(
     source: Origin<PositionalToken6502Stream>,
-) -> Result<(SymbolTable, Origin<MemoryAligned6502Stream>), BackendErr> {
+) -> (SymbolTable, Origin<MemoryAligned6502Stream>) {
     let (origin_offset, instructions) = source.into();
     let (symbol_table, tokens) = instructions.into_iter().fold(
         (SymbolTable::default(), Vec::new()),
@@ -151,22 +185,18 @@ fn generate_symbol_table_from_instructions_origin(
                     (st, insts)
                 }
                 Token::Symbol(l, None) => {
-                    st.labels.insert(l, offset as u16);
+                    let normalized_offset = offset as u16;
+                    st.insert(&l, LEByteEncodedValue::from(normalized_offset));
                     (st, insts)
                 }
                 Token::Symbol(id, Some(bv)) => {
-                    let sv = match bv.bits() {
-                        bits if bits <= 8 => bv.reify().unwrap(),
-                        e => panic!(format!("Backend only supports u8: passed {:?}", e)),
-                    };
-
-                    st.symbols.insert(id, sv);
+                    st.insert(&id, bv);
                     (st, insts)
                 }
             }
         },
     );
-    Ok((symbol_table, Origin::with_offset(origin_offset, tokens)))
+    (symbol_table, Origin::with_offset(origin_offset, tokens))
 }
 
 fn dereference_instructions_to_static_instructions(
@@ -182,14 +212,13 @@ fn dereference_instructions_to_static_instructions(
             let amor = i.amor;
             match amor {
                 AddressingModeOrReference::Label(l) => symbol_table
-                    .labels
-                    .get(&l)
+                    .get_as_u16(&l)
                     .map_or(Err(BackendErr::UndefinedReference(l.clone())), |offset| {
-                        Ok((mnemonic, AddressingMode::Absolute(*offset)))
+                        Ok((mnemonic, AddressingMode::Absolute(offset)))
                     }),
-                AddressingModeOrReference::Symbol(s) => symbol_table.symbols.get(&s.symbol).map_or(
+                AddressingModeOrReference::Symbol(s) => symbol_table.get_as_u8(&s.symbol).map_or(
                     Err(BackendErr::UndefinedReference(s.symbol.clone())),
-                    |byte_value| Ok((mnemonic, AddressingMode::Immediate(*byte_value))),
+                    |byte_value| Ok((mnemonic, AddressingMode::Immediate(byte_value))),
                 ),
                 AddressingModeOrReference::AddressingMode(am) => Ok((mnemonic, am)),
             }
@@ -202,15 +231,7 @@ fn dereference_instructions_to_static_instructions(
         InstructionOrConstant::Constant(bvol) => match bvol {
             PrimitiveOrReference::Primitive(bv) => Ok(bv),
             PrimitiveOrReference::Reference(id) => symbol_table
-                .labels
                 .get(&id)
-                .map(|&v| types::LEByteEncodedValue::from(v))
-                .or_else(|| {
-                    symbol_table
-                        .symbols
-                        .get(&id)
-                        .map(|&v| types::LEByteEncodedValue::from(v))
-                })
                 .ok_or_else(|| BackendErr::UndefinedReference(id.clone())),
         }
         .map(InstructionOrConstant::Constant),
@@ -235,29 +256,25 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
         &self,
         source: Vec<Origin<UnparsedTokenStream>>,
     ) -> AssemblerResult<AssembledOrigins, BackendErr> {
+        // Parse a stream of text tokens into their corresponding types.
         let token_instructions: Vec<Origin<Token6502InstStream>> = source
             .into_iter()
             .map(parse_string_instructions_origin_to_token_instructions_origin)
             .collect::<Result<Vec<Origin<Token6502InstStream>>, parser::ParseErr>>()
             .map_err(|e| BackendErr::Parse(e.to_string()))?;
-        let positional_tokens: Vec<Origin<PositionalToken6502Stream>> = token_instructions
-            .into_iter()
-            .map(convert_token_instructions_origins_to_positional_tokens_origin)
-            .collect::<Result<Vec<Origin<PositionalToken6502Stream>>, BackendErr>>()?;
 
-        // Collect the symbols and instructions into a vector with each item
-        // representing an origins contents
+        // Annotate parsed tokens with their position and offsets. Then collect
+        // the symbols and instructions into a vector of origin-aligned offsets.
         let (symbol_tables, instructions): (
             Vec<SymbolTable>,
             Vec<Origin<MemoryAligned6502Stream>>,
-        ) = positional_tokens
+        ) = token_instructions
             .into_iter()
+            .map(convert_token_instructions_origins_to_positional_tokens_origin)
             .map(generate_symbol_table_from_instructions_origin)
-            .collect::<Result<Vec<(SymbolTable, Origin<MemoryAligned6502Stream>)>, BackendErr>>()?
-            .into_iter()
             .unzip();
 
-        // Join all the origin's symbol tables
+        // Join all the origin's symbol tables into a global symbol table
         let symbol_table: SymbolTable = SymbolTable::from(symbol_tables);
 
         let opcode_origins = instructions
