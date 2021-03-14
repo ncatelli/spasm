@@ -43,7 +43,7 @@ impl Reify<u16> for crate::preparser::types::LEByteEncodedValue {
     fn reify(&self) -> Result<u16, Self::Error> {
         match self.bits() {
             b if b == 0 => Ok(0),
-            b if b <= 8 => self.reify().map(|b: u8| u16::from(b)),
+            b if b <= 8 => Reify::<u8>::reify(self).map(u16::from),
             b if b > 8 && b <= 16 => {
                 let bytes = self.to_vec();
                 Ok(u16::from_le_bytes([bytes[0], bytes[1]]))
