@@ -21,9 +21,6 @@ type PositionalToken6502Stream = Vec<Positional<Token<Instruction>>>;
 type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction, PrimitiveOrReference>>;
 type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 
-type LabelMap = HashMap<String, u16>;
-type SymbolMap = HashMap<String, u8>;
-
 use crate::preparser::types::Reify;
 impl Reify<u8> for crate::preparser::types::LEByteEncodedValue {
     type Error = crate::preparser::types::TypeError;
@@ -40,15 +37,35 @@ impl Reify<u8> for crate::preparser::types::LEByteEncodedValue {
     }
 }
 
+type LabelMap = HashMap<String, u16>;
+type SymbolMap = HashMap<String, LEByteEncodedValue>;
+
 #[derive(Default)]
 struct SymbolTable {
     labels: LabelMap,
     symbols: SymbolMap,
 }
 
+use crate::preparser::types::LEByteEncodedValue;
 impl SymbolTable {
     fn new(labels: LabelMap, symbols: SymbolMap) -> Self {
         Self { labels, symbols }
+    }
+
+    fn get(&self, k: &str) -> Option<LEByteEncodedValue> {
+        self.symbols.get(k).map(|v| v.clone())
+    }
+
+    fn get_as_u8(&self, k: &str) -> Option<u8> {
+        self.get(k)
+            .map(|lebev| lebev.reify())
+            .and_then(|res| res.ok())
+    }
+
+    fn get_as_u16(&self, k: &str) -> Option<u16> {
+        self.get(k)
+            .map(|lebev| lebev.reify())
+            .and_then(|res| res.ok().map(u16::from))
     }
 }
 
@@ -156,7 +173,7 @@ fn generate_symbol_table_from_instructions_origin(
                 }
                 Token::Symbol(id, Some(bv)) => {
                     let sv = match bv.bits() {
-                        bits if bits <= 8 => bv.reify().unwrap(),
+                        bits if bits <= 8 => bv,
                         e => panic!(format!("Backend only supports u8: passed {:?}", e)),
                     };
 
@@ -187,9 +204,9 @@ fn dereference_instructions_to_static_instructions(
                     .map_or(Err(BackendErr::UndefinedReference(l.clone())), |offset| {
                         Ok((mnemonic, AddressingMode::Absolute(*offset)))
                     }),
-                AddressingModeOrReference::Symbol(s) => symbol_table.symbols.get(&s.symbol).map_or(
+                AddressingModeOrReference::Symbol(s) => symbol_table.get_as_u8(&s.symbol).map_or(
                     Err(BackendErr::UndefinedReference(s.symbol.clone())),
-                    |byte_value| Ok((mnemonic, AddressingMode::Immediate(*byte_value))),
+                    |byte_value| Ok((mnemonic, AddressingMode::Immediate(byte_value))),
                 ),
                 AddressingModeOrReference::AddressingMode(am) => Ok((mnemonic, am)),
             }
@@ -205,12 +222,7 @@ fn dereference_instructions_to_static_instructions(
                 .labels
                 .get(&id)
                 .map(|&v| types::LEByteEncodedValue::from(v))
-                .or_else(|| {
-                    symbol_table
-                        .symbols
-                        .get(&id)
-                        .map(|&v| types::LEByteEncodedValue::from(v))
-                })
+                .or_else(|| symbol_table.get(&id))
                 .ok_or_else(|| BackendErr::UndefinedReference(id.clone())),
         }
         .map(InstructionOrConstant::Constant),
