@@ -257,18 +257,21 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
         &self,
         source: Vec<Origin<UnparsedTokenStream>>,
     ) -> AssemblerResult<AssembledOrigins, BackendErr> {
+        // Parse a stream of text tokens into their corresponding types.
         let token_instructions: Vec<Origin<Token6502InstStream>> = source
             .into_iter()
             .map(parse_string_instructions_origin_to_token_instructions_origin)
             .collect::<Result<Vec<Origin<Token6502InstStream>>, parser::ParseErr>>()
             .map_err(|e| BackendErr::Parse(e.to_string()))?;
+
+        // Annotate parsed tokens with their position and offsets.
         let positional_tokens: Vec<Origin<PositionalToken6502Stream>> = token_instructions
             .into_iter()
             .map(convert_token_instructions_origins_to_positional_tokens_origin)
             .collect::<Result<Vec<Origin<PositionalToken6502Stream>>, BackendErr>>()?;
 
-        // Collect the symbols and instructions into a vector with each item
-        // representing an origins contents
+        // Collect the symbols and instructions into a vector of origin-aligned
+        // offsets.
         let (symbol_tables, instructions): (
             Vec<SymbolTable>,
             Vec<Origin<MemoryAligned6502Stream>>,
@@ -279,7 +282,7 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
             .into_iter()
             .unzip();
 
-        // Join all the origin's symbol tables
+        // Join all the origin's symbol tables into a global symbol table
         let symbol_table: SymbolTable = SymbolTable::from(symbol_tables);
 
         let opcode_origins = instructions
