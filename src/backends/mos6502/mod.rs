@@ -168,7 +168,7 @@ fn convert_token_instructions_origins_to_positional_tokens_origin(
 
 fn generate_symbol_table_from_instructions_origin(
     source: Origin<PositionalToken6502Stream>,
-) -> Result<(SymbolTable, Origin<MemoryAligned6502Stream>), BackendErr> {
+) -> (SymbolTable, Origin<MemoryAligned6502Stream>) {
     let (origin_offset, instructions) = source.into();
     let (symbol_table, tokens) = instructions.into_iter().fold(
         (SymbolTable::default(), Vec::new()),
@@ -186,7 +186,6 @@ fn generate_symbol_table_from_instructions_origin(
                 }
                 Token::Symbol(l, None) => {
                     let normalized_offset = offset as u16;
-
                     st.insert(&l, LEByteEncodedValue::from(normalized_offset));
                     (st, insts)
                 }
@@ -197,7 +196,7 @@ fn generate_symbol_table_from_instructions_origin(
             }
         },
     );
-    Ok((symbol_table, Origin::with_offset(origin_offset, tokens)))
+    (symbol_table, Origin::with_offset(origin_offset, tokens))
 }
 
 fn dereference_instructions_to_static_instructions(
@@ -264,22 +263,15 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
             .collect::<Result<Vec<Origin<Token6502InstStream>>, parser::ParseErr>>()
             .map_err(|e| BackendErr::Parse(e.to_string()))?;
 
-        // Annotate parsed tokens with their position and offsets.
-        let positional_tokens: Vec<Origin<PositionalToken6502Stream>> = token_instructions
-            .into_iter()
-            .map(convert_token_instructions_origins_to_positional_tokens_origin)
-            .collect();
-
-        // Collect the symbols and instructions into a vector of origin-aligned
-        // offsets.
+        // Annotate parsed tokens with their position and offsets. Then collect
+        // the symbols and instructions into a vector of origin-aligned offsets.
         let (symbol_tables, instructions): (
             Vec<SymbolTable>,
             Vec<Origin<MemoryAligned6502Stream>>,
-        ) = positional_tokens
+        ) = token_instructions
             .into_iter()
+            .map(convert_token_instructions_origins_to_positional_tokens_origin)
             .map(generate_symbol_table_from_instructions_origin)
-            .collect::<Result<Vec<(SymbolTable, Origin<MemoryAligned6502Stream>)>, BackendErr>>()?
-            .into_iter()
             .unzip();
 
         // Join all the origin's symbol tables into a global symbol table
