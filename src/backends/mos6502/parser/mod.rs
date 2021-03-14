@@ -57,7 +57,9 @@ pub fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Instruction> {
 
 fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a [char], Mnemonic> {
     take_n(alphabetic(), 3)
-        .map(|m| Mnemonic::try_from(m.into_iter().collect::<String>().as_str()).unwrap())
+        .map(|m| Mnemonic::try_from(m.into_iter().collect::<String>().as_str()))
+        .predicate(|res| res.is_ok())
+        .map(|res| res.unwrap())
 }
 
 #[allow(clippy::redundant_closure)]

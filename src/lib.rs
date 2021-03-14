@@ -118,7 +118,10 @@ pub trait Assembler<T, U, E: std::fmt::Display> {
 // opcodes.
 pub fn assemble(backend: Backend, source: &str) -> AssemblerResult<AssembledOrigins, String> {
     let input: Vec<char> = source.chars().collect();
-    let origin_tokens = preparser::PreParser::new().parse(&input).unwrap().unwrap();
+    let origin_tokens = preparser::PreParser::new()
+        .parse(&input)
+        .map(|ms| ms.unwrap())
+        .map_err(|e| e)?;
 
     match backend {
         Backend::MOS6502 => backends::mos6502::MOS6502Assembler::new().assemble(origin_tokens),
