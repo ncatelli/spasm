@@ -139,7 +139,7 @@ fn parse_string_instructions_origin_to_token_instructions_origin(
 
 fn convert_token_instructions_origins_to_positional_tokens_origin(
     source: Origin<Token6502InstStream>,
-) -> Result<Origin<PositionalToken6502Stream>, BackendErr> {
+) -> Origin<PositionalToken6502Stream> {
     let origin_offset = source.offset;
     let tokens = source.instructions;
     let positional_instructions = tokens
@@ -163,7 +163,7 @@ fn convert_token_instructions_origins_to_positional_tokens_origin(
         )
         .1;
 
-    Ok(Origin::with_offset(origin_offset, positional_instructions))
+    Origin::with_offset(origin_offset, positional_instructions)
 }
 
 fn generate_symbol_table_from_instructions_origin(
@@ -268,7 +268,7 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
         let positional_tokens: Vec<Origin<PositionalToken6502Stream>> = token_instructions
             .into_iter()
             .map(convert_token_instructions_origins_to_positional_tokens_origin)
-            .collect::<Result<Vec<Origin<PositionalToken6502Stream>>, BackendErr>>()?;
+            .collect();
 
         // Collect the symbols and instructions into a vector of origin-aligned
         // offsets.
