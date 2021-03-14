@@ -86,7 +86,7 @@ impl SymbolTable {
     }
 
     fn insert(&mut self, k: &str, v: LEByteEncodedValue) -> Option<LEByteEncodedValue> {
-        self.insert(k, v.clone())
+        self.symbols.insert(k.to_string(), v.clone())
     }
 }
 
@@ -187,12 +187,11 @@ fn generate_symbol_table_from_instructions_origin(
                 Token::Symbol(l, None) => {
                     let normalized_offset = offset as u16;
 
-                    st.symbols
-                        .insert(l, LEByteEncodedValue::from(normalized_offset));
+                    st.insert(&l, LEByteEncodedValue::from(normalized_offset));
                     (st, insts)
                 }
                 Token::Symbol(id, Some(bv)) => {
-                    st.symbols.insert(id, bv);
+                    st.insert(&id, bv);
                     (st, insts)
                 }
             }
