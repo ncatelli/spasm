@@ -26,30 +26,47 @@ impl Reify<u8> for crate::preparser::types::LEByteEncodedValue {
     type Error = crate::preparser::types::TypeError;
 
     fn reify(&self) -> Result<u8, Self::Error> {
-        if self.bits() <= 8 {
-            Ok(self.to_vec().last().copied().unwrap_or(0))
-        } else {
-            Err(Self::Error::IllegalType(format!(
+        match self.bits() {
+            b if b == 0 => Ok(0),
+            b if b <= 8 => Ok(self.to_vec().first().copied().unwrap_or(0)),
+            _ => Err(Self::Error::IllegalType(format!(
                 "bit-width {}",
                 self.bits()
-            )))
+            ))),
         }
     }
 }
 
-type LabelMap = HashMap<String, u16>;
+impl Reify<u16> for crate::preparser::types::LEByteEncodedValue {
+    type Error = crate::preparser::types::TypeError;
+
+    fn reify(&self) -> Result<u16, Self::Error> {
+        match self.bits() {
+            b if b == 0 => Ok(0),
+            b if b <= 8 => self.reify().map(|b: u8| u16::from(b)),
+            b if b > 8 && b <= 16 => {
+                let bytes = self.to_vec();
+                Ok(u16::from_le_bytes([bytes[0], bytes[1]]))
+            }
+            _ => Err(Self::Error::IllegalType(format!(
+                "bit-width {}",
+                self.bits()
+            ))),
+        }
+    }
+}
+
 type SymbolMap = HashMap<String, LEByteEncodedValue>;
 
 #[derive(Default)]
 struct SymbolTable {
-    labels: LabelMap,
     symbols: SymbolMap,
 }
 
 use crate::preparser::types::LEByteEncodedValue;
 impl SymbolTable {
-    fn new(labels: LabelMap, symbols: SymbolMap) -> Self {
-        Self { labels, symbols }
+    fn new(symbols: SymbolMap) -> Self {
+        Self { symbols }
     }
 
     fn get(&self, k: &str) -> Option<LEByteEncodedValue> {
@@ -64,25 +81,25 @@ impl SymbolTable {
 
     fn get_as_u16(&self, k: &str) -> Option<u16> {
         self.get(k)
-            .map(|lebev| lebev.reify())
-            .and_then(|res| res.ok().map(u16::from))
+            .map(|lebev| Reify::<u16>::reify(&lebev))
+            .and_then(|res| res.ok())
+    }
+
+    fn insert(&mut self, k: &str, v: LEByteEncodedValue) -> Option<LEByteEncodedValue> {
+        self.insert(k, v.clone())
     }
 }
 
 impl From<Vec<SymbolTable>> for SymbolTable {
     fn from(src: Vec<SymbolTable>) -> Self {
-        let (labels, symbols): (Vec<LabelMap>, Vec<SymbolMap>) =
-            src.into_iter().map(|st| (st.labels, st.symbols)).unzip();
+        let symbols = src
+            .into_iter()
+            .map(|st| st.symbols)
+            .fold(SymbolMap::new(), |acc, sm| {
+                acc.into_iter().chain(sm).collect()
+            });
 
-        let labels = labels.into_iter().fold(LabelMap::new(), |acc, lm| {
-            acc.into_iter().chain(lm).collect()
-        });
-
-        let symbols = symbols.into_iter().fold(SymbolMap::new(), |acc, sm| {
-            acc.into_iter().chain(sm).collect()
-        });
-
-        Self::new(labels, symbols)
+        Self::new(symbols)
     }
 }
 
@@ -168,16 +185,14 @@ fn generate_symbol_table_from_instructions_origin(
                     (st, insts)
                 }
                 Token::Symbol(l, None) => {
-                    st.labels.insert(l, offset as u16);
+                    let normalized_offset = offset as u16;
+
+                    st.symbols
+                        .insert(l, LEByteEncodedValue::from(normalized_offset));
                     (st, insts)
                 }
                 Token::Symbol(id, Some(bv)) => {
-                    let sv = match bv.bits() {
-                        bits if bits <= 8 => bv,
-                        e => panic!(format!("Backend only supports u8: passed {:?}", e)),
-                    };
-
-                    st.symbols.insert(id, sv);
+                    st.symbols.insert(id, bv);
                     (st, insts)
                 }
             }
@@ -199,10 +214,9 @@ fn dereference_instructions_to_static_instructions(
             let amor = i.amor;
             match amor {
                 AddressingModeOrReference::Label(l) => symbol_table
-                    .labels
-                    .get(&l)
+                    .get_as_u16(&l)
                     .map_or(Err(BackendErr::UndefinedReference(l.clone())), |offset| {
-                        Ok((mnemonic, AddressingMode::Absolute(*offset)))
+                        Ok((mnemonic, AddressingMode::Absolute(offset)))
                     }),
                 AddressingModeOrReference::Symbol(s) => symbol_table.get_as_u8(&s.symbol).map_or(
                     Err(BackendErr::UndefinedReference(s.symbol.clone())),
@@ -219,10 +233,7 @@ fn dereference_instructions_to_static_instructions(
         InstructionOrConstant::Constant(bvol) => match bvol {
             PrimitiveOrReference::Primitive(bv) => Ok(bv),
             PrimitiveOrReference::Reference(id) => symbol_table
-                .labels
                 .get(&id)
-                .map(|&v| types::LEByteEncodedValue::from(v))
-                .or_else(|| symbol_table.get(&id))
                 .ok_or_else(|| BackendErr::UndefinedReference(id.clone())),
         }
         .map(InstructionOrConstant::Constant),
