@@ -70,7 +70,7 @@ impl SymbolTable {
     }
 
     fn get(&self, k: &str) -> Option<LEByteEncodedValue> {
-        self.symbols.get(k).map(|v| v.clone())
+        self.symbols.get(k).cloned()
     }
 
     fn get_as_u8(&self, k: &str) -> Option<u8> {
@@ -86,7 +86,7 @@ impl SymbolTable {
     }
 
     fn insert(&mut self, k: &str, v: LEByteEncodedValue) -> Option<LEByteEncodedValue> {
-        self.symbols.insert(k.to_string(), v.clone())
+        self.symbols.insert(k.to_string(), v)
     }
 }
 
