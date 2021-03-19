@@ -9,6 +9,7 @@ use crate::parser::*;
 #[cfg(test)]
 mod tests;
 
+mod cfg;
 pub mod types;
 
 /// SymbolId represents a symbol identifier.
