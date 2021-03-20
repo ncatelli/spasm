@@ -37,7 +37,7 @@ pub enum Token<T> {
 }
 
 #[derive(Default)]
-pub struct PreParser {}
+pub struct PreParser;
 
 impl PreParser {
     pub fn new() -> Self {
