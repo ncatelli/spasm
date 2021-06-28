@@ -45,9 +45,9 @@ impl<T> From<(usize, T)> for Origin<T> {
     }
 }
 
-impl<T> Into<(usize, T)> for Origin<T> {
-    fn into(self) -> (usize, T) {
-        (self.offset, self.instructions)
+impl<T> From<Origin<T>> for (usize, T) {
+    fn from(src: Origin<T>) -> (usize, T) {
+        (src.offset, src.instructions)
     }
 }
 
@@ -124,7 +124,7 @@ pub fn assemble(backend: Backend, source: &str) -> AssemblerResult<AssembledOrig
         .map_err(|e| e)?;
 
     match backend {
-        Backend::MOS6502 => backends::mos6502::MOS6502Assembler::new().assemble(origin_tokens),
+        Backend::Mos6502 => backends::mos6502::Mos6502Assembler::new().assemble(origin_tokens),
     }
     .map_err(|e| e.to_string())
 }

@@ -21,7 +21,7 @@ jmp 0x1234\n";
         Ok(vec![zero_origin!(vec![
             0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x10, 0x1a, 0x10, 0xf0, 0x4c, 0x34, 0x12
         ])]),
-        assemble(Backend::MOS6502, input)
+        assemble(Backend::Mos6502, input)
     )
 }
 
@@ -42,7 +42,7 @@ init:
         Ok(vec![zero_origin!(vec![
             0xea, 0xa9, 0x12, 0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x03, 0x00
         ])]),
-        assemble(Backend::MOS6502, input)
+        assemble(Backend::Mos6502, input)
     )
 }
 
@@ -60,7 +60,7 @@ init:
 
     assert_eq!(
         Err("reference undefined: notinit".to_string()),
-        assemble(Backend::MOS6502, input)
+        assemble(Backend::Mos6502, input)
     )
 }
 
@@ -79,7 +79,7 @@ jmp 0x1234
         Ok(vec![zero_origin!(vec![
             0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x34, 0x12
         ])]),
-        assemble(Backend::MOS6502, input)
+        assemble(Backend::Mos6502, input)
     )
 }
 
@@ -94,7 +94,7 @@ jmp 0x1234
 
     assert_eq!(
         Err("reference undefined: test".to_string()),
-        assemble(Backend::MOS6502, input)
+        assemble(Backend::Mos6502, input)
     )
 }
 
@@ -114,7 +114,7 @@ init:
         Ok(vec![zero_origin!(vec![
             0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x00, 0x00
         ])]),
-        assemble(Backend::MOS6502, input)
+        assemble(Backend::Mos6502, input)
     )
 }
 
@@ -134,7 +134,7 @@ init: ; test
         Ok(vec![zero_origin!(vec![
             0xea, 0xa9, 0x12, 0x8d, 0x34, 0x12, 0x4c, 0x00, 0x00
         ])]),
-        assemble(Backend::MOS6502, input)
+        assemble(Backend::Mos6502, input)
     )
 }
 
@@ -150,7 +150,7 @@ nop
 
     assert_eq!(
         Ok(vec![0xea, 0x00, 0x00, 0xea, 0x00, 0x00, 0xea]),
-        assemble(Backend::MOS6502, input).map(|res| res.emit())
+        assemble(Backend::Mos6502, input).map(|res| res.emit())
     );
 }
 
@@ -167,7 +167,7 @@ nop
 
     assert_eq!(
         Ok(vec![0xea, 0x00, 0x00, 0xea, 0x2b, 0x1a, 0xea]),
-        assemble(Backend::MOS6502, input).map(|res| res.emit())
+        assemble(Backend::Mos6502, input).map(|res| res.emit())
     );
 }
 
@@ -184,7 +184,7 @@ init:
 
     assert_eq!(
         Ok(vec![0xea, 0xea, 0x01, 0x00, 0xff]),
-        assemble(Backend::MOS6502, input).map(|res| res.emit())
+        assemble(Backend::Mos6502, input).map(|res| res.emit())
     );
 }
 
@@ -198,5 +198,5 @@ origin fffc
 .word 0x0001
 ";
 
-    assert!(assemble(Backend::MOS6502, input).is_err())
+    assert!(assemble(Backend::Mos6502, input).is_err())
 }

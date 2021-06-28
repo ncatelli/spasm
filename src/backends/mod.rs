@@ -28,13 +28,13 @@ impl std::fmt::Display for BackendErr {
 /// Backend represents the backend targets currently supported by spasm.
 #[derive(Debug)]
 pub enum Backend {
-    MOS6502,
+    Mos6502,
 }
 
 impl std::fmt::Display for Backend {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output = match self {
-            Backend::MOS6502 => "mos6502".to_string(),
+            Backend::Mos6502 => "mos6502".to_string(),
         };
 
         write!(f, "{}", output)
@@ -46,7 +46,7 @@ impl TryFrom<&str> for Backend {
 
     fn try_from(src: &str) -> Result<Self, Self::Error> {
         match src {
-            "mos6502" => Ok(Backend::MOS6502),
+            "mos6502" => Ok(Backend::Mos6502),
             _ => Err(format!("unknown backend: {}", &src)),
         }
     }
