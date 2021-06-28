@@ -200,3 +200,20 @@ origin fffc
 
     assert!(assemble(Backend::Mos6502, input).is_err())
 }
+
+#[test]
+fn should_strip_initial_origin_if_it_only_contains_preparser_directives() {
+    let input = "
+
+.define byte test 0xff
+.origin 0x03
+init:
+  .word       init
+  .byte       test
+";
+
+    assert_eq!(
+        Ok(vec![0x03, 0x00, 0xff]),
+        assemble(Backend::Mos6502, input).map(|res| res.emit())
+    );
+}
