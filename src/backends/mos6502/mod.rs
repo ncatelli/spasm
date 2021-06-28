@@ -280,7 +280,7 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
         let opcode_origins = instructions
             .into_iter()
             // strip empty origins
-            .filter(|origin| origin.instructions.len() > 0)
+            .filter(|origin| !origin.instructions.is_empty())
             .map(|origin| {
                 let origin_offset = origin.offset;
                 let instructions = origin.instructions;
