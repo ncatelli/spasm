@@ -152,7 +152,10 @@ fn labeldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
 
 #[allow(clippy::redundant_closure)]
 fn symboldef<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
-    byte_def().or(|| two_byte_def()).or(|| four_byte_def())
+    byte_def()
+        .or(|| char_def())
+        .or(|| two_byte_def())
+        .or(|| four_byte_def())
 }
 
 fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
@@ -167,6 +170,37 @@ fn byte_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
                 one_or_more(non_newline_whitespace()),
             )),
             unsigned8(),
+        ),
+    ))
+    .map(|(s, v)| {
+        Token::Symbol(
+            s.into_iter().collect(),
+            Some(types::LeByteEncodedValue::from(v)),
+        )
+    })
+}
+
+fn char_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
+    right(join(
+        join(
+            expect_str(".define char"),
+            one_or_more(non_newline_whitespace()),
+        ),
+        join(
+            left(join(
+                one_or_more(alphabetic()),
+                one_or_more(non_newline_whitespace()),
+            )),
+            expect_character('\'').and_then(|_| {
+                left(join(alphabetic(), expect_character('\''))).map(|c| {
+                    let mut b = [0; 1];
+                    // This is panicable but is protected by the above
+                    // "alphabetic" constraint. Fairly safe due to the
+                    // alphabetic constraint.
+                    c.encode_utf8(&mut b);
+                    b[0]
+                })
+            }),
         ),
     ))
     .map(|(s, v)| {
@@ -231,6 +265,7 @@ fn origin<'a>() -> impl parcel::Parser<'a, &'a [char], u32> {
 #[allow(clippy::redundant_closure)]
 fn constant<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
     const_byte()
+        .or(|| const_char())
         .or(|| const_word())
         .or(|| const_doubleword())
         .map(Token::Constant)
@@ -245,6 +280,28 @@ fn const_byte<'a>() -> impl parcel::Parser<'a, &'a [char], PrimitiveOrReference>
                 one_or_more(alphabetic())
                     .map(|vc| PrimitiveOrReference::Reference(vc.into_iter().collect()))
             }),
+    ))
+}
+
+fn const_char<'a>() -> impl parcel::Parser<'a, &'a [char], PrimitiveOrReference> {
+    right(join(
+        join(expect_str(".char"), one_or_more(non_newline_whitespace())),
+        expect_character('\'').and_then(|_| {
+            left(join(alphabetic(), expect_character('\'')))
+                .map(|c| {
+                    let mut b = [0; 1];
+                    // This is panicable but is protected by the above
+                    // "alphabetic" constraint. Fairly safe due to the
+                    // alphabetic constraint.
+                    c.encode_utf8(&mut b);
+                    b[0]
+                })
+                .map(|b| PrimitiveOrReference::Primitive(types::LeByteEncodedValue::from(b)))
+                .or(|| {
+                    one_or_more(alphabetic())
+                        .map(|vc| PrimitiveOrReference::Reference(vc.into_iter().collect()))
+                })
+        }),
     ))
 }
 
