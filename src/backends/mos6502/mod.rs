@@ -22,7 +22,7 @@ type MemoryAligned6502Stream = Vec<InstructionOrConstant<Instruction, PrimitiveO
 type AssembledOrigins = Vec<Origin<Vec<u8>>>;
 
 use crate::preparser::types::Reify;
-impl Reify<u8> for crate::preparser::types::LEByteEncodedValue {
+impl Reify<u8> for crate::preparser::types::LeByteEncodedValue {
     type Error = crate::preparser::types::TypeError;
 
     fn reify(&self) -> Result<u8, Self::Error> {
@@ -37,7 +37,7 @@ impl Reify<u8> for crate::preparser::types::LEByteEncodedValue {
     }
 }
 
-impl Reify<u16> for crate::preparser::types::LEByteEncodedValue {
+impl Reify<u16> for crate::preparser::types::LeByteEncodedValue {
     type Error = crate::preparser::types::TypeError;
 
     fn reify(&self) -> Result<u16, Self::Error> {
@@ -56,20 +56,20 @@ impl Reify<u16> for crate::preparser::types::LEByteEncodedValue {
     }
 }
 
-type SymbolMap = HashMap<String, LEByteEncodedValue>;
+type SymbolMap = HashMap<String, LeByteEncodedValue>;
 
 #[derive(Default)]
 struct SymbolTable {
     symbols: SymbolMap,
 }
 
-use crate::preparser::types::LEByteEncodedValue;
+use crate::preparser::types::LeByteEncodedValue;
 impl SymbolTable {
     fn new(symbols: SymbolMap) -> Self {
         Self { symbols }
     }
 
-    fn get(&self, k: &str) -> Option<LEByteEncodedValue> {
+    fn get(&self, k: &str) -> Option<LeByteEncodedValue> {
         self.symbols.get(k).cloned()
     }
 
@@ -85,7 +85,7 @@ impl SymbolTable {
             .and_then(|res| res.ok())
     }
 
-    fn insert(&mut self, k: &str, v: LEByteEncodedValue) -> Option<LEByteEncodedValue> {
+    fn insert(&mut self, k: &str, v: LeByteEncodedValue) -> Option<LeByteEncodedValue> {
         self.symbols.insert(k.to_string(), v)
     }
 }
@@ -186,7 +186,7 @@ fn generate_symbol_table_from_instructions_origin(
                 }
                 Token::Symbol(l, None) => {
                     let normalized_offset = offset as u16;
-                    st.insert(&l, LEByteEncodedValue::from(normalized_offset));
+                    st.insert(&l, LeByteEncodedValue::from(normalized_offset));
                     (st, insts)
                 }
                 Token::Symbol(id, Some(bv)) => {
@@ -203,7 +203,7 @@ fn dereference_instructions_to_static_instructions(
     symbol_table: &SymbolTable,
     src_ioc: InstructionOrConstant<Instruction, PrimitiveOrReference>,
 ) -> Result<
-    InstructionOrConstant<isa_mos6502::InstructionVariant, types::LEByteEncodedValue>,
+    InstructionOrConstant<isa_mos6502::InstructionVariant, types::LeByteEncodedValue>,
     BackendErr,
 > {
     match src_ioc {
@@ -238,19 +238,19 @@ fn dereference_instructions_to_static_instructions(
     }
 }
 
-/// MOS6502Assembler functions as a wrapper struct to facilitate an
+/// Mos6502Assembler functions as a wrapper struct to facilitate an
 /// implementation of the Assembler trait for the 6502 instruction set.
 #[derive(Default)]
-pub struct MOS6502Assembler {}
+pub struct Mos6502Assembler {}
 
-impl MOS6502Assembler {
+impl Mos6502Assembler {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
 impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
-    for MOS6502Assembler
+    for Mos6502Assembler
 {
     fn assemble(
         &self,
@@ -291,7 +291,7 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
                         Vec<
                             InstructionOrConstant<
                                 isa_mos6502::InstructionVariant,
-                                types::LEByteEncodedValue,
+                                types::LeByteEncodedValue,
                             >,
                         >,
                         BackendErr,
