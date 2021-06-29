@@ -93,7 +93,7 @@ impl From<char> for LeByteEncodedValue {
     fn from(value: char) -> Self {
         let mut buffer = [0u8; 4];
         let result = value.encode_utf8(&mut buffer);
-        let byte_vec = result.as_bytes().into_iter().copied().collect();
+        let byte_vec = result.as_bytes().iter().copied().collect();
 
         LeByteEncodedValue::new(byte_vec)
     }
