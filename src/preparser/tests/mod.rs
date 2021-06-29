@@ -56,6 +56,22 @@ fn should_parse_single_byte_constant() {
 }
 
 #[test]
+fn should_parse_single_byte_char_constant() {
+    let input = chars!(".define char test 'a'");
+
+    assert_eq!(
+        Ok(MatchStatus::Match((
+            &input[input.len()..],
+            vec![zero_origin!(vec![Token::Symbol(
+                "test".to_string(),
+                Some(types::LeByteEncodedValue::from(97u8))
+            )])]
+        ))),
+        PreParser::new().parse(&input)
+    );
+}
+
+#[test]
 fn should_parse_two_byte_constant() {
     let input = chars!(".define word test 65535");
 
@@ -107,6 +123,7 @@ fn should_parse_origin() {
 fn should_parse_constants() {
     let input = chars!(
         "
+.char       'a'
 .byte       0x1a
 .word       0x1a2b
 .doubleword 0x1a2b3c4d
@@ -118,6 +135,9 @@ fn should_parse_constants() {
             &input[input.len()..],
             vec![crate::Origin::new(vec![
                 Token::Constant(PrimitiveOrReference::Primitive(
+                    types::LeByteEncodedValue::from(0x61u8)
+                )),
+                Token::Constant(PrimitiveOrReference::Primitive(
                     types::LeByteEncodedValue::from(0x1au8)
                 )),
                 Token::Constant(PrimitiveOrReference::Primitive(
@@ -128,6 +148,16 @@ fn should_parse_constants() {
                 ))
             ]),]
         ))),
+        PreParser::new().parse(&input)
+    );
+}
+
+#[test]
+fn should_throw_error_on_non_ascii_character_constants() {
+    let input = chars!(".char       '𒀀'");
+
+    assert_eq!(
+        Ok(MatchStatus::NoMatch(&input[..])),
         PreParser::new().parse(&input)
     );
 }

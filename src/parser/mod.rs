@@ -163,7 +163,7 @@ fn dec_u32<'a>() -> impl Parser<'a, &'a [char], u32> {
         let res = one_or_more(decimal())
             .map(|digits| {
                 let vd: String = digits.into_iter().collect();
-                u32::from_str_radix(&vd, 10)
+                vd.parse::<u32>()
             })
             .parse(input);
 
@@ -182,7 +182,7 @@ fn dec_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
         let res = one_or_more(decimal())
             .map(|digits| {
                 let vd: String = digits.into_iter().collect();
-                u16::from_str_radix(&vd, 10)
+                vd.parse::<u16>()
             })
             .parse(input);
 
@@ -201,7 +201,7 @@ fn dec_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
         let res = one_or_more(decimal())
             .map(|digits| {
                 let vd: String = digits.into_iter().collect();
-                u8::from_str_radix(&vd, 10)
+                vd.parse::<u8>()
             })
             .parse(input);
 
@@ -228,7 +228,7 @@ fn dec_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
                     .into_iter()
                     .chain(digits.into_iter())
                     .collect();
-                i8::from_str_radix(&vd, 10)
+                vd.parse::<i8>()
             })
             .parse(input);
 
