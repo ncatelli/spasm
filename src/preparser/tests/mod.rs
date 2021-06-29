@@ -153,6 +153,16 @@ fn should_parse_constants() {
 }
 
 #[test]
+fn should_throw_error_on_non_ascii_character_constants() {
+    let input = chars!(".char       '𒀀'");
+
+    assert_eq!(
+        Ok(MatchStatus::NoMatch(&input[..])),
+        PreParser::new().parse(&input)
+    );
+}
+
+#[test]
 fn should_parse_constants_as_origin_statement() {
     let input = chars!(
         "

@@ -287,20 +287,23 @@ fn const_char<'a>() -> impl parcel::Parser<'a, &'a [char], PrimitiveOrReference>
     right(join(
         join(expect_str(".char"), one_or_more(non_newline_whitespace())),
         expect_character('\'').and_then(|_| {
-            left(join(alphabetic(), expect_character('\'')))
-                .map(|c| {
-                    let mut b = [0; 1];
-                    // This is panicable but is protected by the above
-                    // "alphabetic" constraint. Fairly safe due to the
-                    // alphabetic constraint.
-                    c.encode_utf8(&mut b);
-                    b[0]
-                })
-                .map(|b| PrimitiveOrReference::Primitive(types::LeByteEncodedValue::from(b)))
-                .or(|| {
-                    one_or_more(alphabetic())
-                        .map(|vc| PrimitiveOrReference::Reference(vc.into_iter().collect()))
-                })
+            left(join(
+                alphabetic().predicate(|c| c.is_ascii_alphabetic()),
+                expect_character('\''),
+            ))
+            .map(|c| {
+                let mut b = [0; 1];
+                // This is panicable but is protected by the above
+                // "alphabetic" constraint. Fairly safe due to the
+                // alphabetic constraint.
+                c.encode_utf8(&mut b);
+                b[0]
+            })
+            .map(|b| PrimitiveOrReference::Primitive(types::LeByteEncodedValue::from(b)))
+            .or(|| {
+                one_or_more(alphabetic())
+                    .map(|vc| PrimitiveOrReference::Reference(vc.into_iter().collect()))
+            })
         }),
     ))
 }
