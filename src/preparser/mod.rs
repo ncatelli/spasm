@@ -291,14 +291,6 @@ fn const_char<'a>() -> impl parcel::Parser<'a, &'a [char], PrimitiveOrReference>
                 alphabetic().predicate(|c| c.is_ascii_alphabetic()),
                 expect_character('\''),
             ))
-            .map(|c| {
-                let mut b = [0; 1];
-                // This is panicable but is protected by the above
-                // "alphabetic" constraint. Fairly safe due to the
-                // alphabetic constraint.
-                c.encode_utf8(&mut b);
-                b[0]
-            })
             .map(|b| PrimitiveOrReference::Primitive(types::LeByteEncodedValue::from(b)))
             .or(|| {
                 one_or_more(alphabetic())

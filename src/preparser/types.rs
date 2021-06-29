@@ -27,6 +27,10 @@ pub struct LeByteEncodedValue {
 }
 
 impl LeByteEncodedValue {
+    pub fn new(inner: Vec<u8>) -> Self {
+        Self { inner }
+    }
+
     fn len(&self) -> usize {
         self.inner.len()
     }
@@ -76,13 +80,23 @@ impl crate::Emitter<Vec<u8>> for LeByteEncodedValue {
 macro_rules! impl_from_to_le_bytes {
     ($($t:ty,)*) => {
         $(
-            impl From<$t> for LeByteEncodedValue{
+            impl From<$t> for LeByteEncodedValue {
                 fn from(src: $t) -> Self {
                     Self { inner: src.to_le_bytes().to_vec() }
                 }
             }
         )*
     };
+}
+
+impl From<char> for LeByteEncodedValue {
+    fn from(value: char) -> Self {
+        let mut buffer = [0u8; 4];
+        let result = value.encode_utf8(&mut buffer);
+        let byte_vec = result.as_bytes().into_iter().copied().collect();
+
+        LeByteEncodedValue::new(byte_vec)
+    }
 }
 
 impl_from_to_le_bytes!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64,);
