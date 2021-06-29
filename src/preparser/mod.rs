@@ -192,14 +192,10 @@ fn char_def<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
                 one_or_more(non_newline_whitespace()),
             )),
             expect_character('\'').and_then(|_| {
-                left(join(alphabetic(), expect_character('\''))).map(|c| {
-                    let mut b = [0; 1];
-                    // This is panicable but is protected by the above
-                    // "alphabetic" constraint. Fairly safe due to the
-                    // alphabetic constraint.
-                    c.encode_utf8(&mut b);
-                    b[0]
-                })
+                left(join(
+                    alphabetic().predicate(|c| c.is_ascii_alphabetic()),
+                    expect_character('\''),
+                ))
             }),
         ),
     ))
