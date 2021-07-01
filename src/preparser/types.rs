@@ -35,23 +35,20 @@ impl LeByteEncodedValue {
         self.inner.len()
     }
 
-    #[allow(dead_code)]
     /// leading_zeros returns the leading zeroes for the concrete type of the
     /// object. For example, 255u8 returns 0, 255u16 would return 8 when
     /// encoded as an LEByteEncodedValue much like their corresponding unsigned
     /// integer type.
     pub fn leading_zeros(&self) -> usize {
+        let bytes = self.inner.len();
         self.inner
             .iter()
             .rev()
             .map(|b| b.leading_zeros())
-            .fold(0usize, |acc, x| {
-                if (acc % 8) == 0 {
-                    acc + x as usize
-                } else {
-                    acc
-                }
-            })
+            .enumerate()
+            .find(|(_depth, leading_zeros)| leading_zeros < &8)
+            .map(|(first, leading)| leading as usize + (first * 8))
+            .unwrap_or_else(|| 8 * bytes)
     }
     /// bits outputs the number of bits needed to express a value.
     pub fn bits(&self) -> usize {
@@ -119,19 +116,35 @@ mod tests {
     }
 
     #[test]
-    fn should_return_leading_zeros_for_underlying_type() {
-        assert_eq!(5, super::LeByteEncodedValue::from(4u8).leading_zeros());
-        assert_eq!(0, super::LeByteEncodedValue::from(255u8).leading_zeros());
+    fn should_return_leading_zeros_for_u8_type() {
+        for byte in 0..255u8 {
+            let leading_zeros = byte.leading_zeros();
+            assert_eq!(
+                leading_zeros as usize,
+                super::LeByteEncodedValue::from(byte).leading_zeros()
+            );
+        }
+    }
 
-        assert_eq!(13, super::LeByteEncodedValue::from(4u16).leading_zeros());
-        assert_eq!(8, super::LeByteEncodedValue::from(255u16).leading_zeros());
+    #[test]
+    fn should_return_leading_zeros_for_u16_type() {
+        for word in 0..u16::MAX {
+            let leading_zeros = word.leading_zeros();
+            assert_eq!(
+                leading_zeros as usize,
+                super::LeByteEncodedValue::from(word).leading_zeros()
+            );
+        }
+    }
 
-        assert_eq!(
-            1,
-            super::LeByteEncodedValue::from(0x6000u16).leading_zeros()
-        );
-
-        assert_eq!(29, super::LeByteEncodedValue::from(4u32).leading_zeros());
-        assert_eq!(24, super::LeByteEncodedValue::from(255u32).leading_zeros());
+    #[test]
+    fn should_return_leading_zeros_for_u32_type() {
+        for doubleword in 0..u16::MAX as u32 {
+            let leading_zeros = doubleword.leading_zeros();
+            assert_eq!(
+                leading_zeros as usize,
+                super::LeByteEncodedValue::from(doubleword).leading_zeros()
+            );
+        }
     }
 }
