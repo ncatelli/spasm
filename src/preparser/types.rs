@@ -54,6 +54,7 @@ impl LeByteEncodedValue {
             // default to total bits as leading zeroes if no 1 bits are found.
             .unwrap_or_else(|| 8 * self.size_of())
     }
+
     /// bits outputs the number of bits needed to express a value.
     pub fn bits(&self) -> usize {
         let bytes = self.inner.len();
