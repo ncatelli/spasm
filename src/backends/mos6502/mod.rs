@@ -41,9 +41,7 @@ impl Reify<u16> for crate::preparser::types::LeByteEncodedValue {
     type Error = crate::preparser::types::TypeError;
 
     fn reify(&self) -> Result<u16, Self::Error> {
-        let bits = self.bits();
-        println!("bits: {:?}", &bits);
-        match bits {
+        match self.bits() {
             b if b == 0 => Ok(0),
             b if b <= 8 => Reify::<u8>::reify(self).map(u16::from),
             b if b > 8 && b <= 16 => {
