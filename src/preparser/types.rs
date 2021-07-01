@@ -21,7 +21,7 @@ pub trait Reify<T> {
     fn reify(&self) -> Result<T, Self::Error>;
 }
 
-/// LEByteEncodedValue represents an arbitrarily length binary value encoded
+/// LeByteEncodedValue represents an arbitrarily length binary value encoded
 /// in little-endian format
 #[derive(Debug, Clone, PartialEq)]
 pub struct LeByteEncodedValue {
@@ -39,7 +39,7 @@ impl LeByteEncodedValue {
 
     /// leading_zeros returns the leading zeroes for the concrete type of the
     /// object. For example, 255u8 returns 0, 255u16 would return 8 when
-    /// encoded as an LEByteEncodedValue much like their corresponding unsigned
+    /// encoded as an LeByteEncodedValue much like their corresponding unsigned
     /// integer type.
     pub fn leading_zeros(&self) -> usize {
         self.inner
