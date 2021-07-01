@@ -35,23 +35,20 @@ impl LeByteEncodedValue {
         self.inner.len()
     }
 
-    #[allow(dead_code)]
     /// leading_zeros returns the leading zeroes for the concrete type of the
     /// object. For example, 255u8 returns 0, 255u16 would return 8 when
     /// encoded as an LEByteEncodedValue much like their corresponding unsigned
     /// integer type.
     pub fn leading_zeros(&self) -> usize {
+        let bytes = self.inner.len();
         self.inner
             .iter()
             .rev()
             .map(|b| b.leading_zeros())
-            .fold(0usize, |acc, x| {
-                if (acc % 8) == 0 {
-                    acc + x as usize
-                } else {
-                    acc
-                }
-            })
+            .enumerate()
+            .find(|(_depth, leading_zeros)| leading_zeros < &8)
+            .map(|(first, leading)| leading as usize + (first * 8))
+            .unwrap_or_else(|| 8 * bytes)
     }
     /// bits outputs the number of bits needed to express a value.
     pub fn bits(&self) -> usize {
@@ -129,6 +126,10 @@ mod tests {
         assert_eq!(
             1,
             super::LeByteEncodedValue::from(0x6000u16).leading_zeros()
+        );
+        assert_eq!(
+            0,
+            super::LeByteEncodedValue::from(0x8000u16).leading_zeros()
         );
 
         assert_eq!(29, super::LeByteEncodedValue::from(4u32).leading_zeros());

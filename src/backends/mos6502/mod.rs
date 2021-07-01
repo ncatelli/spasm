@@ -41,7 +41,9 @@ impl Reify<u16> for crate::preparser::types::LeByteEncodedValue {
     type Error = crate::preparser::types::TypeError;
 
     fn reify(&self) -> Result<u16, Self::Error> {
-        match self.bits() {
+        let bits = self.bits();
+        println!("bits: {:?}", &bits);
+        match bits {
             b if b == 0 => Ok(0),
             b if b <= 8 => Reify::<u8>::reify(self).map(u16::from),
             b if b > 8 && b <= 16 => {
@@ -58,7 +60,7 @@ impl Reify<u16> for crate::preparser::types::LeByteEncodedValue {
 
 type SymbolMap = HashMap<String, LeByteEncodedValue>;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct SymbolTable {
     symbols: SymbolMap,
 }
@@ -320,5 +322,17 @@ impl Assembler<Vec<Origin<UnparsedTokenStream>>, AssembledOrigins, BackendErr>
             .collect::<Result<Vec<Origin<Vec<u8>>>, BackendErr>>()?;
 
         Ok(opcode_origins)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_reify_a_16_bit_lebytesvalue() {
+        let lebev = LeByteEncodedValue::new(vec![0, 128]);
+
+        assert_eq!(Ok(0x8000), Reify::<u16>::reify(&lebev))
     }
 }
