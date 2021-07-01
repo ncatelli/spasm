@@ -1,3 +1,5 @@
+use crate::addressing::SizeOf;
+
 /// Type System errors.
 #[derive(Clone, PartialEq)]
 pub enum TypeError {
@@ -40,15 +42,17 @@ impl LeByteEncodedValue {
     /// encoded as an LEByteEncodedValue much like their corresponding unsigned
     /// integer type.
     pub fn leading_zeros(&self) -> usize {
-        let bytes = self.inner.len();
         self.inner
             .iter()
             .rev()
             .map(|b| b.leading_zeros())
             .enumerate()
             .find(|(_depth, leading_zeros)| leading_zeros < &8)
-            .map(|(first, leading)| leading as usize + (first * 8))
-            .unwrap_or_else(|| 8 * bytes)
+            // If a byte with a 1 bit is found, multiply the depth by 8 and
+            // add that bits leading zeroes for the total leading zeroes.
+            .map(|(depth, leading_zeros)| leading_zeros as usize + (depth * 8))
+            // default to total bits as leading zeroes if no 1 bits are found.
+            .unwrap_or_else(|| 8 * self.size_of())
     }
     /// bits outputs the number of bits needed to express a value.
     pub fn bits(&self) -> usize {
