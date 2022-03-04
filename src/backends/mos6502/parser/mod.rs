@@ -62,22 +62,20 @@ fn mnemonic<'a>() -> impl parcel::Parser<'a, &'a [char], Mnemonic> {
         .map(|res| res.unwrap())
 }
 
-#[allow(clippy::redundant_closure)]
 fn address_mode<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
     accumulator()
-        .or(|| zeropage())
-        .or(|| zeropage_x_indexed())
-        .or(|| zeropage_y_indexed())
-        .or(|| absolute_x_indexed())
-        .or(|| absolute_y_indexed())
-        .or(|| x_indexed_indirect())
-        .or(|| indirect_y_indexed())
-        .or(|| absolute())
-        .or(|| immediate())
-        .or(|| indirect())
-        .or(|| relative())
-        .map(|amor| amor)
-        .or(|| label().map(|l| AddressingModeOrReference::Label(l)))
+        .or(zeropage)
+        .or(zeropage_x_indexed)
+        .or(zeropage_y_indexed)
+        .or(absolute_x_indexed)
+        .or(absolute_y_indexed)
+        .or(x_indexed_indirect)
+        .or(indirect_y_indexed)
+        .or(absolute)
+        .or(immediate)
+        .or(indirect)
+        .or(relative)
+        .or(|| label().map(AddressingModeOrReference::Label))
 }
 
 fn label<'a>() -> impl parcel::Parser<'a, &'a [char], String> {
@@ -200,9 +198,8 @@ fn relative<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReferen
         .map(|i| AddressingModeOrReference::AddressingMode(AddressingMode::Relative(i)))
 }
 
-#[allow(clippy::clippy::redundant_closure)]
 fn zeropage<'a>() -> impl parcel::Parser<'a, &'a [char], AddressingModeOrReference> {
-    left(join(unsigned8(), non_newline_whitespace().or(|| eof())))
+    left(join(unsigned8(), non_newline_whitespace().or(eof)))
         .map(|u| AddressingModeOrReference::AddressingMode(AddressingMode::ZeroPage(u)))
 }
 

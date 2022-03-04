@@ -115,10 +115,10 @@ fn main() {
                             )),
                         }
                         .map(|(in_f, out_f, backend_f)| {
-                            read_src_file(&in_f)
+                            read_src_file(in_f)
                                 .map(|input| assemble_object(backend_f, &input))?
                                 .map(|bin_data| {
-                                    write_dest_file(&out_f, &bin_data).map(|_| EXIT_SUCCESS)
+                                    write_dest_file(out_f, &bin_data).map(|_| EXIT_SUCCESS)
                                 })?
                         })
                     }
