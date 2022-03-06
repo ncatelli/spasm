@@ -38,12 +38,14 @@ fn main() -> RuntimeResult<()> {
     let raw_args: Vec<String> = env::args().into_iter().collect::<Vec<String>>();
     let args = raw_args.iter().map(|a| a.as_str()).collect::<Vec<&str>>();
 
+    let help_flag = scrap::Flag::store_true("help", "h", "display usage information.").optional();
     let version_flag =
         scrap::Flag::store_true("version", "v", "output version information.").optional();
-    let output_flag = scrap::Flag::expect_string(
+    let output_flag = scrap::FlagWithValue::new(
         "out-file",
         "o",
         "an output path for the corresponding binary.",
+        scrap::FileValue::new(true, true, false),
     )
     .optional()
     .with_default("a.out".to_string());
@@ -67,7 +69,8 @@ fn main() -> RuntimeResult<()> {
                 .with_flag(version_flag)
                 .with_flag(output_flag)
                 .with_flag(backend_flag)
-                .with_args_handler(|args, ((version, output), backend)| {
+                .with_flag(help_flag)
+                .with_args_handler(|args, (((version, output), backend), _)| {
                     if version.is_some() {
                         println!("{}", CMD_VERSION);
                         Ok(())
@@ -89,14 +92,24 @@ fn main() -> RuntimeResult<()> {
     cmd_group
         .evaluate(&args[..])
         .map_err(|e| RuntimeError::Undefined(format!("{}\n{}", e, help_cmd)))
-        .and_then(|scrap::Value { span, value: flags }| {
-            let unmatched_args = scrap::return_unused_args(&args[..], &span);
-            cmd_group.dispatch_with_args(unmatched_args, Value::new(span, flags))
-        })
+        .and_then(
+            |scrap::Value {
+                 span,
+                 value: (flags, help),
+             }| {
+                if help.is_some() {
+                    println!("{}", help_cmd);
+                    Ok(())
+                } else {
+                    let unmatched_args = scrap::return_unused_args(&args[..], &span);
+                    cmd_group.dispatch_with_args(unmatched_args, Value::new(span, (flags, help)))
+                }
+            },
+        )
 }
 
-fn read_src_file(filename: &str) -> RuntimeResult<String> {
-    let mut f = File::open(filename).map_err(|_| RuntimeError::FileUnreadable)?;
+fn read_src_file<F: AsRef<str>>(filename: F) -> RuntimeResult<String> {
+    let mut f = File::open(filename.as_ref()).map_err(|_| RuntimeError::FileUnreadable)?;
 
     let mut contents = String::new();
     match f.read_to_string(&mut contents) {
@@ -105,12 +118,12 @@ fn read_src_file(filename: &str) -> RuntimeResult<String> {
     }
 }
 
-fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
+fn write_dest_file<F: AsRef<str>>(filename: F, data: &[u8]) -> RuntimeResult<()> {
     let mut f = OpenOptions::new()
         .truncate(true)
         .create(true)
         .write(true)
-        .open(filename)
+        .open(filename.as_ref())
         .map_err(|_| RuntimeError::FileUnreadable)?;
 
     match f.write_all(data) {
@@ -119,13 +132,16 @@ fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
     }
 }
 
-fn assemble_object(backend_str: &str, asm_src: &str) -> RuntimeResult<Vec<u8>> {
-    let backend: Backend = Backend::try_from(backend_str).map_err(|_| {
-        RuntimeError::InvalidArguments(format!("unknown backend: {}", &backend_str))
+fn assemble_object<B, S>(backend: B, asm_src: S) -> RuntimeResult<Vec<u8>>
+where
+    B: AsRef<str>,
+    S: AsRef<str>,
+{
+    let backend: Backend = Backend::try_from(backend.as_ref()).map_err(|_| {
+        RuntimeError::InvalidArguments(format!("unknown backend: {}", backend.as_ref()))
     })?;
 
-    let obj = assemble(backend, asm_src).map_err(RuntimeError::Undefined)?;
-
+    let obj = assemble(backend, asm_src.as_ref()).map_err(RuntimeError::Undefined)?;
     let bin: Vec<u8> = obj.emit();
 
     Ok(bin)
