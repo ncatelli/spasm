@@ -90,13 +90,12 @@ impl Emitter<Vec<u8>> for Vec<Origin<Vec<u8>>> {
         unpadded_bytecode
             .into_iter()
             .zip(padding)
-            .map(|(bytecode, pad_size)| {
+            .flat_map(|(bytecode, pad_size)| {
                 bytecode
                     .into_iter()
                     .chain(vec![0u8].into_iter().cycle().take(pad_size))
                     .collect::<Vec<u8>>()
             })
-            .flatten()
             .collect()
     }
 }
