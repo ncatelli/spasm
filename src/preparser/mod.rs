@@ -64,24 +64,14 @@ fn origin_statements<'a>() -> impl parcel::Parser<'a, &'a [char], Origin<Prepars
         zero_or_more(non_newline_whitespace().or(|| newline())),
         join(
             origin(),
-            zero_or_more(statement()).map(|ioc| {
-                ioc.into_iter()
-                    .filter(|oi| oi.is_some())
-                    .map(|oi| oi.unwrap())
-                    .collect()
-            }),
+            zero_or_more(statement()).map(|ioc| ioc.into_iter().flatten().collect()),
         ),
     ))
     .map(|(offset, statements)| Origin::with_offset(offset as usize, statements))
 }
 
 fn statements<'a>() -> impl parcel::Parser<'a, &'a [char], PreparseTokenStream> {
-    one_or_more(statement()).map(|ioc| {
-        ioc.into_iter()
-            .filter(|oi| oi.is_some())
-            .map(|oi| oi.unwrap())
-            .collect()
-    })
+    one_or_more(statement()).map(|ioc| ioc.into_iter().flatten().collect())
 }
 
 #[allow(clippy::redundant_closure)]

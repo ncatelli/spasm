@@ -8,26 +8,7 @@ use std::fmt;
 use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 
-const EXIT_SUCCESS: i32 = 0;
-
-const ROOT_HELP_STRING: &str = "Usage: spasm [OPTIONS]
-An experimental multi-target assembler.
-
-Flags:
-    --help, -h          print help string
-    --version, -v       
-
-Subcommands:
-    assemble            assemble a source file into it's corresponding binary format";
-
-const ASSEMBLE_HELP_STRING: &str = "Usage: assemble [OPTIONS]
-assemble a source file into its corresponding binary format
-
-Flags:
-    --help, -h          print help string
-    --in-file, -i       an asm source filepath to assemble
-    --out-file, -o      an output path for the corresponding binary file
-    --backend, -b       specify the target backend to assemble";
+const CMD_VERSION: &str = "1.0.0";
 
 type RuntimeResult<T> = Result<T, RuntimeError>;
 
@@ -53,94 +34,82 @@ impl fmt::Display for RuntimeError {
     }
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
+fn main() -> RuntimeResult<()> {
+    let raw_args: Vec<String> = env::args().into_iter().collect::<Vec<String>>();
+    let args = raw_args.iter().map(|a| a.as_str()).collect::<Vec<&str>>();
 
-    let res = Cmd::new()
-        .name("spasm")
+    let help_flag = scrap::Flag::store_true("help", "h", "display usage information.").optional();
+    let version_flag =
+        scrap::Flag::store_true("version", "v", "output version information.").optional();
+    let output_flag = scrap::FlagWithValue::new(
+        "out-file",
+        "o",
+        "an output path for the corresponding binary.",
+        scrap::FileValue::new(true, true, false),
+    )
+    .optional()
+    .with_default("a.out".to_string());
+    let backend_flag = scrap::Flag::with_choices(
+        "backend",
+        "b",
+        "a target architecture backend.",
+        ["mos6502".to_string()],
+        scrap::StringValue,
+    )
+    .optional()
+    .with_default("mos6502".to_string());
+
+    let cmd_group = scrap::CmdGroup::new("spasm")
         .description("An experimental multi-target assembler.")
         .author("Nate Catelli <ncatelli@packetfire.org>")
-        .version("0.1.0")
-        .flag(
-            Flag::new()
-                .name("version")
-                .short_code("v")
-                .action(Action::StoreTrue)
-                .value_type(ValueType::Bool),
-        )
-        .handler(Box::new(|_| {
-            println!("{}", ROOT_HELP_STRING);
-            Ok(0)
-        }))
-        .subcommand(
-            Cmd::new()
-                .name("assemble")
+        .version(CMD_VERSION)
+        .with_command(
+            scrap::Cmd::new("assemble")
                 .description("assemble a source file into its corresponding binary format")
-                .flag(
-                    Flag::new()
-                        .name("in-file")
-                        .short_code("i")
-                        .help_string("an asm source filepath to assemble")
-                        .value_type(ValueType::Str),
-                )
-                .flag(
-                    Flag::new()
-                        .name("out-file")
-                        .short_code("o")
-                        .help_string("an output path for the corresponding binary file")
-                        .value_type(ValueType::Str)
-                        .default_value(Value::Str("a.out".to_string())),
-                )
-                .flag(
-                    Flag::new()
-                        .name("backend")
-                        .short_code("b")
-                        .help_string("specify the target backend to assemble")
-                        .value_type(ValueType::Str)
-                        .default_value(Value::Str("mos6502".to_string())),
-                )
-                .handler(Box::new(|c| {
-                    {
-                        let inf = c.get("in-file");
-                        let ouf = c.get("out-file");
-                        let backend = c.get("backend");
-                        match (inf, ouf, backend) {
-                            (
-                                Some(Value::Str(in_f)),
-                                Some(Value::Str(out_f)),
-                                Some(Value::Str(b_f)),
-                            ) => Ok((in_f, out_f, b_f)),
-                            _ => Err(RuntimeError::InvalidArguments(
-                                ASSEMBLE_HELP_STRING.to_string(),
-                            )),
-                        }
-                        .map(|(in_f, out_f, backend_f)| {
-                            read_src_file(&in_f)
-                                .map(|input| assemble_object(backend_f, &input))?
-                                .map(|bin_data| {
-                                    write_dest_file(&out_f, &bin_data).map(|_| EXIT_SUCCESS)
-                                })?
-                        })
+                .with_flag(version_flag)
+                .with_flag(output_flag)
+                .with_flag(backend_flag)
+                .with_flag(help_flag)
+                .with_args_handler(|args, (((version, output), backend), _)| {
+                    if version.is_some() {
+                        println!("{}", CMD_VERSION);
+                        Ok(())
+                    } else {
+                        args.into_iter()
+                            .map(|path| {
+                                let in_f = path.unwrap();
+                                read_src_file(&in_f)
+                                    .and_then(|input| assemble_object(&backend, &input))
+                                    .and_then(|bin_data| write_dest_file(&output, &bin_data))
+                            })
+                            .collect::<Result<Vec<()>, _>>()
+                            .map(|_| ())
                     }
-                    .and_then(std::convert::identity)
-                    .map_err(|e| format!("{}", e))
-                })),
-        )
-        .run(args)
-        .unwrap()
-        .dispatch();
+                }),
+        );
 
-    match res {
-        Ok(_) => (),
-        Err(e) => {
-            println!("{}", e);
-            std::process::exit(1)
-        }
-    }
+    let help_cmd = cmd_group.help();
+    cmd_group
+        .evaluate(&args[..])
+        .map_err(|e| RuntimeError::Undefined(format!("{}\n{}", e, help_cmd)))
+        .and_then(
+            |scrap::Value {
+                 span,
+                 value: (flags, help),
+             }| {
+                if help.is_some() {
+                    println!("{}", help_cmd);
+                    Ok(())
+                } else {
+                    let unmatched_args = scrap::return_unused_args(&args[..], &span);
+                    cmd_group.dispatch_with_args(unmatched_args, Value::new(span, (flags, help)))
+                }
+            },
+        )
 }
 
-fn read_src_file(filename: &str) -> RuntimeResult<String> {
-    let mut f = File::open(filename).map_err(|_| RuntimeError::FileUnreadable)?;
+fn read_src_file<F: AsRef<str>>(filename: F) -> RuntimeResult<String> {
+    let mut f = File::open(filename.as_ref()).map_err(|_| RuntimeError::FileUnreadable)?;
 
     let mut contents = String::new();
     match f.read_to_string(&mut contents) {
@@ -149,12 +118,12 @@ fn read_src_file(filename: &str) -> RuntimeResult<String> {
     }
 }
 
-fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
+fn write_dest_file<F: AsRef<str>>(filename: F, data: &[u8]) -> RuntimeResult<()> {
     let mut f = OpenOptions::new()
         .truncate(true)
         .create(true)
         .write(true)
-        .open(filename)
+        .open(filename.as_ref())
         .map_err(|_| RuntimeError::FileUnreadable)?;
 
     match f.write_all(data) {
@@ -163,13 +132,16 @@ fn write_dest_file(filename: &str, data: &[u8]) -> RuntimeResult<()> {
     }
 }
 
-fn assemble_object(backend_str: &str, asm_src: &str) -> RuntimeResult<Vec<u8>> {
-    let backend: Backend = Backend::try_from(backend_str).map_err(|_| {
-        RuntimeError::InvalidArguments(format!("unknown backend: {}", &backend_str))
+fn assemble_object<B, S>(backend: B, asm_src: S) -> RuntimeResult<Vec<u8>>
+where
+    B: AsRef<str>,
+    S: AsRef<str>,
+{
+    let backend: Backend = Backend::try_from(backend.as_ref()).map_err(|_| {
+        RuntimeError::InvalidArguments(format!("unknown backend: {}", backend.as_ref()))
     })?;
 
-    let obj = assemble(backend, asm_src).map_err(RuntimeError::Undefined)?;
-
+    let obj = assemble(backend, asm_src.as_ref()).map_err(RuntimeError::Undefined)?;
     let bin: Vec<u8> = obj.emit();
 
     Ok(bin)

@@ -83,38 +83,34 @@ fn sign<'a>() -> impl Parser<'a, &'a [char], Sign> {
         })
 }
 
-#[allow(clippy::clippy::redundant_closure)]
 fn hex_u32<'a>() -> impl Parser<'a, &'a [char], u32> {
     right(join(
         expect_str("0x"),
-        hex_bytes(4).peek_next(special_character().or(|| whitespace().or(|| eof()))),
+        hex_bytes(4).peek_next(special_character().or(|| whitespace().or(eof))),
     ))
     .map(|hex| char_vec_to_u32_from_radix!(hex, 16))
 }
 
-#[allow(clippy::clippy::redundant_closure)]
 fn hex_u16<'a>() -> impl Parser<'a, &'a [char], u16> {
     right(join(
         expect_str("0x"),
-        hex_bytes(2).peek_next(special_character().or(|| whitespace().or(|| eof()))),
+        hex_bytes(2).peek_next(special_character().or(|| whitespace().or(eof))),
     ))
     .map(|hex| char_vec_to_u16_from_radix!(hex, 16))
 }
 
-#[allow(clippy::clippy::redundant_closure)]
 fn hex_u8<'a>() -> impl Parser<'a, &'a [char], u8> {
     right(join(
         expect_str("0x"),
-        hex_bytes(1).peek_next(special_character().or(|| whitespace().or(|| eof()))),
+        hex_bytes(1).peek_next(special_character().or(|| whitespace().or(eof))),
     ))
     .map(|hex| char_vec_to_u8_from_radix!(hex, 16))
 }
 
-#[allow(clippy::clippy::redundant_closure)]
 fn hex_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
     right(join(
         expect_str("0x"),
-        hex_bytes(1).peek_next(special_character().or(|| whitespace().or(|| eof()))),
+        hex_bytes(1).peek_next(special_character().or(|| whitespace().or(eof))),
     ))
     .map(|hex| char_vec_to_i8_from_radix!(hex, 16))
 }

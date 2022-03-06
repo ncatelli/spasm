@@ -1,6 +1,6 @@
 [package]
 name = "spasm"
-version = "0.2.0"
+version = "1.0.0"
 authors = ["Nate Catelli <ncatelli@packetfire.org>"]
 edition = "2018"
 
@@ -9,5 +9,5 @@ lto = true
 
 [dependencies]
 parcel = { git = "https://github.com/ncatelli/parcel", tag = "v1.9.1" }
-scrap = { git = "https://github.com/ncatelli/scrap", tag = "v0.1.2" }
+scrap = { git = "https://github.com/ncatelli/scrap", branch = "main" }
 isa-mos6502 = { git = "https://github.com/ncatelli/isa-mos6502", tag = "v0.2.0" }
