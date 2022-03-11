@@ -18,7 +18,7 @@ source = "git+https://github.com/ncatelli/parcel?tag=v1.9.1#bd387b7bf7503ad760f5
 [[package]]
 name = "scrap"
 version = "1.0.0"
-source = "git+https://github.com/ncatelli/scrap?branch=main#887854d4af708a40a3c5b0e85e9588e662e12607"
+source = "git+https://github.com/ncatelli/scrap?tag=v1.0.0#293eb9055cfa85fe68070e8c366819e61af677d3"
 
 [[package]]
 name = "spasm"

@@ -70,22 +70,27 @@ fn main() -> RuntimeResult<()> {
                 .with_flag(output_flag)
                 .with_flag(backend_flag)
                 .with_flag(help_flag)
-                .with_args_handler(|args, (((version, output), backend), _)| {
-                    if version.is_some() {
-                        println!("{}", CMD_VERSION);
-                        Ok(())
-                    } else {
-                        args.into_iter()
-                            .map(|path| {
-                                let in_f = path.unwrap();
-                                read_src_file(&in_f)
-                                    .and_then(|input| assemble_object(&backend, &input))
-                                    .and_then(|bin_data| write_dest_file(&output, &bin_data))
-                            })
-                            .collect::<Result<Vec<()>, _>>()
-                            .map(|_| ())
-                    }
-                }),
+                .with_helpstring_and_args_handler(
+                    |help_string, args, (((version, output), backend), help)| {
+                        if help.is_some() {
+                            println!("{}", help_string);
+                            Ok(())
+                        } else if version.is_some() {
+                            println!("{}", CMD_VERSION);
+                            Ok(())
+                        } else {
+                            args.into_iter()
+                                .map(|path| {
+                                    let in_f = path.unwrap();
+                                    read_src_file(&in_f)
+                                        .and_then(|input| assemble_object(&backend, &input))
+                                        .and_then(|bin_data| write_dest_file(&output, &bin_data))
+                                })
+                                .collect::<Result<Vec<()>, _>>()
+                                .map(|_| ())
+                        }
+                    },
+                ),
         );
 
     let help_cmd = cmd_group.help();
@@ -102,7 +107,10 @@ fn main() -> RuntimeResult<()> {
                     Ok(())
                 } else {
                     let unmatched_args = scrap::return_unused_args(&args[..], &span);
-                    cmd_group.dispatch_with_args(unmatched_args, Value::new(span, (flags, help)))
+                    cmd_group.dispatch_with_helpstring_and_args(
+                        unmatched_args,
+                        Value::new(span, (flags, help)),
+                    )
                 }
             },
         )
