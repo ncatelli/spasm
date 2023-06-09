@@ -2,7 +2,7 @@
 name = "spasm"
 version = "1.0.0"
 authors = ["Nate Catelli <ncatelli@packetfire.org>"]
-edition = "2018"
+edition = "2021"
 
 [profile.release]
 lto = true
