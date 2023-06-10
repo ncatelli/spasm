@@ -119,8 +119,7 @@ pub fn assemble(backend: Backend, source: &str) -> AssemblerResult<AssembledOrig
     let input: Vec<char> = source.chars().collect();
     let origin_tokens = preparser::PreParser::new()
         .parse(&input)
-        .map(|ms| ms.unwrap())
-        .map_err(|e| e)?;
+        .map(|ms| ms.unwrap())?;
 
     match backend {
         Backend::Mos6502 => backends::mos6502::Mos6502Assembler::new().assemble(origin_tokens),

@@ -47,7 +47,7 @@ impl PartialEq<char> for Sign {
 }
 
 pub fn non_whitespace_character<'a>() -> impl Parser<'a, &'a [char], char> {
-    move |input: &'a [char]| match input.get(0) {
+    move |input: &'a [char]| match input.first() {
         Some(&next) if !next.is_whitespace() => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
@@ -120,8 +120,8 @@ pub fn hex_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a [char], Vec<char>> {
 }
 
 pub fn hex_digit<'a>() -> impl Parser<'a, &'a [char], char> {
-    move |input: &'a [char]| match input.get(0) {
-        Some(&next) if next.is_digit(16) => Ok(MatchStatus::Match((&input[1..], next))),
+    move |input: &'a [char]| match input.first() {
+        Some(&next) if next.is_ascii_hexdigit() => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
@@ -147,7 +147,7 @@ pub fn binary_bytes<'a>(bytes: usize) -> impl Parser<'a, &'a [char], Vec<char>> 
 }
 
 pub fn binary<'a>() -> impl Parser<'a, &'a [char], char> {
-    move |input: &'a [char]| match input.get(0) {
+    move |input: &'a [char]| match input.first() {
         Some(&next) if next.is_digit(2) => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
@@ -238,8 +238,8 @@ fn dec_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
 }
 
 pub fn decimal<'a>() -> impl Parser<'a, &'a [char], char> {
-    move |input: &'a [char]| match input.get(0) {
-        Some(&next) if next.is_digit(10) => Ok(MatchStatus::Match((&input[1..], next))),
+    move |input: &'a [char]| match input.first() {
+        Some(&next) if next.is_ascii_digit() => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
 }
@@ -249,7 +249,7 @@ pub fn special_character<'a>() -> impl Parser<'a, &'a [char], char> {
         '-', '_', '\\', '|', '#', '&', '’', '(', ')', '*', '+', ',', '.', '/', ':', ';', '<', '=',
         '>',
     ];
-    move |input: &'a [char]| match input.get(0) {
+    move |input: &'a [char]| match input.first() {
         Some(&next) if special.contains(&next) => Ok(MatchStatus::Match((&input[1..], next))),
         _ => Ok(MatchStatus::NoMatch(input)),
     }
