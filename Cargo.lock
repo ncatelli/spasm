@@ -22,7 +22,7 @@ source = "git+https://github.com/ncatelli/scrap?tag=v1.0.0#293eb9055cfa85fe68070
 
 [[package]]
 name = "spasm"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "isa-mos6502",
  "parcel",
