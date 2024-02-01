@@ -53,7 +53,7 @@ impl<'a> Parser<'a, &'a [char], OriginStream> for PreParser {
             origin_statements().or(|| statements().map(Origin::new)),
             zero_or_more(origin_statements()),
         )
-        .map(|(head, tail)| vec![head].into_iter().chain(tail.into_iter()).collect())
+        .map(|(head, tail)| [head].into_iter().chain(tail).collect())
         .parse(input)
     }
 }
@@ -121,9 +121,7 @@ fn instruction<'a>() -> impl parcel::Parser<'a, &'a [char], Token<String>> {
             })
         })),
     )
-    .map(|(head, tail)| {
-        Token::Instruction(vec![head].into_iter().chain(tail.into_iter()).collect())
-    })
+    .map(|(head, tail)| Token::Instruction(vec![head].into_iter().chain(tail).collect()))
 }
 
 #[allow(clippy::redundant_closure)]
