@@ -27,8 +27,8 @@ impl Reify<u8> for crate::preparser::types::LeByteEncodedValue {
 
     fn reify(&self) -> Result<u8, Self::Error> {
         match self.bits() {
-            b if b == 0 => Ok(0),
-            b if b <= 8 => Ok(self.to_vec().first().copied().unwrap_or(0)),
+            0 => Ok(0),
+            1..=8 => Ok(self.to_vec().first().copied().unwrap_or(0)),
             _ => Err(Self::Error::IllegalType(format!(
                 "bit-width {}",
                 self.bits()
@@ -42,9 +42,9 @@ impl Reify<u16> for crate::preparser::types::LeByteEncodedValue {
 
     fn reify(&self) -> Result<u16, Self::Error> {
         match self.bits() {
-            b if b == 0 => Ok(0),
-            b if b <= 8 => Reify::<u8>::reify(self).map(u16::from),
-            b if b > 8 && b <= 16 => {
+            0 => Ok(0),
+            1..=8 => Reify::<u8>::reify(self).map(u16::from),
+            9..=16 => {
                 let bytes = self.to_vec();
                 Ok(u16::from_le_bytes([bytes[0], bytes[1]]))
             }

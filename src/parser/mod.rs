@@ -220,10 +220,7 @@ fn dec_i8<'a>() -> impl Parser<'a, &'a [char], i8> {
                     _ => '+',
                 };
 
-                let vd: String = vec![pos_or_neg]
-                    .into_iter()
-                    .chain(digits.into_iter())
-                    .collect();
+                let vd: String = [pos_or_neg].into_iter().chain(digits).collect();
                 vd.parse::<i8>()
             })
             .parse(input);
@@ -245,7 +242,7 @@ pub fn decimal<'a>() -> impl Parser<'a, &'a [char], char> {
 }
 
 pub fn special_character<'a>() -> impl Parser<'a, &'a [char], char> {
-    let special = vec![
+    let special = [
         '-', '_', '\\', '|', '#', '&', '’', '(', ')', '*', '+', ',', '.', '/', ':', ';', '<', '=',
         '>',
     ];

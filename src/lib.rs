@@ -84,7 +84,7 @@ impl Emitter<Vec<u8>> for Vec<Origin<Vec<u8>>> {
             .copied()
             .zip(offset_end[..offset_end.len() - 1].iter().copied())
             .map(|(start_of_next, end_of_last)| start_of_next - end_of_last)
-            .chain(vec![0].into_iter())
+            .chain([0])
             .collect::<Vec<usize>>();
 
         unpadded_bytecode
